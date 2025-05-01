@@ -25,6 +25,14 @@ export interface LoginCredentials {
   company_code: string;
 }
 
+export interface RegisterCredentials {
+  email: string;
+  username: string;
+  password: string;
+  full_name: string;
+  company_code: string;
+}
+
 export interface AuthResponse {
   access_token: string;
   token_type: string;
@@ -66,6 +74,27 @@ class AuthService {
       AuthService.instance = new AuthService();
     }
     return AuthService.instance;
+  }
+
+  async register(credentials: RegisterCredentials): Promise<AuthResponse> {
+    try {
+      const response = await api.post<AuthResponse>(API.ENDPOINTS.AUTH.REGISTER, credentials);
+      
+      // Store the token securely
+      if (response.data.access_token) {
+        localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.access_token);
+        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.data.user));
+      }
+      
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.data?.detail) {
+        const detail = error.response.data.detail;
+        throw new Error(typeof detail === 'string' ? detail : detail.message || 'Registration failed');
+      }
+      
+      throw new Error('Registration failed. Please try again.');
+    }
   }
 
   async login(credentials: LoginCredentials): Promise<AuthResponse> {

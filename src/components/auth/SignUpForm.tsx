@@ -3,44 +3,137 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { authService, RegisterCredentials } from '@/services/auth';
+import { VALIDATION } from '@/config/constants';
+import { toast } from 'sonner';
 
 interface FormData {
-  name: string;
+  full_name: string;
   email: string;
+  username: string;
   password: string;
   confirmPassword: string;
-  company: string;
-  role: string;
+  company_code: string;
+  role: string; // This is just for UI, not sent to API
 }
 
 export default function SignUpForm() {
   const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    name: '',
+    full_name: '',
     email: '',
+    username: '',
     password: '',
     confirmPassword: '',
-    company: '',
+    company_code: '',
     role: ''
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
 
   const updateFormData = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear error on field change
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateStep = (currentStep: number): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    if (currentStep === 1) {
+      if (!formData.full_name.trim()) {
+        newErrors.full_name = 'Full name is required';
+      }
+      
+      if (!formData.email.trim()) {
+        newErrors.email = 'Email is required';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        newErrors.email = 'Please enter a valid email address';
+      }
+
+      if (!formData.username.trim()) {
+        newErrors.username = 'Username is required';
+      } else if (formData.username.length < 3) {
+        newErrors.username = 'Username must be at least 3 characters long';
+      }
+    }
+    
+    if (currentStep === 2) {
+      if (!formData.password) {
+        newErrors.password = 'Password is required';
+      } else if (!VALIDATION.PASSWORD.PATTERN.test(formData.password)) {
+        newErrors.password = VALIDATION.PASSWORD.MESSAGE;
+      }
+      
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = 'Please confirm your password';
+      } else if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
+    }
+    
+    if (currentStep === 3) {
+      if (!formData.company_code.trim()) {
+        newErrors.company_code = 'Company code is required';
+      } else if (!/^[A-Z0-9]{8}$/.test(formData.company_code)) {
+        newErrors.company_code = VALIDATION.COMPANY_CODE.MESSAGE;
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateStep(step)) {
+      return;
+    }
+    
     if (step < 3) {
       setStep(step + 1);
     } else {
-      // TODO: Implement signup logic here
-      console.log('Signup complete with:', formData);
+      setIsLoading(true);
+      
+      try {
+        const registerData: RegisterCredentials = {
+          email: formData.email,
+          username: formData.username,
+          password: formData.password,
+          full_name: formData.full_name,
+          company_code: formData.company_code
+        };
+        
+        await authService.register(registerData);
+        toast.success('Registration successful!');
+        router.push('/dashboard');
+      } catch (error) {
+        toast.error('Registration failed', {
+          description: error instanceof Error ? error.message : 'Please try again later',
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   const goBack = () => {
     setStep(step - 1);
+  };
+
+  const renderError = (field: keyof FormData) => {
+    return errors[field] ? (
+      <p className="mt-1 text-sm text-red-400">{errors[field]}</p>
+    ) : null;
   };
 
   const steps = {
@@ -56,18 +149,20 @@ export default function SignUpForm() {
           <p className="text-gray-400 text-sm">Let's start with your basic details</p>
         </div>
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="full_name" className="block text-sm font-medium text-gray-300 mb-2">
             Full Name
           </label>
           <input
             type="text"
-            id="name"
-            value={formData.name}
-            onChange={(e) => updateFormData('name', e.target.value)}
-            className="w-full px-4 py-3 bg-gray-800/50 border border-white/15 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            id="full_name"
+            value={formData.full_name}
+            onChange={(e) => updateFormData('full_name', e.target.value)}
+            className={`w-full px-3 py-2 bg-gray-800/50 border ${errors.full_name ? 'border-red-500' : 'border-white/15'} rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all`}
             placeholder="Enter your full name"
             required
+            disabled={isLoading}
           />
+          {renderError('full_name')}
         </div>
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
@@ -78,10 +173,28 @@ export default function SignUpForm() {
             id="email"
             value={formData.email}
             onChange={(e) => updateFormData('email', e.target.value)}
-            className="w-full px-4 py-3 bg-gray-800/50 border border-white/15 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 bg-gray-800/50 border ${errors.email ? 'border-red-500' : 'border-white/15'} rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all`}
             placeholder="Enter your email"
             required
+            disabled={isLoading}
           />
+          {renderError('email')}
+        </div>
+        <div>
+          <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+            Username
+          </label>
+          <input
+            type="text"
+            id="username"
+            value={formData.username}
+            onChange={(e) => updateFormData('username', e.target.value)}
+            className={`w-full px-3 py-2 bg-gray-800/50 border ${errors.username ? 'border-red-500' : 'border-white/15'} rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all`}
+            placeholder="Choose a username"
+            required
+            disabled={isLoading}
+          />
+          {renderError('username')}
         </div>
       </motion.div>
     ),
@@ -105,10 +218,13 @@ export default function SignUpForm() {
             id="password"
             value={formData.password}
             onChange={(e) => updateFormData('password', e.target.value)}
-            className="w-full px-4 py-3 bg-gray-800/50 border border-white/15 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 bg-gray-800/50 border ${errors.password ? 'border-red-500' : 'border-white/15'} rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all`}
             placeholder="Create a password"
             required
+            disabled={isLoading}
+            minLength={8}
           />
+          {renderError('password')}
         </div>
         <div>
           <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
@@ -119,10 +235,12 @@ export default function SignUpForm() {
             id="confirmPassword"
             value={formData.confirmPassword}
             onChange={(e) => updateFormData('confirmPassword', e.target.value)}
-            className="w-full px-4 py-3 bg-gray-800/50 border border-white/15 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            className={`w-full px-3 py-2 bg-gray-800/50 border ${errors.confirmPassword ? 'border-red-500' : 'border-white/15'} rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all`}
             placeholder="Confirm your password"
             required
+            disabled={isLoading}
           />
+          {renderError('confirmPassword')}
         </div>
       </motion.div>
     ),
@@ -138,31 +256,35 @@ export default function SignUpForm() {
           <p className="text-gray-400 text-sm">Tell us about your organization</p>
         </div>
         <div>
-          <label htmlFor="company" className="block text-sm font-medium text-gray-300 mb-2">
-            Company Name
+          <label htmlFor="company_code" className="block text-sm font-medium text-gray-300 mb-2">
+            Company Code
           </label>
           <input
             type="text"
-            id="company"
-            value={formData.company}
-            onChange={(e) => updateFormData('company', e.target.value)}
-            className="w-full px-4 py-3 bg-gray-800/50 border border-white/15 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
-            placeholder="Enter your company name"
+            id="company_code"
+            value={formData.company_code}
+            onChange={(e) => updateFormData('company_code', e.target.value.toUpperCase())}
+            className={`w-full px-3 py-2 bg-gray-800/50 border ${errors.company_code ? 'border-red-500' : 'border-white/15'} rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all`}
+            placeholder="Enter your company code"
             required
+            disabled={isLoading}
+            maxLength={8}
+            pattern="[A-Z0-9]{8}"
           />
+          {renderError('company_code')}
         </div>
         <div>
           <label htmlFor="role" className="block text-sm font-medium text-gray-300 mb-2">
-            Your Role
+            Your Role (optional)
           </label>
           <input
             type="text"
             id="role"
             value={formData.role}
             onChange={(e) => updateFormData('role', e.target.value)}
-            className="w-full px-4 py-3 bg-gray-800/50 border border-white/15 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            className="w-full px-3 py-2 bg-gray-800/50 border border-white/15 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
             placeholder="Enter your role"
-            required
+            disabled={isLoading}
           />
         </div>
       </motion.div>
@@ -170,15 +292,15 @@ export default function SignUpForm() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="w-full p-8 space-y-6 bg-gray-900/40 backdrop-blur-xl rounded-xl border border-white/15"
+        className="w-full p-6 space-y-4 bg-gray-900/40 backdrop-blur-xl rounded-xl border border-white/15"
       >
         {/* Progress Bar */}
-        <div className="relative mb-8">
+        <div className="relative mb-6">
           <div className="h-1 bg-gray-800 rounded-full">
             <motion.div
               className="h-1 bg-purple-500 rounded-full"
@@ -235,21 +357,33 @@ export default function SignUpForm() {
             {steps[step as keyof typeof steps]}
           </AnimatePresence>
 
-          <div className="flex justify-between mt-8">
+          <div className="flex justify-between mt-6">
             {step > 1 && (
               <button
                 type="button"
                 onClick={goBack}
-                className="px-6 py-3 text-sm text-gray-400 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+                disabled={isLoading}
               >
                 Back
               </button>
             )}
             <button
               type="submit"
-              className="relative ml-auto px-6 py-3 text-white font-medium text-sm rounded-lg overflow-hidden bg-purple-500 hover:bg-purple-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-2 focus:ring-offset-gray-900"
+              disabled={isLoading}
+              className="relative ml-auto px-4 py-2 text-white font-medium text-sm rounded-lg bg-purple-500 hover:bg-purple-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span className="relative">{step === 3 ? 'Complete Setup' : 'Continue'}</span>
+              {isLoading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {step === 3 ? 'Creating Account...' : 'Processing...'}
+                </span>
+              ) : (
+                <span>{step === 3 ? 'Complete Setup' : 'Continue'}</span>
+              )}
             </button>
           </div>
         </form>
@@ -259,13 +393,14 @@ export default function SignUpForm() {
           <button
             onClick={() => router.push('/login')}
             className="text-purple-500 hover:text-purple-400 font-medium transition-colors"
+            disabled={isLoading}
           >
             Sign in
           </button>
         </p>
       </motion.div>
 
-      <p className="text-xs text-gray-400 text-center px-6">
+      <p className="text-xs text-gray-400 text-center">
         By clicking {step === 3 ? 'complete setup' : 'continue'}, you agree to our{' '}
         <a href="/terms" className="text-purple-500 hover:text-purple-400 transition-colors">
           Terms of Service
