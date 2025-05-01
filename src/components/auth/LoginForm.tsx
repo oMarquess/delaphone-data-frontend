@@ -85,6 +85,16 @@ export default function LoginForm() {
 
     try {
       const response = await authService.login(formData);
+      
+      // Check if user is verified if the field exists
+      if (response.user.is_verified === false) {
+        toast.warning('Account pending verification', {
+          description: 'Your account is awaiting admin verification. You will receive an email when verified.',
+          duration: 6000,
+        });
+        return;
+      }
+      
       toast.success('Login successful!');
       router.push('/dashboard');
     } catch (error: any) {
@@ -109,6 +119,11 @@ export default function LoginForm() {
         
         toast.error('ACCOUNT LOCKED', {
           description: error.message,
+          duration: 6000,
+        });
+      } else if (error.type === 'verification') {
+        toast.warning('Account pending verification', {
+          description: error.message || 'Your account is awaiting admin verification. You will receive an email when verified.',
           duration: 6000,
         });
       } else {

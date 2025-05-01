@@ -40,6 +40,7 @@ export interface AuthResponse {
     id: string;
     email: string;
     username: string;
+    is_verified?: boolean;
   };
 }
 
@@ -80,6 +81,12 @@ class AuthService {
     try {
       const response = await api.post<AuthResponse>(API.ENDPOINTS.AUTH.REGISTER, credentials);
       
+      // Check if the response indicates an error
+      if (response.data && 'success' in response.data && response.data.success === false) {
+        // This is an error response in the format {success: false, errors: [...]}
+        throw response.data;
+      }
+      
       // Store the token securely
       if (response.data.access_token) {
         localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.access_token);
@@ -88,11 +95,48 @@ class AuthService {
       
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.detail) {
-        const detail = error.response.data.detail;
-        throw new Error(typeof detail === 'string' ? detail : detail.message || 'Registration failed');
+      // Log the error for debugging
+      console.error('Register error:', error);
+      
+      if (axios.isAxiosError(error)) {
+        // Handle different response formats
+        
+        // Format 1: {success: false, errors: [...], data: null}
+        if (error.response?.data && 'success' in error.response.data && error.response.data.success === false) {
+          throw error.response.data;
+        }
+        
+        // Format 2: Check if email already exists message in response
+        if (error.response?.data?.message && typeof error.response.data.message === 'string') {
+          const message = error.response.data.message;
+          if (message.includes('email') || message.includes('Email')) {
+            throw {
+              success: false,
+              errors: [message],
+              data: null
+            };
+          }
+        }
+        
+        // Format 3: Handle detailed error
+        if (error.response?.data?.detail) {
+          const detail = error.response.data.detail;
+          const errorMessage = typeof detail === 'string' ? detail : (detail.message || 'Registration failed');
+          
+          // Check if it's about email
+          if (errorMessage.toLowerCase().includes('email')) {
+            throw {
+              success: false,
+              errors: [errorMessage],
+              data: null
+            };
+          }
+          
+          throw new Error(errorMessage);
+        }
       }
       
+      // Default error
       throw new Error('Registration failed. Please try again.');
     }
   }
@@ -127,6 +171,12 @@ class AuthService {
             type: 'lockout',
             message: detail.message,
             lockoutTime: detail.lockout_time,
+            detail
+          };
+        } else if (detail.error === 'verification_required') {
+          throw {
+            type: 'verification',
+            message: detail.message || 'Account verification required',
             detail
           };
         }

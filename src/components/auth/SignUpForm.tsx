@@ -14,7 +14,6 @@ interface FormData {
   password: string;
   confirmPassword: string;
   company_code: string;
-  role: string; // This is just for UI, not sent to API
 }
 
 export default function SignUpForm() {
@@ -26,8 +25,7 @@ export default function SignUpForm() {
     username: '',
     password: '',
     confirmPassword: '',
-    company_code: '',
-    role: ''
+    company_code: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
@@ -81,9 +79,7 @@ export default function SignUpForm() {
     }
     
     if (currentStep === 3) {
-      if (!formData.company_code.trim()) {
-        newErrors.company_code = 'Company code is required';
-      } else if (!/^[A-Z0-9]{8}$/.test(formData.company_code)) {
+      if (formData.company_code.trim() && !/^[A-Z0-9]{8}$/.test(formData.company_code)) {
         newErrors.company_code = VALIDATION.COMPANY_CODE.MESSAGE;
       }
     }
@@ -113,12 +109,63 @@ export default function SignUpForm() {
           company_code: formData.company_code
         };
         
-        await authService.register(registerData);
-        toast.success('Registration successful!');
-        router.push('/dashboard');
+        // Make the API call and explicitly check for success response
+        const response = await authService.register(registerData);
+        
+        // Print the response for debugging
+        console.log('Signup API Success Response:', response);
+        
+        // Only proceed if we get a successful response
+        // Clear any auth data that might have been stored during registration
+        authService.logout();
+        
+        toast.success('Registration successful!', {
+          description: 'Please log in with your credentials to access your account.',
+          duration: 5000
+        });
+        
+        // Redirect to login page instead of dashboard
+        router.push('/login');
       } catch (error) {
+        // Print detailed error for debugging
+        console.error('Registration error details:', error);
+        
+        // Check for API response with success: false
+        if (error && typeof error === 'object' && 'success' in error && error.success === false) {
+          if ('errors' in error && Array.isArray(error.errors) && error.errors.length > 0) {
+            // Join all error messages
+            const errorMessages = error.errors;
+            const combinedErrorMessage = errorMessages.join(', ');
+            console.log('Error messages from API:', combinedErrorMessage);
+            
+            // Check if any error is about email already registered
+            if (errorMessages.some(msg => 
+              msg.includes('Email already registered') || 
+              msg.includes('already exists') || 
+              msg.toLowerCase().includes('email'))) {
+              toast.error('Email already registered', {
+                description: 'Please use a different email address to continue with registration.',
+                duration: 5000
+              });
+            } else {
+              toast.error('Registration failed', {
+                description: combinedErrorMessage,
+                duration: 5000
+              });
+            }
+            return;
+          }
+        }
+        
+        // Default case - extract error message if possible
+        let errorMessage = 'Please try again later';
+        if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+          errorMessage = error.message;
+        }
+        
         toast.error('Registration failed', {
-          description: error instanceof Error ? error.message : 'Please try again later',
+          description: errorMessage,
+          duration: 5000
         });
       } finally {
         setIsLoading(false);
@@ -252,12 +299,12 @@ export default function SignUpForm() {
         className="space-y-5"
       >
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-white mb-2">Work Details</h2>
-          <p className="text-gray-400 text-sm">Tell us about your organization</p>
+          <h2 className="text-xl font-semibold text-white mb-2">Account Details</h2>
+          <p className="text-gray-400 text-sm">Complete your account setup</p>
         </div>
         <div>
           <label htmlFor="company_code" className="block text-sm font-medium text-gray-300 mb-2">
-            Company Code
+            Company Code <span className="text-gray-400 text-xs">(optional)</span>
           </label>
           <input
             type="text"
@@ -265,27 +312,20 @@ export default function SignUpForm() {
             value={formData.company_code}
             onChange={(e) => updateFormData('company_code', e.target.value.toUpperCase())}
             className={`w-full px-3 py-2 bg-gray-800/50 border ${errors.company_code ? 'border-red-500' : 'border-white/15'} rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all`}
-            placeholder="Enter your company code"
-            required
+            placeholder="Enter your company code (if you have one)"
             disabled={isLoading}
             maxLength={8}
-            pattern="[A-Z0-9]{8}"
           />
           {renderError('company_code')}
-        </div>
-        <div>
-          <label htmlFor="role" className="block text-sm font-medium text-gray-300 mb-2">
-            Your Role (optional)
-          </label>
-          <input
-            type="text"
-            id="role"
-            value={formData.role}
-            onChange={(e) => updateFormData('role', e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800/50 border border-white/15 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
-            placeholder="Enter your role"
-            disabled={isLoading}
-          />
+          <div className="mt-2 p-3 bg-gray-800/50 rounded border border-white/10 text-xs text-gray-300">
+            <p className="font-medium mb-1 text-purple-400">About Company Codes:</p>
+            <ul className="list-disc pl-4 space-y-1">
+              <li>If you have a company code, enter it to gain immediate access</li>
+              <li>Without a code, your account will require admin verification</li>
+              <li>Verification typically takes 24 hours</li>
+              <li>You'll receive an email when your account is verified</li>
+            </ul>
+          </div>
         </div>
       </motion.div>
     )
