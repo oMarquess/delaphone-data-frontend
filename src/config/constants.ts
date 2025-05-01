@@ -7,6 +7,7 @@ export const API = {
       REGISTER: '/auth/register',
       FORGOT_PASSWORD: '/auth/forgot-password',
       RESET_PASSWORD: '/auth/reset-password',
+      CHECK_EMAIL: '/auth/check-email',
     }
   }
 } as const;

@@ -223,6 +223,25 @@ class AuthService {
   getAuthToken(): string | null {
     return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   }
+
+  async checkEmailAvailability(email: string): Promise<{ isAvailable: boolean; message?: string }> {
+    try {
+      const response = await api.post(API.ENDPOINTS.AUTH.CHECK_EMAIL, { email });
+      return { isAvailable: true };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // If we get a specific error about email already existing
+        if (error.response?.data && 'success' in error.response.data && error.response.data.success === false) {
+          if ('errors' in error.response.data && Array.isArray(error.response.data.errors)) {
+            const errorMessage = error.response.data.errors.join(', ');
+            return { isAvailable: false, message: errorMessage };
+          }
+        }
+      }
+      // For any other error, assume email is not available (safer fallback)
+      return { isAvailable: false, message: 'Unable to verify email availability' };
+    }
+  }
 }
 
 export const authService = AuthService.getInstance(); 
