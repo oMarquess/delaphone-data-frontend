@@ -170,98 +170,111 @@ export default function SignUpForm() {
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-      className="w-full p-8 space-y-6 bg-gray-900/40 backdrop-blur-xl rounded-xl border border-white/15"
-    >
-      {/* Progress Bar */}
-      <div className="relative mb-8">
-        <div className="h-1 bg-gray-800 rounded-full">
-          <motion.div
-            className="h-1 bg-purple-500 rounded-full"
-            initial={{ width: '0%' }}
-            animate={{ width: `${(step / 3) * 100}%` }}
-            transition={{ duration: 0.3 }}
-          />
+    <div className="space-y-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="w-full p-8 space-y-6 bg-gray-900/40 backdrop-blur-xl rounded-xl border border-white/15"
+      >
+        {/* Progress Bar */}
+        <div className="relative mb-8">
+          <div className="h-1 bg-gray-800 rounded-full">
+            <motion.div
+              className="h-1 bg-purple-500 rounded-full"
+              initial={{ width: '0%' }}
+              animate={{ width: `${(step / 3) * 100}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
+          <div className="flex justify-between mt-2">
+            <div className="flex items-center">
+              <motion.div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                  step >= 1 ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400'
+                }`}
+                animate={{
+                  scale: step === 1 ? 1.1 : 1,
+                  backgroundColor: step >= 1 ? '#8B5CF6' : '#1F2937'
+                }}
+              >
+                1
+              </motion.div>
+            </div>
+            <div className="flex items-center">
+              <motion.div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                  step >= 2 ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400'
+                }`}
+                animate={{
+                  scale: step === 2 ? 1.1 : 1,
+                  backgroundColor: step >= 2 ? '#8B5CF6' : '#1F2937'
+                }}
+              >
+                2
+              </motion.div>
+            </div>
+            <div className="flex items-center">
+              <motion.div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                  step >= 3 ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400'
+                }`}
+                animate={{
+                  scale: step === 3 ? 1.1 : 1,
+                  backgroundColor: step >= 3 ? '#8B5CF6' : '#1F2937'
+                }}
+              >
+                3
+              </motion.div>
+            </div>
+          </div>
         </div>
-        <div className="flex justify-between mt-2">
-          <div className="flex items-center">
-            <motion.div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                step >= 1 ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400'
-              }`}
-              animate={{
-                scale: step === 1 ? 1.1 : 1,
-                backgroundColor: step >= 1 ? '#8B5CF6' : '#1F2937'
-              }}
-            >
-              1
-            </motion.div>
-          </div>
-          <div className="flex items-center">
-            <motion.div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                step >= 2 ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400'
-              }`}
-              animate={{
-                scale: step === 2 ? 1.1 : 1,
-                backgroundColor: step >= 2 ? '#8B5CF6' : '#1F2937'
-              }}
-            >
-              2
-            </motion.div>
-          </div>
-          <div className="flex items-center">
-            <motion.div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                step >= 3 ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400'
-              }`}
-              animate={{
-                scale: step === 3 ? 1.1 : 1,
-                backgroundColor: step >= 3 ? '#8B5CF6' : '#1F2937'
-              }}
-            >
-              3
-            </motion.div>
-          </div>
-        </div>
-      </div>
 
-      <form onSubmit={handleSubmit}>
-        <AnimatePresence mode="wait">
-          {steps[step as keyof typeof steps]}
-        </AnimatePresence>
+        <form onSubmit={handleSubmit}>
+          <AnimatePresence mode="wait">
+            {steps[step as keyof typeof steps]}
+          </AnimatePresence>
 
-        <div className="flex justify-between mt-8">
-          {step > 1 && (
+          <div className="flex justify-between mt-8">
+            {step > 1 && (
+              <button
+                type="button"
+                onClick={goBack}
+                className="px-6 py-3 text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                Back
+              </button>
+            )}
             <button
-              type="button"
-              onClick={goBack}
-              className="px-6 py-3 text-sm text-gray-400 hover:text-white transition-colors"
+              type="submit"
+              className="relative ml-auto px-6 py-3 text-white font-medium text-sm rounded-lg overflow-hidden bg-purple-500 hover:bg-purple-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-2 focus:ring-offset-gray-900"
             >
-              Back
+              <span className="relative">{step === 3 ? 'Complete Setup' : 'Continue'}</span>
             </button>
-          )}
-          <button
-            type="submit"
-            className="relative ml-auto px-6 py-3 text-white font-medium text-sm rounded-lg overflow-hidden bg-purple-500 hover:bg-purple-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-2 focus:ring-offset-gray-900"
-          >
-            <span className="relative">{step === 3 ? 'Complete Setup' : 'Continue'}</span>
-          </button>
-        </div>
-      </form>
+          </div>
+        </form>
 
-      <p className="text-center text-sm text-gray-400">
-        Already have an account?{' '}
-        <button
-          onClick={() => router.push('/login')}
-          className="text-purple-500 hover:text-purple-400 font-medium transition-colors"
-        >
-          Sign in
-        </button>
+        <p className="text-center text-sm text-gray-400">
+          Already have an account?{' '}
+          <button
+            onClick={() => router.push('/login')}
+            className="text-purple-500 hover:text-purple-400 font-medium transition-colors"
+          >
+            Sign in
+          </button>
+        </p>
+      </motion.div>
+
+      <p className="text-xs text-gray-400 text-center px-6">
+        By clicking {step === 3 ? 'complete setup' : 'continue'}, you agree to our{' '}
+        <a href="/terms" className="text-purple-500 hover:text-purple-400 transition-colors">
+          Terms of Service
+        </a>{' '}
+        and{' '}
+        <a href="/privacy" className="text-purple-500 hover:text-purple-400 transition-colors">
+          Privacy Policy
+        </a>
       </p>
-    </motion.div>
+    </div>
   );
 } 

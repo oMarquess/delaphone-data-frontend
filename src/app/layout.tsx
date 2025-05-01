@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Press_Start_2P } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 const pressStart2P = Press_Start_2P({ 
@@ -29,7 +30,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} ${pressStart2P.variable}`}>{children}</body>
+      <body className={`${inter.className} ${pressStart2P.variable}`}>
+        {children}
+        <Toaster 
+          toastOptions={{
+            error: {
+              style: { 
+                background: '#7f1d1d', // dark red background
+                color: 'white',        // white text
+                fontWeight: '500',     // medium font weight
+                border: '1px solid #ef4444' // red border
+              },
+            },
+            className: 'font-medium text-sm',
+          }}
+        />
+      </body>
     </html>
   );
 }
