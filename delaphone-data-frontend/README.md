@@ -1,2 +1,0 @@
-# delaphone-data-frontend
-Delaphone

@@ -3,8 +3,10 @@ import { Button } from "@/components/Buttons";
 import starsBg from "@/assets/stars.png";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
+import { useRouter } from 'next/navigation';
 
 export const Hero = () => {
+  const router = useRouter();
   const sectionRef = useRef(null);
   const {scrollYProgress} = useScroll({
     target: sectionRef,
@@ -78,7 +80,7 @@ export const Hero = () => {
       <h1 className="text-6xl leading-tight md:text-7xl md:leading-[1.1] font-semibold tracking-tighter bg-[radial-gradient(100%_100%_at_top_left,_white,_#FFFFFF,_rgba(255,87,87,0.5))] text-transparent bg-clip-text text-center">AI Insights From Every Customer Call</h1>
       <p className="text-lg md:text-xl text-white/70 mt-5 text-center max-w-xl mx-auto">Turn conversations into data. Turn data into decisions.</p>
       <div className="flex gap-4 justify-center mt-5">
-      <Button>Get for free</Button>
+      <Button onClick={() => router.push('/login')}>Try for free</Button>
       
       </div>
     </div>
