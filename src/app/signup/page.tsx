@@ -33,7 +33,7 @@ export default function SignUpPage() {
 
       {/* Logo and Form Container */}
       <div className="relative z-10 w-full max-w-md px-8">
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-6">
           <div className="border h-16 w-16 rounded-lg inline-flex items-center justify-center bg-gray-900/70 backdrop-blur-md mb-4">
             <Image src={LogoIcon} alt="Dela Logo" width={48} height={48} />
           </div>
@@ -41,18 +41,10 @@ export default function SignUpPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-2xl font-bold text-white mb-2"
+            className="text-2xl font-bold text-white"
           >
             Create your account
           </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-gray-400 text-center max-w-sm"
-          >
-            Join Delaphone and start transforming your customer conversations
-          </motion.p>
         </div>
         <SignUpForm />
       </div>
