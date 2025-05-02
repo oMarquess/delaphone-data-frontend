@@ -29,7 +29,7 @@ export const STORAGE_KEYS = {
 export const VALIDATION = {
   PASSWORD: {
     MIN_LENGTH: 8,
-    PATTERN: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
+    PATTERN: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/,
     MESSAGE: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number',
   },
   COMPANY_CODE: {
