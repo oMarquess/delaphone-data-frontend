@@ -56,10 +56,10 @@ export const Footer = () => {
           <div className="border h-10 w-10 rounded-lg inline-flex items-center justify-center">
             <Image src={LogoIcon} alt="Dela Logo" className="w-6 h-6" />
           </div>
-          <div className={`${pressStart2P.className} text-xs leading-relaxed`}>Delaphone AI</div>
+          <div className={`${pressStart2P.className} text-xs text-white leading-relaxed`}>Delaphone AI</div>
         </div>
         
-        <nav className="flex items-center gap-5 md:gap-8 text-gray-400">
+        <nav className="flex items-center gap-5 md:gap-8 text-white/70">
           <a href="/" className="hover:text-white transition-colors text-xs md:text-sm">Features</a>
           <a href="/" className="hover:text-white transition-colors text-xs md:text-sm">How It Works</a>
           <a href="/" className="hover:text-white transition-colors text-xs md:text-sm">Use Cases</a>
@@ -72,7 +72,7 @@ export const Footer = () => {
             <YoutubeIcon className="text-white/50 hover:text-white transition-colors"/>
           </div>
           
-          <div className="text-xs text-gray-500 whitespace-nowrap">
+          <div className="text-xs text-white/50 whitespace-nowrap">
             © {new Date().getFullYear()} Delaphone.AI
           </div>
         </div>

@@ -29,7 +29,7 @@ const FeatureTab = (tab:typeof tabs[number]) => {
       {/* Content */}
       <div className="p-4 rounded-[10px] flex items-center justify-center bg-gray-900 relative m-[1px]">  
         <div className="flex items-center gap-2">
-          <div className="font-medium">{tab.title}</div>
+          <div className="font-medium text-white">{tab.title}</div>
           {tab.isNew && <div className="text-xs px-2 py-0.5 rounded-full bg-[#FF5757] text-white font-semibold">New</div>}
         </div>
       </div>
@@ -40,7 +40,7 @@ const FeatureTab = (tab:typeof tabs[number]) => {
 export const Features = () => {
   return <section className="py-15 md:py-15">
     <div className="container">
-      <h2 className="text-5xl md:text-6xl font-medium text-center tracking-tighter">
+      <h2 className="text-5xl md:text-6xl text-white font-medium text-center tracking-tighter">
         What You Get With 
         <span className="relative inline-block ml-2">
           Delaphone.AI
@@ -71,7 +71,7 @@ export const Features = () => {
         </span>
       </h2>
       <p className="text-white/70 text-lg tracking-tight md:text-xl max-w-xl mx-auto text-center mt-5">Boost revenue, accelerate growth, and reduce operational costs by turning every call into a strategic advantage.</p>
-      <div className="mt-10 flex flex-col lg:flex-row gap-3">
+      <div className="mt-10 flex text-white flex-col lg:flex-row gap-3">
       {tabs.map((tab) => (
         <FeatureTab key={tab.title} {...tab} />
       ))}
