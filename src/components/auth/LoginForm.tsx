@@ -16,9 +16,7 @@ interface RateLimitState {
 export default function LoginForm() {
   const [formData, setFormData] = useState({
     email: '',
-    username: '',
     password: '',
-    company_code: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [rateLimit, setRateLimit] = useState<RateLimitState>({
@@ -86,20 +84,28 @@ export default function LoginForm() {
     try {
       const response = await authService.login(formData);
       
-      // Check if user is verified if the field exists
-      if (response.user.is_verified === false) {
-        toast.warning('Account pending verification', {
-          description: 'Your account is awaiting admin verification. You will receive an email when verified.',
+      // Check if user is verified
+      if (response.is_verified === false) {
+        toast.error('Account not verified', {
+          description: 'Your account needs to be verified. Please check your email for verification instructions.',
           duration: 6000,
         });
+        setIsLoading(false);
         return;
       }
       
       toast.success('Login successful!');
       router.push('/dashboard');
     } catch (error: any) {
+      // Handle verification error from API
+      if (error.response?.data?.detail?.verification_required) {
+        toast.error('Account not verified', {
+          description: error.response.data.detail.message || 'Your account needs to be verified before you can log in.',
+          duration: 6000,
+        });
+      }
       // Handle rate limiting errors
-      if (error.type === 'delay') {
+      else if (error.type === 'delay') {
         setRateLimit({
           type: 'delay',
           message: error.message,
@@ -122,8 +128,8 @@ export default function LoginForm() {
           duration: 6000,
         });
       } else if (error.type === 'verification') {
-        toast.warning('Account pending verification', {
-          description: error.message || 'Your account is awaiting admin verification. You will receive an email when verified.',
+        toast.error('Account not verified', {
+          description: error.message || 'Your account needs to be verified. Please check your email for verification instructions.',
           duration: 6000,
         });
       } else {
@@ -200,23 +206,6 @@ export default function LoginForm() {
             />
           </div>
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-1">
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              className="w-full px-3 py-2 bg-gray-800/50 border border-white/15 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
-              placeholder="Enter your username"
-              required
-              disabled={isLoading || (rateLimit.type !== 'none' && rateLimit.remainingTime > 0)}
-              autoComplete="username"
-            />
-          </div>
-          <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
               Password
             </label>
@@ -232,24 +221,6 @@ export default function LoginForm() {
               disabled={isLoading || (rateLimit.type !== 'none' && rateLimit.remainingTime > 0)}
               autoComplete="current-password"
               minLength={8}
-            />
-          </div>
-          <div>
-            <label htmlFor="company_code" className="block text-sm font-medium text-gray-300 mb-1">
-              Company Code
-            </label>
-            <input
-              type="text"
-              id="company_code"
-              name="company_code"
-              value={formData.company_code}
-              onChange={handleChange}
-              className="w-full px-3 py-2 bg-gray-800/50 border border-white/15 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
-              placeholder="Enter your company code"
-              required
-              disabled={isLoading || (rateLimit.type !== 'none' && rateLimit.remainingTime > 0)}
-              pattern="[A-Z0-9]{8}"
-              title="Company code must be 8 characters long and contain only uppercase letters and numbers"
             />
           </div>
           <div className="flex items-center justify-between text-sm">

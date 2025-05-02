@@ -20,9 +20,7 @@ api.interceptors.request.use((config) => {
 
 export interface LoginCredentials {
   email: string;
-  username: string;
   password: string;
-  company_code: string;
 }
 
 export interface RegisterCredentials {
@@ -36,12 +34,12 @@ export interface RegisterCredentials {
 export interface AuthResponse {
   access_token: string;
   token_type: string;
-  user: {
-    id: string;
-    email: string;
-    username: string;
-    is_verified?: boolean;
-  };
+  user_id: string;
+  username: string;
+  email: string;
+  company_id: string;
+  company_code: string;
+  is_verified: boolean;
 }
 
 export interface RateLimitInfo {
@@ -148,17 +146,32 @@ class AuthService {
       // Store the token securely
       if (response.data.access_token) {
         localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.access_token);
-        // Store minimal user data
-        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.data.user));
+        // Store user data
+        const userData = {
+          id: response.data.user_id,
+          username: response.data.username,
+          email: response.data.email,
+          is_verified: response.data.is_verified
+        };
+        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
       }
 
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.data?.detail) {
-        const detail = error.response.data.detail as RateLimitError;
+        const detail = error.response.data.detail;
+        
+        // Handle verification status response
+        if (typeof detail === 'object' && detail.verification_required) {
+          throw {
+            type: 'verification',
+            message: detail.message,
+            detail
+          };
+        }
         
         // Handle different rate limiting scenarios
-        if (detail.status === 'delayed') {
+        if (typeof detail === 'object' && detail.status === 'delayed') {
           throw {
             type: 'delay',
             message: detail.message,
@@ -166,14 +179,14 @@ class AuthService {
             attemptsRemaining: detail.rate_limit_info.attempts_remaining,
             detail
           };
-        } else if (detail.status === 'locked') {
+        } else if (typeof detail === 'object' && detail.status === 'locked') {
           throw {
             type: 'lockout',
             message: detail.message,
             lockoutTime: detail.lockout_time,
             detail
           };
-        } else if (detail.error === 'verification_required') {
+        } else if (typeof detail === 'object' && detail.error === 'verification_required') {
           throw {
             type: 'verification',
             message: detail.message || 'Account verification required',
@@ -181,7 +194,7 @@ class AuthService {
           };
         }
         
-        throw new Error(detail.message || 'Login failed');
+        throw new Error(typeof detail === 'object' ? detail.message : detail || 'Login failed');
       }
       
       throw new Error('Login failed. Please check your credentials and try again.');
