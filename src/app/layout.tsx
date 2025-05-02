@@ -33,16 +33,12 @@ export default function RootLayout({
       <body className={`${inter.className} ${pressStart2P.variable}`}>
         {children}
         <Toaster 
+          duration={10000} // 10 seconds default duration for all toasts
           toastOptions={{
-            error: {
-              style: { 
-                background: '#7f1d1d', // dark red background
-                color: 'white',        // white text
-                fontWeight: '500',     // medium font weight
-                border: '1px solid #ef4444' // red border
-              },
-            },
             className: 'font-medium text-sm',
+            classNames: {
+              error: 'bg-red-900/90 border-red-500 text-white font-medium',
+            },
           }}
         />
       </body>

@@ -33,6 +33,8 @@ export default function SignUpForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Items for Ant Design Steps
   const stepItems = [
@@ -108,6 +110,12 @@ export default function SignUpForm() {
         newErrors.email = 'Email is required';
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
         newErrors.email = 'Please enter a valid email address';
+      } else if (emailStatus === 'taken') {
+        // Prevent continuing if email is already taken
+        newErrors.email = 'Email already registered. Please use a different email.';
+      } else if (emailStatus === 'checking') {
+        // Prevent continuing if still checking email availability
+        newErrors.email = 'Please wait while we verify email availability';
       }
 
       if (!formData.username.trim()) {
@@ -330,33 +338,73 @@ export default function SignUpForm() {
           <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
             Password
           </label>
-          <input
-            type="password"
-            id="password"
-            value={formData.password}
-            onChange={(e) => updateFormData('password', e.target.value)}
-            className={`w-full px-3 py-2 bg-gray-800/50 border ${errors.password ? 'border-red-500' : 'border-white/15'} rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all`}
-            placeholder="Create a password"
-            required
-            disabled={isLoading}
-            minLength={8}
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              id="password"
+              value={formData.password}
+              onChange={(e) => updateFormData('password', e.target.value)}
+              className={`w-full px-3 py-2 bg-gray-800/50 border ${errors.password ? 'border-red-500' : 'border-white/15'} rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all`}
+              placeholder="Create a password"
+              required
+              disabled={isLoading}
+              minLength={8}
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white focus:outline-none"
+              onClick={() => setShowPassword(!showPassword)}
+              tabIndex={-1}
+              disabled={isLoading}
+            >
+              {showPassword ? (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              )}
+            </button>
+          </div>
           {renderError('password')}
         </div>
         <div>
           <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
             Confirm Password
           </label>
-          <input
-            type="password"
-            id="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={(e) => updateFormData('confirmPassword', e.target.value)}
-            className={`w-full px-3 py-2 bg-gray-800/50 border ${errors.confirmPassword ? 'border-red-500' : 'border-white/15'} rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all`}
-            placeholder="Confirm your password"
-            required
-            disabled={isLoading}
-          />
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              id="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={(e) => updateFormData('confirmPassword', e.target.value)}
+              className={`w-full px-3 py-2 bg-gray-800/50 border ${errors.confirmPassword ? 'border-red-500' : 'border-white/15'} rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all`}
+              placeholder="Confirm your password"
+              required
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white focus:outline-none"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              tabIndex={-1}
+              disabled={isLoading}
+            >
+              {showConfirmPassword ? (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              )}
+            </button>
+          </div>
           {renderError('confirmPassword')}
         </div>
       </motion.div>
@@ -498,7 +546,7 @@ export default function SignUpForm() {
             )}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || (step === 1 && (emailStatus === 'checking' || emailStatus === 'taken'))}
               className="relative ml-auto px-4 py-2 text-white font-medium text-sm rounded-lg bg-purple-500 hover:bg-purple-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (

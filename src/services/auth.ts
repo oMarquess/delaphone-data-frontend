@@ -11,7 +11,9 @@ const api = axios.create({
 
 // Intercept requests to add auth token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+  // Try localStorage first, then sessionStorage
+  const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || 
+                sessionStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -139,21 +141,36 @@ class AuthService {
     }
   }
 
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+  async login(credentials: LoginCredentials, rememberMe: boolean = false): Promise<AuthResponse> {
     try {
       const response = await api.post<AuthResponse>(API.ENDPOINTS.AUTH.LOGIN, credentials);
 
       // Store the token securely
       if (response.data.access_token) {
-        localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.access_token);
-        // Store user data
-        const userData = {
-          id: response.data.user_id,
-          username: response.data.username,
-          email: response.data.email,
-          is_verified: response.data.is_verified
-        };
-        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
+        // If remember me is checked, store permanently, otherwise use session storage
+        if (rememberMe) {
+          // Store in localStorage (persistent across browser sessions)
+          localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.access_token);
+          // Store user data
+          const userData = {
+            id: response.data.user_id,
+            username: response.data.username,
+            email: response.data.email,
+            is_verified: response.data.is_verified
+          };
+          localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
+        } else {
+          // Store in sessionStorage (cleared when browser tab is closed)
+          sessionStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.access_token);
+          // Store user data
+          const userData = {
+            id: response.data.user_id,
+            username: response.data.username,
+            email: response.data.email,
+            is_verified: response.data.is_verified
+          };
+          sessionStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
+        }
       }
 
       return response.data;
@@ -220,39 +237,78 @@ class AuthService {
   }
 
   logout(): void {
+    // Clear from both storage types
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER_DATA);
+    sessionStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    sessionStorage.removeItem(STORAGE_KEYS.USER_DATA);
   }
 
   isAuthenticated(): boolean {
-    return !!localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+    // Check both storage types
+    return !!(localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || 
+              sessionStorage.getItem(STORAGE_KEYS.AUTH_TOKEN));
   }
 
   getCurrentUser(): any {
-    const user = localStorage.getItem(STORAGE_KEYS.USER_DATA);
-    return user ? JSON.parse(user) : null;
+    // Try localStorage first, then sessionStorage
+    const localUser = localStorage.getItem(STORAGE_KEYS.USER_DATA);
+    if (localUser) return JSON.parse(localUser);
+    
+    const sessionUser = sessionStorage.getItem(STORAGE_KEYS.USER_DATA);
+    return sessionUser ? JSON.parse(sessionUser) : null;
   }
 
   getAuthToken(): string | null {
-    return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+    // Try localStorage first, then sessionStorage
+    return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || 
+           sessionStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   }
 
   async checkEmailAvailability(email: string): Promise<{ isAvailable: boolean; message?: string }> {
     try {
-      const response = await api.post(API.ENDPOINTS.AUTH.CHECK_EMAIL, { email });
-      return { isAvailable: true };
+      console.log('Checking email availability for:', email);
+      
+      // Make GET request with email as query parameter
+      const response = await api.get(`${API.ENDPOINTS.AUTH.CHECK_EMAIL}?email=${encodeURIComponent(email)}`);
+      
+      // Map the response to our expected format (available → isAvailable)
+      return { 
+        isAvailable: response.data.available, 
+        message: response.data.message 
+      };
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        // If we get a specific error about email already existing
-        if (error.response?.data && 'success' in error.response.data && error.response.data.success === false) {
-          if ('errors' in error.response.data && Array.isArray(error.response.data.errors)) {
-            const errorMessage = error.response.data.errors.join(', ');
-            return { isAvailable: false, message: errorMessage };
+      console.error('Error checking email availability:', error);
+      
+      // Handle specific API error responses
+      if (axios.isAxiosError(error) && error.response) {
+        const errorData = error.response.data;
+        
+        // If the API returned a structured error
+        if (errorData && typeof errorData === 'object') {
+          // If the API explicitly returned available: false
+          if ('available' in errorData && errorData.available === false) {
+            return { 
+              isAvailable: false, 
+              message: errorData.message || 'Email is already registered' 
+            };
+          }
+          
+          // If there's a detail field with error information
+          if ('detail' in errorData && typeof errorData.detail === 'string') {
+            return { 
+              isAvailable: false, 
+              message: errorData.detail 
+            };
           }
         }
       }
-      // For any other error, assume email is not available (safer fallback)
-      return { isAvailable: false, message: 'Unable to verify email availability' };
+      
+      // For other errors (like network issues), provide a generic message
+      return { 
+        isAvailable: false, 
+        message: 'Unable to verify email availability. Please try again.' 
+      };
     }
   }
 }
