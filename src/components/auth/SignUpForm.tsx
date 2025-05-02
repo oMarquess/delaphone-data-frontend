@@ -7,6 +7,7 @@ import { authService, RegisterCredentials } from '@/services/auth';
 import { VALIDATION } from '@/config/constants';
 import { toast } from 'sonner';
 import debounce from 'lodash/debounce';
+import { Steps, ConfigProvider, theme } from 'antd';
 
 interface FormData {
   full_name: string;
@@ -32,6 +33,13 @@ export default function SignUpForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const router = useRouter();
+
+  // Items for Ant Design Steps
+  const stepItems = [
+    { title: '' },
+    { title: '' },
+    { title: '' }
+  ];
 
   // Add debounce function for email checking
   const debouncedCheckEmail = useCallback(
@@ -373,7 +381,7 @@ export default function SignUpForm() {
             id="company_code"
             value={formData.company_code}
             onChange={(e) => updateFormData('company_code', e.target.value.toUpperCase())}
-            className={`w-full px-3 py-2 bg-gray-800/50 border ${errors.company_code ? 'border-red-500' : 'border-white/15'} rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all`}
+            className={`w-full px-3 py-2 bg-gray-800/50 border ${errors.company_code ? 'border-red-500' : 'border-white/15'} rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all text-sm`}
             placeholder="Enter your company code (if you have one)"
             disabled={isLoading}
             maxLength={8}
@@ -401,58 +409,76 @@ export default function SignUpForm() {
         transition={{ duration: 0.5, delay: 0.2 }}
         className="w-full p-6 space-y-4 bg-gray-900/40 backdrop-blur-xl rounded-xl border border-white/15"
       >
-        {/* Progress Bar */}
-        <div className="relative mb-6">
-          <div className="h-1 bg-gray-800 rounded-full">
-            <motion.div
-              className="h-1 bg-purple-500 rounded-full"
-              initial={{ width: '0%' }}
-              animate={{ width: `${(step / 3) * 100}%` }}
-              transition={{ duration: 0.3 }}
+        {/* Ant Design Steps Component */}
+        <motion.div 
+          className="mb-8 custom-steps-wrapper"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <ConfigProvider
+            theme={{
+              algorithm: theme.darkAlgorithm,
+              token: {
+                colorPrimary: '#8B5CF6',
+                colorBgContainer: 'transparent',
+                colorText: '#FFFFFF',
+              }
+            }}
+          >
+            <Steps
+              current={step - 1}
+              items={stepItems}
+              className="custom-steps"
             />
-          </div>
-          <div className="flex justify-between mt-2">
-            <div className="flex items-center">
-              <motion.div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                  step >= 1 ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400'
-                }`}
-                animate={{
-                  scale: step === 1 ? 1.1 : 1,
-                  backgroundColor: step >= 1 ? '#8B5CF6' : '#1F2937'
-                }}
-              >
-                1
-              </motion.div>
-            </div>
-            <div className="flex items-center">
-              <motion.div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                  step >= 2 ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400'
-                }`}
-                animate={{
-                  scale: step === 2 ? 1.1 : 1,
-                  backgroundColor: step >= 2 ? '#8B5CF6' : '#1F2937'
-                }}
-              >
-                2
-              </motion.div>
-            </div>
-            <div className="flex items-center">
-              <motion.div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                  step >= 3 ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400'
-                }`}
-                animate={{
-                  scale: step === 3 ? 1.1 : 1,
-                  backgroundColor: step >= 3 ? '#8B5CF6' : '#1F2937'
-                }}
-              >
-                3
-              </motion.div>
-            </div>
-          </div>
-        </div>
+          </ConfigProvider>
+          <style jsx global>{`
+            /* Custom styles for Ant Design Steps */
+            .custom-steps-wrapper {
+              margin: 0;
+              padding: 0;
+              overflow: hidden;
+              width: 100%;
+            }
+            .custom-steps-wrapper .ant-steps {
+              background: transparent;
+              max-width: 100%;
+            }
+            .custom-steps-wrapper .ant-steps-item {
+              padding: 0 !important;
+              flex: 1;
+            }
+            .custom-steps-wrapper .ant-steps-item-title {
+              display: none;
+            }
+            /* Common styles for both desktop and mobile */
+            .custom-steps-wrapper .ant-steps-item-process .ant-steps-item-icon {
+              background-color: #8B5CF6 !important;
+              border-color: #8B5CF6 !important;
+            }
+            .custom-steps-wrapper .ant-steps-item-finish .ant-steps-item-icon {
+              background-color: transparent !important;
+              border-color: white !important;
+            }
+            .custom-steps-wrapper .ant-steps-item-finish .ant-steps-item-icon > .ant-steps-icon {
+              color: white !important;
+            }
+            .custom-steps-wrapper .ant-steps-item-wait .ant-steps-item-icon {
+              background-color: #1F2937 !important;
+              border-color: #4B5563 !important;
+            }
+            .custom-steps-wrapper .ant-steps-item-tail::after {
+              background-color: #4B5563 !important;
+            }
+            .custom-steps-wrapper .ant-steps-item-finish .ant-steps-item-tail::after {
+              background-color: white !important;
+            }
+            /* Remove the pulsing animation since it's not rendering properly */
+            .custom-steps-wrapper .ant-steps-item-process .ant-steps-item-icon {
+              /* No animation */
+            }
+          `}</style>
+        </motion.div>
 
         <form onSubmit={handleSubmit}>
           <AnimatePresence mode="wait">
