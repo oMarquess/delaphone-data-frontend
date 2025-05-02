@@ -12,11 +12,11 @@ export const Header = () => {
           <Image src={LogoIcon} alt="Dela Logo" width={32} height={32} />
         </div>
         <div className="hidden md:block">
-          <nav className="flex gap-8 text-gray-400 text-sm">
-            <a href="/" className="hover:text-gray-300 transition-colors">Features</a>
-            <a href="/" className="hover:text-gray-300 transition-colors">How It Works</a>
-            <a href="/" className="hover:text-gray-300 transition-colors">Use Cases</a>
-            <a href="/" className="hover:text-gray-300 transition-colors">Pricing</a> 
+          <nav className="flex gap-8 text-white/70 text-sm">
+            <a href="/" className="hover:text-white transition-colors">Features</a>
+            <a href="/" className="hover:text-white transition-colors">How It Works</a>
+            <a href="/" className="hover:text-white transition-colors">Use Cases</a>
+            <a href="/" className="hover:text-white transition-colors">Pricing</a> 
           </nav>
         </div>
         <div className="flex items-center gap-4">

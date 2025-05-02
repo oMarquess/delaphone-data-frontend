@@ -34,7 +34,7 @@ const testimonials = [
 export const Testimonials = () => {
   return <section className="pt-28 pb-18 md:py-24">
     <div className="container">
-      <h2 className="text-5xl md:text-6xl font-medium text-center tracking-tighter">What Our Clients Say</h2>
+      <h2 className="text-5xl md:text-6xl text-white font-medium text-center tracking-tighter">What Our Clients Say</h2>
       <p className="text-white/70 text-lg tracking-tight md:text-xl max-w-sm mx-auto text-center mt-5">Real results from real businesses using our AI call analytics.</p>
       <div className="overflow-hidden mt-10" style={{ 
         WebkitMaskImage: "linear-gradient(to right, transparent, black 20%, black 80%, transparent)",

@@ -50,7 +50,7 @@ export const CallToAction = () => {
         <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-gray-900/50 to-transparent"></div>
         
         <div className="relative z-10 container">
-          <h2 className="text-5xl md:text-6xl max-w-sm mx-auto tracking-tighter text-center font-medium">Book Your Demo</h2>
+          <h2 className="text-5xl md:text-6xl max-w-sm mx-auto text-white tracking-tighter text-center font-medium">Book Your Demo</h2>
           <p className="text-center text-lg md:text-xl max-w-xs mx-auto text-white/70 tracking-tight px-4 mt-5">Get a personalized walkthrough.</p>
           <div className="flex justify-center mt-10">
             <Button>Book a Demo</Button>

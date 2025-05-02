@@ -9,7 +9,7 @@ export const LogoTicker = () => {
     <div className="container">
       <div className="flex items-center gap-5">
         <div className="flex-1 md:flex-none">
-          <h2 className="font-medium"> Powering Industry Leaders: </h2>
+          <h2 className="text-xl md:text-2xl font-medium text-white tracking-tighter">Powering Industry Leaders:</h2>
         </div>
         <div className="flex-1 overflow-hidden relative">
           <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-transparent to-gray-900 z-10 pointer-events-none"></div>
