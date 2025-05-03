@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Press_Start_2P } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 const pressStart2P = Press_Start_2P({ 
@@ -29,18 +30,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} ${pressStart2P.variable}`}>
-        {children}
-        <Toaster 
-          duration={10000} // 10 seconds default duration for all toasts
-          toastOptions={{
-            className: 'font-medium text-sm',
-            classNames: {
-              error: 'bg-red-900/90 border-red-500 text-white font-medium',
-            },
-          }}
-        />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+          <Toaster 
+            duration={10000} // 10 seconds default duration for all toasts
+            toastOptions={{
+              className: 'font-medium text-sm',
+              classNames: {
+                error: 'bg-red-900/90 border-red-500 text-white font-medium',
+              },
+            }}
+          />
+        </ThemeProvider>
       </body>
     </html>
   );
