@@ -3,6 +3,8 @@ import { Inter, Press_Start_2P } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { AuthProvider } from "@/context/AuthContext";
+import RouteGuard from "@/components/auth/RouteGuard";
 
 const inter = Inter({ subsets: ["latin"] });
 const pressStart2P = Press_Start_2P({ 
@@ -33,7 +35,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} ${pressStart2P.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
+          <AuthProvider>
+            <RouteGuard>
+              {children}
+            </RouteGuard>
+          </AuthProvider>
           <Toaster 
             duration={10000} // 10 seconds default duration for all toasts
             toastOptions={{

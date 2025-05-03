@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useSidebar } from './SidebarContext';
 import { useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext'; 
 import { 
   DashboardOutlined, 
   BarChartOutlined, 
@@ -22,6 +23,7 @@ interface NavItem {
 const SideNav = () => {
   const pathname = usePathname();
   const { collapsed, mobileNavOpen, setActiveTab, toggleMobileNav } = useSidebar();
+  const { user, logout } = useAuth();
   
   // Close mobile nav when route changes
   useEffect(() => {
@@ -61,6 +63,10 @@ const SideNav = () => {
       setActiveTab(currentNav.name);
     }
   }, [pathname, setActiveTab]);
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <>
@@ -104,12 +110,29 @@ const SideNav = () => {
               </div>
               {!collapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">John Smith</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">DalaPhone Inc.</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {user?.username || 'User'}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {user?.email || 'user@example.com'}
+                  </p>
                 </div>
               )}
               {!collapsed && (
-                <button className="p-1 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                <button 
+                  className="p-1 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                  onClick={handleLogout}
+                  aria-label="Logout"
+                >
+                  <LogoutOutlined style={{ fontSize: '18px' }} />
+                </button>
+              )}
+              {collapsed && (
+                <button 
+                  className="p-1 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                  onClick={handleLogout}
+                  aria-label="Logout"
+                >
                   <LogoutOutlined style={{ fontSize: '18px' }} />
                 </button>
               )}
