@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { authService } from '@/services/auth';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
+import { authService } from '@/services/auth';
+import { ROUTES } from '@/config/constants';
 
 interface RateLimitState {
   type: 'none' | 'delay' | 'lockout';
@@ -28,7 +30,18 @@ export default function LoginForm() {
   });
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get('redirect') || ROUTES.APP.DASHBOARD;
+  const { login, isAuthenticated } = useAuth();
 
+  // If already authenticated, redirect to dashboard
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push(ROUTES.APP.DASHBOARD);
+    }
+  }, [isAuthenticated, router]);
+
+  // Handle rate limit timer
   useEffect(() => {
     // Clean up timer on unmount
     return () => {
@@ -84,7 +97,8 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
-      const response = await authService.login(formData, rememberMe);
+      // Use the login method from AuthContext instead
+      const response = await login(formData.email, formData.password, rememberMe);
       
       // Check if user is verified
       if (response.is_verified === false) {
@@ -97,7 +111,7 @@ export default function LoginForm() {
       }
       
       toast.success('Login successful!');
-      router.push('/dashboard');
+      router.push(redirectPath);
     } catch (error: any) {
       // Handle verification error from API
       if (error.response?.data?.detail?.verification_required) {
@@ -149,8 +163,32 @@ export default function LoginForm() {
     return authService.formatRemainingTime(seconds);
   };
 
+  // Show a special message if the user was redirected from a protected route
+  const showRedirectMessage = searchParams.has('redirect');
+
   return (
     <div className="space-y-2">
+      {showRedirectMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="w-full p-4 bg-blue-900/40 backdrop-blur-xl rounded-xl border border-blue-500/30 text-blue-100"
+        >
+          <div className="flex items-start">
+            <div className="mr-2 mt-0.5">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-medium">Please log in to continue</p>
+              <p className="text-sm">You need to be logged in to access this page.</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+      
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
