@@ -65,7 +65,7 @@ export default function DashboardNavbar() {
       <div className="flex items-center pr-2 md:pr-4">
         {/* Hide on small screens */}
         <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
-          <button className="flex items-center space-x-1 px-2 py-1 md:px-3 md:py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-xs md:text-sm text-gray-700 dark:text-gray-300">
+          {/* <button className="flex items-center space-x-1 px-2 py-1 md:px-3 md:py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-xs md:text-sm text-gray-700 dark:text-gray-300">
             <CalendarOutlined style={{ fontSize: '14px' }} />
             <span>{timeRange}</span>
           </button>
@@ -73,7 +73,7 @@ export default function DashboardNavbar() {
           <button className="flex items-center space-x-1 px-2 py-1 md:px-3 md:py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-xs md:text-sm text-gray-700 dark:text-gray-300">
             <FilterOutlined style={{ fontSize: '14px' }} />
             <span>{agent}</span>
-          </button>
+          </button> */}
           
           <button className="flex items-center space-x-1 px-2 py-1 md:px-3 md:py-1.5 bg-gray-800 dark:bg-gray-700 text-white rounded-md text-xs md:text-sm">
             <DownloadOutlined style={{ fontSize: '14px' }} />

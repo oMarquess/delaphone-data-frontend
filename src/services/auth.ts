@@ -42,6 +42,12 @@ export interface AuthResponse {
   company_id: string;
   company_code: string;
   is_verified: boolean;
+  user?: {
+    id: string;
+    username: string;
+    email: string;
+    is_verified: boolean;
+  };
 }
 
 export interface RateLimitInfo {
@@ -90,7 +96,16 @@ class AuthService {
       // Store the token securely
       if (response.data.access_token) {
         localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.access_token);
-        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.data.user));
+        
+        // Create user data from response if not already present
+        const userData = response.data.user || {
+          id: response.data.user_id,
+          username: response.data.username,
+          email: response.data.email,
+          is_verified: response.data.is_verified
+        };
+        
+        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
       }
       
       return response.data;
@@ -147,28 +162,22 @@ class AuthService {
 
       // Store the token securely
       if (response.data.access_token) {
+        // Create user data from response if not already present
+        const userData = response.data.user || {
+          id: response.data.user_id,
+          username: response.data.username,
+          email: response.data.email,
+          is_verified: response.data.is_verified
+        };
+
         // If remember me is checked, store permanently, otherwise use session storage
         if (rememberMe) {
           // Store in localStorage (persistent across browser sessions)
           localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.access_token);
-          // Store user data
-          const userData = {
-            id: response.data.user_id,
-            username: response.data.username,
-            email: response.data.email,
-            is_verified: response.data.is_verified
-          };
           localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
         } else {
           // Store in sessionStorage (cleared when browser tab is closed)
           sessionStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.access_token);
-          // Store user data
-          const userData = {
-            id: response.data.user_id,
-            username: response.data.username,
-            email: response.data.email,
-            is_verified: response.data.is_verified
-          };
           sessionStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
         }
       }

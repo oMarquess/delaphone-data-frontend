@@ -37,18 +37,18 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <RouteGuard>
-              {children}
+        {children}
             </RouteGuard>
           </AuthProvider>
-          <Toaster 
-            duration={10000} // 10 seconds default duration for all toasts
-            toastOptions={{
-              className: 'font-medium text-sm',
-              classNames: {
-                error: 'bg-red-900/90 border-red-500 text-white font-medium',
-              },
-            }}
-          />
+        <Toaster 
+          duration={10000} // 10 seconds default duration for all toasts
+          toastOptions={{
+            className: 'font-medium text-sm',
+            classNames: {
+              error: 'bg-red-900/90 border-red-500 text-white font-medium',
+            },
+          }}
+        />
         </ThemeProvider>
       </body>
     </html>
