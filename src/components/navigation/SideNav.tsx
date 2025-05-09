@@ -34,24 +34,24 @@ const SideNav = () => {
   }, [pathname]);
 
   const navItems = [
-    { 
-      path: '/dashboard', 
+    {
+      path: '/dashboard',
       name: 'Overview', 
       icon: <DashboardOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
     },
-    { 
+    {
       path: '/dashboard/analytics', 
       name: 'Analytics', 
       icon: <BarChartOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
     },
-    { 
+    {
       path: '/dashboard/reports', 
-      name: 'Reports', 
+      name: 'Reports',
       icon: <FileTextOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
     },
-    { 
+    {
       path: '/dashboard/settings', 
-      name: 'Settings', 
+      name: 'Settings',
       icon: <SettingOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
     },
   ];
@@ -79,26 +79,26 @@ const SideNav = () => {
         <nav className={`flex flex-col h-full bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'}`}>
           <div className="flex-1 p-4 overflow-y-auto">
             <ul className="space-y-1">
-              {navItems.map((item) => {
-                const isActive = pathname === item.path;
-                return (
+          {navItems.map((item) => {
+            const isActive = pathname === item.path;
+            return (
                   <li key={item.path}>
-                    <Link
-                      href={item.path}
+              <Link
+                href={item.path}
                       className={`flex items-center p-3 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                        isActive
+                  isActive
                           ? 'bg-gray-100 dark:bg-gray-700 font-medium text-gray-900 dark:text-gray-100'
                           : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-                      }`}
-                    >
+                }`}
+              >
                       <div className="flex items-center">
                         <div className="mr-3">{item.icon}</div>
                         {!collapsed && <span>{item.name}</span>}
                       </div>
-                    </Link>
+              </Link>
                   </li>
-                );
-              })}
+            );
+          })}
             </ul>
           </div>
           
@@ -136,9 +136,9 @@ const SideNav = () => {
                   <LogoutOutlined style={{ fontSize: '18px' }} />
                 </button>
               )}
-            </div>
-          </div>
-        </nav>
+        </div>
+      </div>
+    </nav>
       </div>
       
       {/* Mobile overlay - only render when needed */}
