@@ -150,28 +150,40 @@ export default function LoginForm() {
             duration: 5000,
           });
         }
-      } else if (error.type === 'delay') {
-        const remainingTime = parseInt(error.delay);
+      } else if (error.response?.data?.detail === 'Incorrect password') {
+        toast.error('Invalid Login', {
+          description: 'Incorrect password. Please try again.',
+          duration: 5000,
+        });
+      } else if (error.response?.data?.detail?.status === 'delayed') {
+        const detail = error.response.data.detail;
+        const remainingTime = parseInt(detail.delay);
         setRateLimit({
           type: 'delay',
-          message: error.message,
+          message: detail.message,
           remainingTime
         });
         setIsRateLimited(true);
         toast.error('Too Many Attempts', {
-          description: `Please wait ${formatRemainingTime(remainingTime)} before trying again.`,
+          description: `${detail.message} ${detail.attempts_remaining} attempts remaining.`,
           duration: 5000,
         });
-      } else if (error.type === 'lockout') {
-        const lockoutTime = parseInt(error.lockoutTime);
+      } else if (error.response?.data?.detail?.status === 'locked') {
+        const detail = error.response.data.detail;
+        const lockoutTime = parseInt(detail.ttl_seconds);
         setRateLimit({
           type: 'lockout',
-          message: error.message,
+          message: detail.message,
           remainingTime: lockoutTime
         });
         setIsRateLimited(true);
         toast.error('Account Locked', {
-          description: `Too many failed attempts. Please try again in ${formatRemainingTime(lockoutTime)}.`,
+          description: detail.message,
+          duration: 5000,
+        });
+      } else if (error.type === 'account_inactive') {
+        toast.error('Account Inactive', {
+          description: error.message,
           duration: 5000,
         });
       } else if (error.message) {

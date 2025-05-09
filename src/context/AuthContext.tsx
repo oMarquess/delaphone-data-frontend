@@ -50,10 +50,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await authService.login(credentials, rememberMe);
       setIsAuthenticated(true);
       setUser(response.user || {
-        id: response.user_id,
-        username: response.username,
-        email: response.email,
-        is_verified: response.is_verified
+        username: response.user_info.username,
+        is_verified: response.user_info.is_verified,
+        is_active: response.user_info.is_active,
+        company_id: response.user_info.company_id,
+        company_code: response.user_info.company_code
       });
       router.push(ROUTES.APP.DASHBOARD);
     } catch (error) {

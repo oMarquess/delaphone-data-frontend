@@ -234,22 +234,32 @@ class AuthService {
         access_token: string;
         refresh_token: string;
         token_type: string;
-        user_id: string;
-        username: string;
-        email: string;
-        company_id: string;
-        company_code: string;
-        is_verified: boolean;
         expires_in: number;
+        user_info: {
+          is_verified: boolean;
+          is_active: boolean;
+          company_id: string;
+          company_code: string;
+          username: string;
+        }
       }>(API.ENDPOINTS.AUTH.LOGIN, loginData);
       
       console.log('Login response:', response.data);
 
       // Check if user is verified
-      if (!response.data.is_verified) {
+      if (!response.data.user_info.is_verified) {
         throw {
           type: 'verification_required',
           message: 'Your account is pending verification. Please check your email for verification instructions. This process may take 24-48 hours.',
+          detail: response.data
+        };
+      }
+
+      // Check if user is active
+      if (!response.data.user_info.is_active) {
+        throw {
+          type: 'account_inactive',
+          message: 'Your account is currently inactive. Please contact support.',
           detail: response.data
         };
       }
@@ -263,19 +273,21 @@ class AuthService {
 
       // Create user data from response
       const userData = {
-        id: response.data.user_id,
-        username: response.data.username,
-        email: response.data.email,
-        is_verified: response.data.is_verified,
-        company_id: response.data.company_id,
-        company_code: response.data.company_code
+        username: response.data.user_info.username,
+        is_verified: response.data.user_info.is_verified,
+        is_active: response.data.user_info.is_active,
+        company_id: response.data.user_info.company_id,
+        company_code: response.data.user_info.company_code
       };
 
       // Store user data
       const storage = rememberMe ? localStorage : sessionStorage;
       storage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
 
-      return response.data;
+      return {
+        ...response.data,
+        user: userData
+      };
     } catch (error) {
       console.error('Login error:', error);
       
