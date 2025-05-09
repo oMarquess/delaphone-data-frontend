@@ -1,89 +1,86 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { authService } from '@/services/auth';
+import { useRouter } from 'next/navigation';
+import authService from '@/services/auth';
+import tokenManager from '@/services/tokenManager';
+import { toast } from 'sonner';
 import { ROUTES } from '@/config/constants';
 
-type User = {
-  id: string;
-  username: string;
-  email: string;
-  is_verified: boolean;
-};
-
-type AuthContextType = {
-  user: User | null;
-  isLoading: boolean;
+interface AuthContextType {
   isAuthenticated: boolean;
-  login: (email: string, password: string, rememberMe: boolean) => Promise<any>;
+  user: any;
+  login: (credentials: { email: string; password: string }, rememberMe: boolean) => Promise<void>;
   logout: () => void;
-};
+  loading: boolean;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
+    // Check authentication status on mount
     const checkAuth = async () => {
-      setIsLoading(true);
       try {
-        // Check if user is authenticated
-        if (authService.isAuthenticated()) {
-          // Get current user
-          const userData = authService.getCurrentUser();
-          setUser(userData);
-        } else {
-          setUser(null);
+        const authenticated = authService.isAuthenticated();
+        setIsAuthenticated(authenticated);
+        if (authenticated) {
+          setUser(authService.getCurrentUser());
         }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setIsAuthenticated(false);
+        setUser(null);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string, rememberMe: boolean) => {
+  const login = async (credentials: { email: string; password: string }, rememberMe: boolean) => {
     try {
-      const response = await authService.login({ email, password }, rememberMe);
-      
-      // Set user data
-      const userData = {
+      setLoading(true);
+      const response = await authService.login(credentials, rememberMe);
+      setIsAuthenticated(true);
+      setUser(response.user || {
         id: response.user_id,
         username: response.username,
         email: response.email,
         is_verified: response.is_verified
-      };
-      
-      setUser(userData);
-      return response;
+      });
+      router.push(ROUTES.APP.DASHBOARD);
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login failed:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = () => {
     authService.logout();
+    setIsAuthenticated(false);
     setUser(null);
     router.push(ROUTES.AUTH.LOGIN);
   };
 
-  const isAuthenticated = !!user;
+  const value = {
+    isAuthenticated,
+    user,
+    login,
+    logout,
+    loading
+  };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isLoading,
-      isAuthenticated, 
-      login, 
-      logout 
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

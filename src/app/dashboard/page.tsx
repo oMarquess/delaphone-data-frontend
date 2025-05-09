@@ -9,7 +9,7 @@ import DateRangePicker from '@/components/dashboard/DateRangePicker';
 import SummaryCard from '@/components/dashboard/SummaryCard';
 import CallVolumeChart from '@/components/dashboard/CallVolumeChart';
 import CallDispositionChart from '@/components/dashboard/CallDispositionChart';
-import HourlyDistributionChart from '@/components/dashboard/HourlyDistributionChart';
+import HourlyDistributionLineChart from '@/components/dashboard/HourlyDistributionLineChart';
 import CallDirectionChart from '@/components/dashboard/CallDirectionChart';
 import CallDurationMetricsChart from '@/components/dashboard/CallDurationMetricsChart';
 import RecordingMetricsCard from '@/components/dashboard/RecordingMetricsCard';
@@ -171,7 +171,7 @@ export default function DashboardPage() {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 lg:col-span-3">
           <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Hourly Call Distribution</h2>
           <div className="h-[400px]"> {/* Increased height for better visibility */}
-            <HourlyDistributionChart 
+            <HourlyDistributionLineChart 
               data={(dashboardData?.hourly_distribution && dashboardData.hourly_distribution.length > 0) 
                 ? dashboardData.hourly_distribution 
                 : generateSampleHourlyData()} 
