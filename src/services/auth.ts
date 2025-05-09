@@ -147,29 +147,12 @@ class AuthService {
 
       // Store the token securely
       if (response.data.access_token) {
-        // If remember me is checked, store permanently, otherwise use session storage
         if (rememberMe) {
-          // Store in localStorage (persistent across browser sessions)
           localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.access_token);
-          // Store user data
-          const userData = {
-            id: response.data.user_id,
-            username: response.data.username,
-            email: response.data.email,
-            is_verified: response.data.is_verified
-          };
-          localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
+          localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.data));
         } else {
-          // Store in sessionStorage (cleared when browser tab is closed)
           sessionStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.access_token);
-          // Store user data
-          const userData = {
-            id: response.data.user_id,
-            username: response.data.username,
-            email: response.data.email,
-            is_verified: response.data.is_verified
-          };
-          sessionStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
+          sessionStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.data));
         }
       }
 
@@ -178,43 +161,58 @@ class AuthService {
       if (axios.isAxiosError(error) && error.response?.data?.detail) {
         const detail = error.response.data.detail;
         
-        // Handle verification status response
-        if (typeof detail === 'object' && detail.verification_required) {
+        // Handle simple string error (incorrect password)
+        if (typeof detail === 'string') {
           throw {
-            type: 'verification',
-            message: detail.message,
-            detail
+            type: 'error',
+            message: detail
           };
         }
         
-        // Handle different rate limiting scenarios
-        if (typeof detail === 'object' && detail.status === 'delayed') {
-          throw {
-            type: 'delay',
-            message: detail.message,
-            delay: detail.delay,
-            attemptsRemaining: detail.rate_limit_info.attempts_remaining,
-            detail
-          };
-        } else if (typeof detail === 'object' && detail.status === 'locked') {
-          throw {
-            type: 'lockout',
-            message: detail.message,
-            lockoutTime: detail.lockout_time,
-            detail
-          };
-        } else if (typeof detail === 'object' && detail.error === 'verification_required') {
-          throw {
-            type: 'verification',
-            message: detail.message || 'Account verification required',
-            detail
-          };
+        // Handle rate limiting scenarios
+        if (typeof detail === 'object') {
+          // Handle delay response
+          if (detail.status === 'delayed') {
+            throw {
+              type: 'delay',
+              message: detail.message,
+              delay: detail.delay,
+              attemptsRemaining: detail.rate_limit_info.attempts_remaining,
+              detail
+            };
+          }
+          
+          // Handle lockout response
+          if (detail.status === 'locked') {
+            throw {
+              type: 'lockout',
+              message: detail.message,
+              lockoutTime: detail.ttl_seconds,
+              detail
+            };
+          }
+          
+          // Handle verification required
+          if (detail.error === 'verification_required') {
+            throw {
+              type: 'verification',
+              message: detail.message || 'Account verification required',
+              detail
+            };
+          }
         }
         
-        throw new Error(typeof detail === 'object' ? detail.message : detail || 'Login failed');
+        // Handle any other error format
+        throw {
+          type: 'error',
+          message: typeof detail === 'object' ? detail.message : detail || 'Login failed'
+        };
       }
       
-      throw new Error('Login failed. Please check your credentials and try again.');
+      throw {
+        type: 'error',
+        message: 'Login failed. Please check your credentials and try again.'
+      };
     }
   }
 

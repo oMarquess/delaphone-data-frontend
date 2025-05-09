@@ -85,19 +85,9 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Prevent submission if rate limited
-    if (rateLimit.type !== 'none' && rateLimit.remainingTime > 0) {
-      toast.error('Please wait before trying again', {
-        description: rateLimit.message,
-      });
-      return;
-    }
-    
     setIsLoading(true);
-
+    
     try {
-      // Use the login method from AuthContext instead
       const response = await login(formData.email, formData.password, rememberMe);
       
       // Check if user is verified
@@ -113,46 +103,56 @@ export default function LoginForm() {
       toast.success('Login successful!');
       router.push(redirectPath);
     } catch (error: any) {
-      // Handle verification error from API
-      if (error.response?.data?.detail?.verification_required) {
-        toast.error('Account not verified', {
-          description: error.response.data.detail.message || 'Your account needs to be verified before you can log in.',
-          duration: 6000,
-        });
-      }
-      // Handle rate limiting errors
-      else if (error.type === 'delay') {
-        setRateLimit({
-          type: 'delay',
-          message: error.message,
-          remainingTime: error.delay,
-          attemptsRemaining: error.attemptsRemaining
-        });
-        
-        toast.error('Login attempt delayed', {
-          description: error.message,
-        });
-      } else if (error.type === 'lockout') {
-        setRateLimit({
-          type: 'lockout',
-          message: error.message,
-          remainingTime: error.lockoutTime,
-        });
-        
-        toast.error('ACCOUNT LOCKED', {
-          description: error.message,
-          duration: 6000,
-        });
-      } else if (error.type === 'verification') {
-        toast.error('Account not verified', {
-          description: error.message || 'Your account needs to be verified. Please check your email for verification instructions.',
-          duration: 6000,
-        });
-      } else {
-        // Regular error
-        toast.error('Login failed', {
-          description: error.message || 'Please check your credentials and try again.',
-        });
+      // Handle different error types
+      switch (error.type) {
+        case 'error':
+          // Handle simple error (like incorrect password)
+          toast.error('Login failed', {
+            description: error.message,
+          });
+          break;
+          
+        case 'delay':
+          // Handle rate limit delay
+          setRateLimit({
+            type: 'delay',
+            message: error.message,
+            remainingTime: error.delay,
+            attemptsRemaining: error.attemptsRemaining
+          });
+          
+          toast.error('Login attempt delayed', {
+            description: error.message,
+          });
+          break;
+          
+        case 'lockout':
+          // Handle account lockout
+          setRateLimit({
+            type: 'lockout',
+            message: error.message,
+            remainingTime: error.lockoutTime,
+          });
+          
+          toast.error('Account locked', {
+            description: error.message,
+            duration: 6000,
+          });
+          break;
+          
+        case 'verification':
+          // Handle verification required
+          toast.error('Account not verified', {
+            description: error.message || 'Your account needs to be verified. Please check your email for verification instructions.',
+            duration: 6000,
+          });
+          break;
+          
+        default:
+          // Handle unknown errors
+          toast.error('Login failed', {
+            description: error.message || 'Please check your credentials and try again.',
+          });
       }
     } finally {
       setIsLoading(false);
