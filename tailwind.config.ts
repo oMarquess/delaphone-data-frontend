@@ -26,6 +26,9 @@ const config: Config = {
   		lg: '1200px'
   	},
   	extend: {
+      fontFamily: {
+        'fira-sans': ['var(--font-fira-sans)', 'sans-serif'],
+      },
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
