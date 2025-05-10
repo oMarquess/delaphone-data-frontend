@@ -11,7 +11,9 @@ import {
   FileTextOutlined, 
   SettingOutlined,
   UserOutlined,
-  LogoutOutlined
+  LogoutOutlined,
+  PhoneOutlined,
+  BulbOutlined
 } from '@ant-design/icons';
 
 interface NavItem {
@@ -40,6 +42,11 @@ const SideNav = () => {
       icon: <DashboardOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
     },
     {
+      path: '/dashboard/call-logs',
+      name: 'Call Logs', 
+      icon: <PhoneOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
+    },
+    {
       path: '/dashboard/analytics', 
       name: 'Analytics', 
       icon: <BarChartOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
@@ -48,6 +55,11 @@ const SideNav = () => {
       path: '/dashboard/reports', 
       name: 'Reports',
       icon: <FileTextOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
+    },
+    {
+      path: '/dashboard/ai-insights', 
+      name: 'AI Insights',
+      icon: <BulbOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
     },
     {
       path: '/dashboard/settings', 
