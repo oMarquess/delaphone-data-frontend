@@ -8,6 +8,7 @@ export const API = {
       FORGOT_PASSWORD: '/auth/forgot-password',
       RESET_PASSWORD: '/auth/reset-password',
       CHECK_EMAIL: '/auth/check-email',
+      REFRESH: '/auth/refresh',
     }
   }
 } as const;
@@ -22,6 +23,8 @@ export const RATE_LIMIT = {
 // Local Storage Keys
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'auth_token',
+  REFRESH_TOKEN: 'refresh_token',
+  TOKEN_EXPIRY: 'token_expiry',
   USER_DATA: 'user',
 } as const;
 

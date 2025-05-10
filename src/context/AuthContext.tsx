@@ -44,18 +44,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
+  // Set up token refresh mechanism
+  useEffect(() => {
+    // Only attempt token refresh if the user is authenticated
+    if (!isAuthenticated) return;
+
+    // Function to check and refresh token if needed
+    const checkTokenValidity = async () => {
+      try {
+        await tokenManager.getValidToken();
+      } catch (error) {
+        console.error('Token refresh failed in background check:', error);
+        // If token refresh fails, log the user out
+        logout();
+      }
+    };
+
+    // Check token immediately
+    checkTokenValidity();
+
+    // Set up interval to check token validity periodically (every 5 minutes)
+    const intervalId = setInterval(checkTokenValidity, 5 * 60 * 1000);
+
+    // Clean up interval on unmount
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [isAuthenticated]);
+
   const login = async (credentials: { email: string; password: string }, rememberMe: boolean) => {
     try {
       setLoading(true);
       const response = await authService.login(credentials, rememberMe);
       setIsAuthenticated(true);
-      setUser(response.user || {
-        username: response.user_info.username,
-        is_verified: response.user_info.is_verified,
-        is_active: response.user_info.is_active,
-        company_id: response.user_info.company_id,
-        company_code: response.user_info.company_code
-      });
+      
+      // Extract user data from response
+      const userData = {
+        username: response.user_info?.username || response.user?.username,
+        is_verified: response.user_info?.is_verified || response.user?.is_verified,
+        is_active: response.user_info?.is_active || response.user?.is_active,
+        company_id: response.user_info?.company_id || response.user?.company_id,
+        company_code: response.user_info?.company_code || response.user?.company_code
+      };
+      
+      setUser(userData);
       router.push(ROUTES.APP.DASHBOARD);
     } catch (error) {
       console.error('Login failed:', error);

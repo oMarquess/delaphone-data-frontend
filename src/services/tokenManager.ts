@@ -69,8 +69,14 @@ class TokenManager {
           throw new Error('No refresh token available');
         }
 
-        const response = await axios.post(API.ENDPOINTS.AUTH.REFRESH, {
+        console.log('Attempting to refresh token');
+        
+        const response = await axios.post(API.BASE_URL + API.ENDPOINTS.AUTH.REFRESH, {
           refresh_token
+        });
+
+        console.log('Token refresh successful', { 
+          expires_in: response.data.expires_in 
         });
 
         const tokens: TokenData = {
@@ -81,6 +87,13 @@ class TokenManager {
 
         this.storeTokens(tokens);
         return tokens;
+      } catch (error) {
+        console.error('Token refresh failed:', error);
+        
+        // Clear tokens on refresh failure
+        this.clearTokens();
+        
+        throw error;
       } finally {
         this.refreshPromise = null;
       }
@@ -123,13 +136,27 @@ class TokenManager {
       '0'
     );
 
-    // If token is expired or about to expire, refresh it
-    if (!accessToken || Date.now() + this.TOKEN_REFRESH_THRESHOLD >= expiryTime) {
-      const tokens = await this.refreshTokens();
-      return tokens.access_token;
+    // If token is expired or about to expire (or no token), refresh it
+    const now = Date.now();
+    const shouldRefresh = !accessToken || now + this.TOKEN_REFRESH_THRESHOLD >= expiryTime;
+    
+    if (shouldRefresh) {
+      console.log(`Token ${!accessToken ? 'missing' : 'expiring soon'}, refreshing...`, {
+        now: new Date(now).toISOString(),
+        expiry: expiryTime ? new Date(expiryTime).toISOString() : 'none',
+        timeToExpiry: expiryTime ? (expiryTime - now) / 1000 : 'n/a'
+      });
+      
+      try {
+        const tokens = await this.refreshTokens();
+        return tokens.access_token;
+      } catch (error) {
+        console.error('Failed to refresh token in getValidToken:', error);
+        throw error;
+      }
     }
 
-    return accessToken;
+    return accessToken as string;
   }
 
   public isTokenExpired(): boolean {

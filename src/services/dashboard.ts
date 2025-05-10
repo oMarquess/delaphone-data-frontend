@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { API_BASE_URL, STORAGE_KEYS } from '@/config/constants';
+import { API_BASE_URL, STORAGE_KEYS, API } from '@/config/constants';
+import tokenManager from '@/services/tokenManager';
 
 // Create an axios instance with default config
 const api = axios.create({
@@ -11,14 +12,18 @@ const api = axios.create({
 });
 
 // Intercept requests to add auth token
-api.interceptors.request.use((config) => {
-  // Try localStorage first, then sessionStorage
-  const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || 
-                sessionStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.request.use(async (config) => {
+  try {
+    // Get a valid token (this will auto-refresh if needed)
+    const token = await tokenManager.getValidToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  } catch (error) {
+    console.error('Error getting valid token for request:', error);
+    return Promise.reject(error);
   }
-  return config;
 }, (error) => {
   return Promise.reject(error);
 });
@@ -26,17 +31,31 @@ api.interceptors.request.use((config) => {
 // Intercept responses to handle auth errors
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Handle unauthorized errors (token expired, invalid, etc.)
-    if (error.response && error.response.status === 401) {
-      // Clear auth data from storage as it's no longer valid
-      localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.USER_DATA);
-      sessionStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-      sessionStorage.removeItem(STORAGE_KEYS.USER_DATA);
-      
-      // The component will handle redirecting to login
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Only attempt refresh if we have a token and it's a 401 error
+    if (error.response?.status === 401 && !originalRequest._retry && tokenManager.getAccessToken()) {
+      originalRequest._retry = true;
+
+      try {
+        // Get new tokens
+        const tokens = await tokenManager.refreshTokens();
+        
+        // Update the failed request's authorization header
+        originalRequest.headers.Authorization = `Bearer ${tokens.access_token}`;
+        
+        // Retry the original request
+        return axios(originalRequest);
+      } catch (refreshError) {
+        // If refresh fails, clear tokens and handle logout
+        console.error('Token refresh failed:', refreshError);
+        tokenManager.clearTokens();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
     }
+
     return Promise.reject(error);
   }
 );
