@@ -79,6 +79,7 @@ export interface HourlyDistribution {
   inbound: number;
   outbound: number;
   internal: number;
+  unknown: number;
 }
 
 export interface DispositionDistribution {

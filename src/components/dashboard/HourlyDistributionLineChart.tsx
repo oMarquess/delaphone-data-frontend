@@ -1,7 +1,7 @@
 'use client';
 
 import { TrendingUp } from "lucide-react";
-import { CartesianGrid, Line, LineChart, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useState, useMemo } from 'react';
 import { HourlyDistribution } from '@/services/dashboard';
 
@@ -11,10 +11,6 @@ interface HourlyDistributionLineChartProps {
 }
 
 const chartConfig = {
-  total: {
-    label: "Total Calls",
-    color: "hsl(var(--chart-1))",
-  },
   inbound: {
     label: "Inbound",
     color: "hsl(var(--chart-2))",
@@ -27,14 +23,18 @@ const chartConfig = {
     label: "Internal",
     color: "hsl(var(--chart-4))",
   },
+  unknown: {
+    label: "Unknown",
+    color: "hsl(var(--chart-1))",
+  },
 } as const;
 
 export default function HourlyDistributionLineChart({ data, isLoading = false }: HourlyDistributionLineChartProps) {
-  const [activeLines, setActiveLines] = useState({
-    total: true,
+  const [activeCategories, setActiveCategories] = useState({
     inbound: true,
     outbound: true,
     internal: true,
+    unknown: true,
   });
 
   // Process data safely, ensuring every property exists
@@ -54,10 +54,10 @@ export default function HourlyDistributionLineChart({ data, isLoading = false }:
         return {
           hour,
           hourLabel,
-          total: item.total || 0,
           inbound: item.inbound || 0,
-          outbound: item.outbound || 0, 
-          internal: item.internal || 0
+          outbound: item.outbound || 0,
+          internal: item.internal || 0,
+          unknown: item.unknown || 0
         };
       });
     } catch (error) {
@@ -66,8 +66,8 @@ export default function HourlyDistributionLineChart({ data, isLoading = false }:
     }
   }, [data]);
 
-  const toggleLine = (key: keyof typeof activeLines) => {
-    setActiveLines(prev => ({
+  const toggleCategory = (key: keyof typeof activeCategories) => {
+    setActiveCategories(prev => ({
       ...prev,
       [key]: !prev[key]
     }));
@@ -121,21 +121,21 @@ export default function HourlyDistributionLineChart({ data, isLoading = false }:
           <button
             key={key}
             className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200 ${
-              activeLines[key as keyof typeof activeLines]
+              activeCategories[key as keyof typeof activeCategories]
                 ? 'shadow-sm'
                 : 'opacity-50 hover:opacity-75'
             }`}
             style={{
-              backgroundColor: activeLines[key as keyof typeof activeLines]
+              backgroundColor: activeCategories[key as keyof typeof activeCategories]
                 ? `${config.color}15`
                 : 'transparent',
               color: config.color,
               border: `1px solid ${config.color}`,
-              boxShadow: activeLines[key as keyof typeof activeLines]
+              boxShadow: activeCategories[key as keyof typeof activeCategories]
                 ? `0 0 0 2px ${config.color}30`
                 : 'none'
             }}
-            onClick={() => toggleLine(key as keyof typeof activeLines)}
+            onClick={() => toggleCategory(key as keyof typeof activeCategories)}
           >
             {config.label}
           </button>
@@ -143,64 +143,57 @@ export default function HourlyDistributionLineChart({ data, isLoading = false }:
       </div>
 
       <ResponsiveContainer width="100%" height={350}>
-        <LineChart
+        <BarChart
           data={formattedData}
           margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
+          <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
           <XAxis
             dataKey="hourLabel"
             tickLine={false}
             axisLine={false}
             tickMargin={8}
+            tickFormatter={(value) => value}
           />
           <YAxis
             tickLine={false}
             axisLine={false}
             tickMargin={8}
           />
-          <Tooltip content={<CustomTooltip />} />
-          {activeLines.total && (
-            <Line
-              dataKey="total"
-              name="Total Calls"
-              type="monotone"
-              stroke={chartConfig.total.color}
-              strokeWidth={2}
-              dot={false}
-            />
-          )}
-          {activeLines.inbound && (
-            <Line
+          <Tooltip content={<CustomTooltip />} cursor={false} />
+          {activeCategories.inbound && (
+            <Bar 
               dataKey="inbound"
               name="Inbound"
-              type="monotone"
-              stroke={chartConfig.inbound.color}
-              strokeWidth={2}
-              dot={false}
+              fill={chartConfig.inbound.color}
+              radius={4}
             />
           )}
-          {activeLines.outbound && (
-            <Line
-              dataKey="outbound"
+          {activeCategories.outbound && (
+            <Bar 
+              dataKey="outbound" 
               name="Outbound"
-              type="monotone"
-              stroke={chartConfig.outbound.color}
-              strokeWidth={2}
-              dot={false}
+              fill={chartConfig.outbound.color}
+              radius={4}
             />
           )}
-          {activeLines.internal && (
-            <Line
-              dataKey="internal"
+          {activeCategories.internal && (
+            <Bar 
+              dataKey="internal" 
               name="Internal"
-              type="monotone"
-              stroke={chartConfig.internal.color}
-              strokeWidth={2}
-              dot={false}
+              fill={chartConfig.internal.color}
+              radius={4}
             />
           )}
-        </LineChart>
+          {activeCategories.unknown && (
+            <Bar 
+              dataKey="unknown" 
+              name="Unknown"
+              fill={chartConfig.unknown.color}
+              radius={4}
+            />
+          )}
+        </BarChart>
       </ResponsiveContainer>
 
       {/* <div className="flex w-full items-start gap-2 text-sm">

@@ -66,7 +66,8 @@ export default function DashboardPage() {
       total: Math.floor(Math.random() * 50) + 10,
       inbound: Math.floor(Math.random() * 30) + 5,
       outbound: Math.floor(Math.random() * 20) + 5,
-      internal: Math.floor(Math.random() * 5)
+      internal: Math.floor(Math.random() * 5),
+      unknown: Math.floor(Math.random() * 8) + 1
     }));
   };
 
