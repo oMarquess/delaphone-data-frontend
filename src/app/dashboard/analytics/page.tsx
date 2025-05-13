@@ -5,6 +5,10 @@ import { PhoneIcon, UserIcon, ClockIcon, BarChartIcon } from 'lucide-react';
 import SummaryCard from '@/components/dashboard/SummaryCard';
 import { AnalyticsFilterBar, AnalyticsFilters } from '@/components/analytics/AnalyticsFilterBar';
 import { useAnalyticsData, formatDuration } from '@/services/analytics';
+import TopCallerComparisonChart from '@/components/analytics/TopCallerComparisonChart';
+import ActivityTimeline from '@/components/analytics/ActivityTimeline';
+import CallerMetricsCards from '@/components/analytics/CallerMetricsCards';
+import CallPerformanceRadar from '@/components/analytics/CallPerformanceRadar';
 
 export default function AnalyticsPage() {
   // Initial filters
@@ -80,16 +84,42 @@ export default function AnalyticsPage() {
       )}
       
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Call Analytics</h2>
-        {isLoading ? (
-          <div className="flex justify-center items-center h-40">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-          </div>
-        ) : (
-          <p className="text-gray-600 dark:text-gray-400">
-            {data ? `Showing ${data.top_callers.length} results for the selected filters.` : 'No data available.'}
-          </p>
-        )}
+        <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Key Performance Metrics</h2>
+        <CallerMetricsCards 
+          callers={data?.top_callers} 
+          isLoading={isLoading} 
+        />
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Top Caller Comparison</h2>
+          <TopCallerComparisonChart 
+            callers={data?.top_callers} 
+            isLoading={isLoading} 
+            sortMetric="call_count"
+          />
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Caller Performance Radar</h2>
+          <CallPerformanceRadar 
+            callers={data?.top_callers} 
+            isLoading={isLoading} 
+            maxCallers={3}
+          />
+        </div>
+      </div>
+      
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Activity Timeline</h2>
+        <ActivityTimeline 
+          data={{
+            top_callers: data?.top_callers,
+            time_period: data?.time_period
+          }} 
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );
