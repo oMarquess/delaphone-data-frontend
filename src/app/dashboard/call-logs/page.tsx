@@ -61,6 +61,20 @@ export default function CallLogsPage() {
     shouldRetryOnError: false
   });
   
+  // Add debugging to see API response
+  useEffect(() => {
+    if (data) {
+      console.log('API Response:', {
+        data,
+        totalCount: data.total_count,
+        filteredCount: data.filtered_count,
+        recordsLength: data.records?.length,
+        pageSize: parseInt(filters.limit || '100'),
+        totalPages: Math.ceil((data.filtered_count || 0) / parseInt(filters.limit || '100'))
+      });
+    }
+  }, [data, filters.limit]);
+  
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);

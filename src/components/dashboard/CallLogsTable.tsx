@@ -168,6 +168,9 @@ export default function CallLogsTable({
     return pages;
   };
 
+  // Debug pagination data
+  console.log('Pagination Debug:', { filteredCount, pageSize, totalPages, currentPage });
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
@@ -319,6 +322,7 @@ export default function CallLogsTable({
         </table>
       </div>
       
+
       {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
