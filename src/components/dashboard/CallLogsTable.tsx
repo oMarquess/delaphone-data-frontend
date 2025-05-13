@@ -308,7 +308,7 @@ export default function CallLogsTable({
           ) : sortedRecords.length > 0 ? (
             sortedRecords.map((record) => (
               <div 
-                key={record.uniqueid}
+                key={`card-${record.uniqueid}`}
                 className={`border rounded-lg overflow-hidden transition-all duration-200 ${
                   expandedRow === record.uniqueid
                     ? 'border-blue-300 dark:border-blue-700 shadow-md'
@@ -417,27 +417,27 @@ export default function CallLogsTable({
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Call ID</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400">{record.uniqueid}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 break-all">{record.uniqueid}</div>
                       </div>
                       <div>
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">DID</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400">{record.did || 'N/A'}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 break-words">{record.did || 'N/A'}</div>
                       </div>
                       <div>
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Channel</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400">{record.channel}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 break-words">{record.channel}</div>
                       </div>
                       <div>
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Dest. Channel</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400">{record.dstchannel || 'N/A'}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 break-words">{record.dstchannel || 'N/A'}</div>
                       </div>
                       <div>
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Last App</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400">{record.lastapp}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 break-words">{record.lastapp}</div>
                       </div>
                       <div>
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Last Data</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400">{record.lastdata}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 break-all">{record.lastdata}</div>
                       </div>
                       <div>
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Bill Duration</div>
@@ -445,7 +445,7 @@ export default function CallLogsTable({
                       </div>
                       <div>
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Account Code</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400">{record.accountcode || 'N/A'}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 break-words">{record.accountcode || 'N/A'}</div>
                       </div>
                     </div>
                   </div>
@@ -463,9 +463,16 @@ export default function CallLogsTable({
       {/* Table View */}
       {viewMode === 'table' && (
         <div className="overflow-x-auto">
+          {/* Hint text to guide users */}
+          <div className="px-6 py-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 flex items-center">
+            <Info size={12} className="mr-1.5" /> Click on any row to see more details
+          </div>
+          
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
+                <th scope="col" className="w-8 px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   <button onClick={() => handleSort('calldate')} className="flex items-center">
                     Date/Time {renderSortIcon('calldate')}
@@ -500,7 +507,7 @@ export default function CallLogsTable({
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center">
+                  <td colSpan={8} className="px-6 py-10 text-center">
                     <div className="flex justify-center items-center space-x-2">
                       <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500"></div>
                       <span className="text-gray-500 dark:text-gray-400">Loading records...</span>
@@ -512,9 +519,16 @@ export default function CallLogsTable({
                   <>
                     <tr 
                       key={record.uniqueid}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                      className={`group hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer ${
+                        expandedRow === record.uniqueid ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                      }`}
                       onClick={() => toggleRowExpansion(record.uniqueid)}
                     >
+                      <td className="pl-4 pr-0 py-4 whitespace-nowrap text-center align-middle">
+                        <div className={`transition-transform duration-200 ${expandedRow === record.uniqueid ? 'rotate-90' : ''}`}>
+                          <ChevronRight size={16} className="text-gray-400 group-hover:text-blue-500 dark:text-gray-500 dark:group-hover:text-blue-400" />
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-white">
                         {formatDate(record.calldate)}
                       </td>
@@ -545,11 +559,6 @@ export default function CallLogsTable({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-white">
                         <div className="flex space-x-2">
-                          {record.recordingfile && (
-                            <button className="p-1 rounded bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800">
-                              <Play size={16} />
-                            </button>
-                          )}
                           <button className="p-1 rounded bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                             <Download size={16} />
                           </button>
@@ -558,31 +567,71 @@ export default function CallLogsTable({
                     </tr>
                     {expandedRow === record.uniqueid && (
                       <tr className="bg-gray-50 dark:bg-gray-700/70">
-                        <td colSpan={7} className="px-6 py-4">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-700 dark:text-white">Call Details</h4>
-                              <div className="mt-2 text-sm text-gray-600 dark:text-gray-200">
-                                <div><span className="font-medium text-gray-700 dark:text-white">ID:</span> <span className="dark:text-gray-200">{record.uniqueid}</span></div>
-                                <div><span className="font-medium text-gray-700 dark:text-white">Channel:</span> <span className="dark:text-gray-200">{record.channel}</span></div>
-                                <div><span className="font-medium text-gray-700 dark:text-white">Dest. Channel:</span> <span className="dark:text-gray-200">{record.dstchannel || 'N/A'}</span></div>
-                                <div><span className="font-medium text-gray-700 dark:text-white">Context:</span> <span className="dark:text-gray-200">{record.dcontext}</span></div>
+                        <td colSpan={8} className="px-6 py-4">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-600">
+                              <h4 className="text-sm font-semibold text-gray-800 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">Call Details</h4>
+                              <div className="space-y-2">
+                                <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">ID:</span>
+                                  <span className="text-xs text-gray-800 dark:text-gray-200 font-mono break-all">{record.uniqueid}</span>
+                                </div>
+                                <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Channel:</span>
+                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.channel}</span>
+                                </div>
+                                <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Dest. Channel:</span>
+                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.dstchannel || 'N/A'}</span>
+                                </div>
+                                <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Context:</span>
+                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.dcontext}</span>
+                                </div>
                               </div>
                             </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-700 dark:text-white">Duration Details</h4>
-                              <div className="mt-2 text-sm text-gray-600 dark:text-gray-200">
-                                <div><span className="font-medium text-gray-700 dark:text-white">Total Duration:</span> <span className="dark:text-gray-200">{formatDuration(record.duration)}</span></div>
-                                <div><span className="font-medium text-gray-700 dark:text-white">Bill Duration:</span> <span className="dark:text-gray-200">{formatDuration(record.billsec)}</span></div>
-                                <div><span className="font-medium text-gray-700 dark:text-white">DID:</span> <span className="dark:text-gray-200">{record.did || 'N/A'}</span></div>
+                            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-600">
+                              <h4 className="text-sm font-semibold text-gray-800 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">Duration Details</h4>
+                              <div className="space-y-2">
+                                <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Total Duration:</span>
+                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{formatDuration(record.duration)}</span>
+                                </div>
+                                <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Bill Duration:</span>
+                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{formatDuration(record.billsec)}</span>
+                                </div>
+                                <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">DID:</span>
+                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.did || 'N/A'}</span>
+                                </div>
                               </div>
                             </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-700 dark:text-white">Application</h4>
-                              <div className="mt-2 text-sm text-gray-600 dark:text-gray-200">
-                                <div><span className="font-medium text-gray-700 dark:text-white">Last App:</span> <span className="dark:text-gray-200">{record.lastapp}</span></div>
-                                <div><span className="font-medium text-gray-700 dark:text-white">Last Data:</span> <span className="dark:text-gray-200">{record.lastdata}</span></div>
-                                <div><span className="font-medium text-gray-700 dark:text-white">Account Code:</span> <span className="dark:text-gray-200">{record.accountcode || 'N/A'}</span></div>
+                            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-600">
+                              <h4 className="text-sm font-semibold text-gray-800 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">Application</h4>
+                              <div className="space-y-2">
+                                <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Last App:</span>
+                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.lastapp}</span>
+                                </div>
+                                <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Last Data:</span>
+                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-all">{record.lastdata}</span>
+                                </div>
+                                <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Account Code:</span>
+                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.accountcode || 'N/A'}</span>
+                                </div>
+                                {record.recordingfile && (
+                                  <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                    <button 
+                                      className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Play size={12} /> Play recording
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -593,7 +642,7 @@ export default function CallLogsTable({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={8} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
                     No call records found matching your filters.
                   </td>
                 </tr>
