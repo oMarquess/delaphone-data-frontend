@@ -50,7 +50,7 @@ export default function CallDirectionChart({ data, isLoading = false }: CallDire
     return (
       <div className="h-64 flex items-center justify-center bg-gray-50 dark:bg-gray-900 rounded">
         <div className="flex flex-col items-center space-y-2">
-          <div className="w-8 h-8 border-4 border-t-purple-500 border-b-purple-700 border-l-purple-600 border-r-purple-600 rounded-full animate-spin"></div>
+          {/* <div className="w-8 h-8 border-4 border-t-purple-500 border-b-purple-700 border-l-purple-600 border-r-purple-600 rounded-full animate-spin"></div> */}
           <p className="text-gray-500 dark:text-gray-400">Loading chart data...</p>
         </div>
       </div>
