@@ -87,20 +87,22 @@ export default function CallLogsPage() {
   
   const handleDateRangeChange = (startDate: string, endDate: string, label: string) => {
     setDateRangeLabel(label);
-    setDateRange({ startDate, endDate });
     
     // If Custom is selected, open the advanced filters section
     if (label === 'Custom') {
       setFilterVisible(true);
       
-      if (!startDate) {
-        // If custom is selected but no dates provided, just update the label and keep current dates
+      // Don't update date range if no dates provided (this prevents API call with empty dates)
+      if (!startDate || !endDate) {
         return;
       }
     } else {
       // If any preset is selected, close the advanced filters
       setFilterVisible(false);
     }
+    
+    // Update dates only if we have valid values
+    setDateRange({ startDate, endDate });
     
     // Reset page and trigger data refetch
     setCurrentPage(1);
