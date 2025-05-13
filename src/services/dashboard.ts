@@ -197,6 +197,67 @@ export const dashboardService = {
     }
   },
   
+  // Get call logs with filtering
+  getCallLogs: async (
+    startDate: string, 
+    endDate: string, 
+    filters: {
+      callDirection?: string,
+      callStatus?: string,
+      hasRecording?: string, 
+      sourceNumber?: string,
+      destinationNumber?: string,
+      minDuration?: string,
+      maxDuration?: string,
+      did?: string,
+      extension?: string,
+      callerName?: string,
+      queue?: string,
+      uniqueCallersOnly?: boolean,
+      limit?: string,
+      sortBy?: string,
+      sortOrder?: string,
+      page?: number
+    }
+  ): Promise<any> => {
+    try {
+      // Map frontend filter names to API parameter names
+      const params: Record<string, any> = {
+        start_date: startDate,
+        end_date: endDate,
+      };
+      
+      // Only add parameters that have values
+      if (filters.callDirection && filters.callDirection !== 'all') params.direction = filters.callDirection;
+      if (filters.callStatus && filters.callStatus !== 'all') params.disposition = filters.callStatus;
+      if (filters.hasRecording === 'yes') params.has_recording = true;
+      if (filters.hasRecording === 'no') params.has_recording = false;
+      if (filters.sourceNumber) params.src = filters.sourceNumber;
+      if (filters.destinationNumber) params.dst = filters.destinationNumber;
+      if (filters.minDuration) params.min_duration = filters.minDuration;
+      if (filters.maxDuration) params.max_duration = filters.maxDuration;
+      if (filters.did) params.did = filters.did;
+      if (filters.extension) params.extension = filters.extension;
+      if (filters.callerName) params.cnam = filters.callerName;
+      if (filters.queue) params.queue = filters.queue;
+      if (filters.uniqueCallersOnly) params.unique_callers_only = filters.uniqueCallersOnly;
+      if (filters.limit) params.limit = filters.limit;
+      if (filters.sortBy) params.sort_by = filters.sortBy;
+      if (filters.sortOrder) params.sort_order = filters.sortOrder;
+      
+      // Add pagination
+      if (filters.page && filters.page > 0) {
+        params.offset = filters.page > 1 ? (filters.page - 1) * (parseInt(filters.limit || '100')) : 0;
+      }
+      
+      const response = await api.get('/call-records/logs', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching call logs:', error);
+      throw error;
+    }
+  },
+  
   // Get call metrics
   getCallMetrics: async (startDate: string, endDate: string, disposition?: string): Promise<any> => {
     try {

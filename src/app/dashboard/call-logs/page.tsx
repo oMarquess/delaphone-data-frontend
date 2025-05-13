@@ -1,71 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { FilterIcon, ChevronDownIcon, CalendarIcon, Download } from 'lucide-react';
+import useSWR from 'swr';
 import QuickDateSelector from '@/components/analytics/QuickDateSelector';
 import CallLogsAdvancedFilter, { CallLogsFilterValues } from '@/components/dashboard/CallLogsAdvancedFilter';
 import CallLogsTable, { CallLog } from '@/components/dashboard/CallLogsTable';
-
-// Mock data for demonstration
-const mockCallLogs: CallLog[] = [
-  {
-    calldate: '2025-05-13T13:35:58',
-    clid: '"Agent/109 Login" <1009>',
-    src: '1009',
-    dst: 's',
-    dcontext: 'from-internal',
-    channel: 'SIP/1009-000011a9',
-    dstchannel: '',
-    lastapp: 'AgentLogin',
-    lastdata: '109',
-    duration: 6027,
-    billsec: 6025,
-    disposition: 'ANSWERED',
-    amaflags: 3,
-    accountcode: '',
-    uniqueid: '1747143358.5357',
-    userfield: '',
-    recordingfile: '',
-    cnum: '',
-    cnam: '',
-    outbound_cnum: '',
-    outbound_cnam: '',
-    dst_cnam: '',
-    did: '',
-    direction: 'outbound'
-  },
-  {
-    calldate: '2025-05-13T11:03:56',
-    clid: '"Agent/109 Login" <1009>',
-    src: '1009',
-    dst: 's',
-    dcontext: 'from-internal',
-    channel: 'SIP/1009-0000119f',
-    dstchannel: '',
-    lastapp: 'AgentLogin',
-    lastdata: '109',
-    duration: 9097,
-    billsec: 9095,
-    disposition: 'ANSWERED',
-    amaflags: 3,
-    accountcode: '',
-    uniqueid: '1747134236.5339',
-    userfield: '',
-    recordingfile: '',
-    cnum: '',
-    cnam: '',
-    outbound_cnum: '',
-    outbound_cnam: '',
-    dst_cnam: '',
-    did: '',
-    direction: 'outbound'
-  },
-  // Add more mock records as needed
-];
+import { dashboardService } from '@/services/dashboard';
 
 export default function CallLogsPage() {
-  const [isLoading, setIsLoading] = useState(false);
   const [filterVisible, setFilterVisible] = useState(false);
   const [dateRangeLabel, setDateRangeLabel] = useState('Last 7 Days');
   const [dateRange, setDateRange] = useState({
@@ -89,13 +33,43 @@ export default function CallLogsPage() {
     sortBy: 'calldate',
     sortOrder: 'desc'
   });
+  const [currentPage, setCurrentPage] = useState(1);
   
-  // Mock data state
-  const [callLogsData, setCallLogsData] = useState({
-    records: mockCallLogs,
-    totalCount: 10637,
-    filteredCount: 42
+  // Create a unique key for SWR based on filters, date range, and pagination
+  const swrKey = useCallback(() => {
+    return [
+      '/call-records/logs',
+      dateRange.startDate,
+      dateRange.endDate,
+      filters,
+      currentPage
+    ];
+  }, [dateRange.startDate, dateRange.endDate, filters, currentPage]);
+  
+  // Fetcher function for SWR
+  const fetcher = async ([url, startDate, endDate, filterValues, page]: [string, string, string, CallLogsFilterValues, number]) => {
+    return dashboardService.getCallLogs(startDate, endDate, { 
+      ...filterValues,
+      page
+    });
+  };
+  
+  // Use SWR for data fetching
+  const { data, error, isLoading, mutate } = useSWR(swrKey(), fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 5000,
+    shouldRetryOnError: false
   });
+  
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, dateRange.startDate, dateRange.endDate]);
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   
   const handleDateRangeChange = (startDate: string, endDate: string, label: string) => {
     setDateRangeLabel(label);
@@ -114,39 +88,25 @@ export default function CallLogsPage() {
       setFilterVisible(false);
     }
     
-    // Here you would fetch call logs with the new date range
-    fetchCallLogs(startDate, endDate, filters);
+    // Reset page and trigger data refetch
+    setCurrentPage(1);
   };
   
   const handleFilterChange = (newFilters: CallLogsFilterValues) => {
     setFilters(newFilters);
-    // Here you would fetch call logs with the updated filters
-    fetchCallLogs(dateRange.startDate, dateRange.endDate, newFilters);
+    // Reset page and trigger data refetch
+    setCurrentPage(1);
   };
   
-  const fetchCallLogs = async (startDate: string, endDate: string, filterValues: CallLogsFilterValues) => {
-    setIsLoading(true);
-    
-    try {
-      // This is where you would make the API call to fetch call logs
-      // For now, we'll just simulate a delay and return mock data
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // In a real implementation, you would set the data from the API response
-      
-      // For now, just keeping the mock data
-      setCallLogsData({
-        records: mockCallLogs,
-        totalCount: 10637,
-        filteredCount: 42
-      });
-    } catch (error) {
-      console.error('Error fetching call logs:', error);
-      // Handle error state
-    } finally {
-      setIsLoading(false);
-    }
+  // Extract data for UI display
+  const callLogsData = {
+    records: data?.records || [],
+    totalCount: data?.total_count || 0,
+    filteredCount: data?.filtered_count || 0
   };
+  
+  // Calculate page size from limit
+  const pageSize = parseInt(filters.limit || '100');
   
   return (
     <div className="space-y-6">
@@ -205,11 +165,22 @@ export default function CallLogsPage() {
           <span className="font-medium">Period:</span> {dateRange.startDate} to {dateRange.endDate}
           <span className="mx-2">•</span>
           <span className="font-medium">Results:</span> {callLogsData.filteredCount} calls
+          {data?.summary && (
+            <>
+              <span className="mx-2">•</span>
+              <span className="font-medium">Answered:</span> {data.summary.answered_calls} ({data.summary.answer_rate}%)
+            </>
+          )}
         </div>
         {isLoading && (
           <div className="flex items-center text-blue-700 dark:text-blue-400">
             <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-blue-500 rounded-full mr-2"></div>
             <span className="text-sm">Loading...</span>
+          </div>
+        )}
+        {error && (
+          <div className="text-sm text-red-600 dark:text-red-400">
+            Error loading data. Please try again.
           </div>
         )}
       </div>
@@ -219,6 +190,10 @@ export default function CallLogsPage() {
         records={callLogsData.records}
         totalCount={callLogsData.totalCount}
         filteredCount={callLogsData.filteredCount}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+        pageSize={pageSize}
+        isLoading={isLoading}
       />
     </div>
   );
