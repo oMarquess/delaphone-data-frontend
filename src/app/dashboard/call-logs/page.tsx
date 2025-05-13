@@ -2,153 +2,224 @@
 
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { SearchOutlined, FilterOutlined, DownloadOutlined } from '@ant-design/icons';
+import { FilterIcon, ChevronDownIcon, CalendarIcon, Download } from 'lucide-react';
+import QuickDateSelector from '@/components/analytics/QuickDateSelector';
+import CallLogsAdvancedFilter, { CallLogsFilterValues } from '@/components/dashboard/CallLogsAdvancedFilter';
+import CallLogsTable, { CallLog } from '@/components/dashboard/CallLogsTable';
+
+// Mock data for demonstration
+const mockCallLogs: CallLog[] = [
+  {
+    calldate: '2025-05-13T13:35:58',
+    clid: '"Agent/109 Login" <1009>',
+    src: '1009',
+    dst: 's',
+    dcontext: 'from-internal',
+    channel: 'SIP/1009-000011a9',
+    dstchannel: '',
+    lastapp: 'AgentLogin',
+    lastdata: '109',
+    duration: 6027,
+    billsec: 6025,
+    disposition: 'ANSWERED',
+    amaflags: 3,
+    accountcode: '',
+    uniqueid: '1747143358.5357',
+    userfield: '',
+    recordingfile: '',
+    cnum: '',
+    cnam: '',
+    outbound_cnum: '',
+    outbound_cnam: '',
+    dst_cnam: '',
+    did: '',
+    direction: 'outbound'
+  },
+  {
+    calldate: '2025-05-13T11:03:56',
+    clid: '"Agent/109 Login" <1009>',
+    src: '1009',
+    dst: 's',
+    dcontext: 'from-internal',
+    channel: 'SIP/1009-0000119f',
+    dstchannel: '',
+    lastapp: 'AgentLogin',
+    lastdata: '109',
+    duration: 9097,
+    billsec: 9095,
+    disposition: 'ANSWERED',
+    amaflags: 3,
+    accountcode: '',
+    uniqueid: '1747134236.5339',
+    userfield: '',
+    recordingfile: '',
+    cnum: '',
+    cnam: '',
+    outbound_cnum: '',
+    outbound_cnam: '',
+    dst_cnam: '',
+    did: '',
+    direction: 'outbound'
+  },
+  // Add more mock records as needed
+];
 
 export default function CallLogsPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [filterVisible, setFilterVisible] = useState(false);
+  const [dateRangeLabel, setDateRangeLabel] = useState('Last 7 Days');
+  const [dateRange, setDateRange] = useState({
+    startDate: format(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+    endDate: format(new Date(), 'yyyy-MM-dd')
+  });
+  const [filters, setFilters] = useState<CallLogsFilterValues>({
+    callDirection: 'all',
+    callStatus: 'all',
+    hasRecording: 'all',
+    sourceNumber: '',
+    destinationNumber: '',
+    minDuration: '',
+    maxDuration: '',
+    did: '',
+    extension: '',
+    callerName: '',
+    queue: '',
+    uniqueCallersOnly: false,
+    limit: '100',
+    sortBy: 'calldate',
+    sortOrder: 'desc'
+  });
+  
+  // Mock data state
+  const [callLogsData, setCallLogsData] = useState({
+    records: mockCallLogs,
+    totalCount: 10637,
+    filteredCount: 42
+  });
+  
+  const handleDateRangeChange = (startDate: string, endDate: string, label: string) => {
+    setDateRangeLabel(label);
+    setDateRange({ startDate, endDate });
+    
+    // If Custom is selected, open the advanced filters section
+    if (label === 'Custom') {
+      setFilterVisible(true);
+      
+      if (!startDate) {
+        // If custom is selected but no dates provided, just update the label and keep current dates
+        return;
+      }
+    } else {
+      // If any preset is selected, close the advanced filters
+      setFilterVisible(false);
+    }
+    
+    // Here you would fetch call logs with the new date range
+    fetchCallLogs(startDate, endDate, filters);
+  };
+  
+  const handleFilterChange = (newFilters: CallLogsFilterValues) => {
+    setFilters(newFilters);
+    // Here you would fetch call logs with the updated filters
+    fetchCallLogs(dateRange.startDate, dateRange.endDate, newFilters);
+  };
+  
+  const fetchCallLogs = async (startDate: string, endDate: string, filterValues: CallLogsFilterValues) => {
+    setIsLoading(true);
+    
+    try {
+      // This is where you would make the API call to fetch call logs
+      // For now, we'll just simulate a delay and return mock data
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // In a real implementation, you would set the data from the API response
+      
+      // For now, just keeping the mock data
+      setCallLogsData({
+        records: mockCallLogs,
+        totalCount: 10637,
+        filteredCount: 42
+      });
+    } catch (error) {
+      console.error('Error fetching call logs:', error);
+      // Handle error state
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Header with filter toggle */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Call Logs</h1>
-        <div className="flex items-center space-x-2">
-          <button className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md flex items-center space-x-1">
-            <FilterOutlined style={{ fontSize: '14px' }} />
-            <span>Filter</span>
+        
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button 
+            onClick={() => setFilterVisible(!filterVisible)}
+            className="flex items-center gap-2 py-2 px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            <FilterIcon size={16} />
+            <span>Advanced Filters</span>
+            <ChevronDownIcon size={16} className={`transition-transform ${filterVisible ? 'rotate-180' : ''}`} />
           </button>
-          <button className="px-4 py-2 bg-gray-800 dark:bg-gray-700 text-white rounded-md flex items-center space-x-1">
-            <DownloadOutlined style={{ fontSize: '14px' }} />
-            <span>Export</span>
+          
+          <div className="flex items-center gap-2 py-2 px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
+            <CalendarIcon size={16} className="text-gray-500 dark:text-gray-400" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {dateRange.startDate} to {dateRange.endDate}
+            </span>
+          </div>
+          
+          <button className="flex items-center gap-2 py-2 px-4 bg-gray-800 dark:bg-gray-700 text-white rounded-md">
+            <Download size={16} />
+            <span>Download Logs</span>
           </button>
         </div>
       </div>
       
-      {/* Search bar */}
+      {/* Quick date range selector */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 dark:text-gray-400">
-            <SearchOutlined style={{ fontSize: '16px' }} />
-          </span>
-          <input
-            type="text"
-            placeholder="Search by caller ID, direction, disposition..."
-            className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Quick Select:</span>
+          <QuickDateSelector 
+            onChange={handleDateRangeChange} 
+            activeLabel={dateRangeLabel}
+            filterVisible={filterVisible}
           />
         </div>
       </div>
       
-      {/* Call logs table */}
-      <div className="bg-white dark:bg-gray-800 overflow-hidden rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        {isLoading ? (
-          <div className="p-6 flex items-center justify-center">
-            <div className="flex flex-col items-center space-y-2">
-              <div className="w-8 h-8 border-4 border-t-purple-500 border-b-purple-700 border-l-purple-600 border-r-purple-600 rounded-full animate-spin"></div>
-              <p className="text-gray-500 dark:text-gray-400">Loading call logs...</p>
-            </div>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-900">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Date & Time
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Direction
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    From
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    To
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Duration
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                <tr className="text-sm text-gray-700 dark:text-gray-300">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {format(new Date(), 'MMM dd, yyyy HH:mm:ss')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
-                      Inbound
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">+15551234567</td>
-                  <td className="px-6 py-4 whitespace-nowrap">+17778889999</td>
-                  <td className="px-6 py-4 whitespace-nowrap">2m 45s</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">
-                      Answered
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300">
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-                <tr className="text-sm text-gray-700 dark:text-gray-300">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {format(new Date(Date.now() - 3600000), 'MMM dd, yyyy HH:mm:ss')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">
-                      Outbound
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">+17778889999</td>
-                  <td className="px-6 py-4 whitespace-nowrap">+12223334444</td>
-                  <td className="px-6 py-4 whitespace-nowrap">1m 15s</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">
-                      Answered
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300">
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-                <tr className="text-sm text-gray-700 dark:text-gray-300">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {format(new Date(Date.now() - 7200000), 'MMM dd, yyyy HH:mm:ss')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
-                      Inbound
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">+13334445555</td>
-                  <td className="px-6 py-4 whitespace-nowrap">+17778889999</td>
-                  <td className="px-6 py-4 whitespace-nowrap">0m 0s</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">
-                      No Answer
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300">
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+      {/* Collapsible filter section */}
+      <div className={`transition-all duration-300 overflow-hidden ${filterVisible ? 'max-h-[1200px] opacity-100 mb-10' : 'max-h-0 opacity-0'}`}>
+        <CallLogsAdvancedFilter 
+          visible={filterVisible} 
+          onFilterChange={handleFilterChange} 
+          initialValues={filters}
+        />
+      </div>
+      
+      {/* Dashboard status */}
+      <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
+        <div className="text-sm text-blue-800 dark:text-blue-300">
+          <span className="font-medium">Period:</span> {dateRange.startDate} to {dateRange.endDate}
+          <span className="mx-2">•</span>
+          <span className="font-medium">Results:</span> {callLogsData.filteredCount} calls
+        </div>
+        {isLoading && (
+          <div className="flex items-center text-blue-700 dark:text-blue-400">
+            <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-blue-500 rounded-full mr-2"></div>
+            <span className="text-sm">Loading...</span>
           </div>
         )}
       </div>
+      
+      {/* Call Logs Table */}
+      <CallLogsTable 
+        records={callLogsData.records}
+        totalCount={callLogsData.totalCount}
+        filteredCount={callLogsData.filteredCount}
+      />
     </div>
   );
 } 
