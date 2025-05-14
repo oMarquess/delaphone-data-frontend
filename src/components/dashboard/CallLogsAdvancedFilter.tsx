@@ -22,6 +22,7 @@ export interface CallLogsFilterValues {
   hasRecording: string;
   sourceNumber: string;
   destinationNumber: string;
+  direction: string;
   minDuration: string;
   maxDuration: string;
   did: string;
@@ -45,6 +46,7 @@ export default function CallLogsAdvancedFilter({
     hasRecording: 'all',
     sourceNumber: '',
     destinationNumber: '',
+    direction: 'all',
     minDuration: '',
     maxDuration: '',
     did: '',

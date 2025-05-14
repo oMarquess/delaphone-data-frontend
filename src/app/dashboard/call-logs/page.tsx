@@ -22,6 +22,7 @@ export default function CallLogsPage() {
     hasRecording: 'all',
     sourceNumber: '',
     destinationNumber: '',
+    direction: 'all',
     minDuration: '',
     maxDuration: '',
     did: '',
