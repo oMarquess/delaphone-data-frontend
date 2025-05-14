@@ -111,6 +111,13 @@ export default function CallLogsPage() {
   
   const handleFilterChange = (newFilters: CallLogsFilterValues) => {
     setFilters(newFilters);
+    // If the advanced filter includes date changes, update the dateRange state too
+    if (newFilters.startDate && newFilters.endDate) {
+      setDateRange({
+        startDate: newFilters.startDate,
+        endDate: newFilters.endDate
+      });
+    }
     // Reset page and trigger data refetch
     setCurrentPage(1);
   };
