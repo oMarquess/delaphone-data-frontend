@@ -14,7 +14,7 @@ const pressStart2P = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
-  title: "Delaphone.AI | Call Intelligence Platform",
+  title: "DLP.AI | Call Intelligence Platform",
   description: "Transform your customer conversations into actionable insights. Boost revenue and reduce costs with AI-powered call analytics.",
   icons: {
     icon: '/assets/logo-dela.png',

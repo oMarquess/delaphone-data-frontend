@@ -14,7 +14,7 @@ const firaSans = Fira_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Dashboard | Delaphone.AI",
+  title: "Dashboard | DLP.AI",
   description: "Call intelligence dashboard with advanced analytics",
 };
 
