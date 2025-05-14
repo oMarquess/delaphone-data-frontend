@@ -327,6 +327,8 @@ export default function CallLogsAdvancedFilter({
                     <Option value="100">100</Option>
                     <Option value="250">250</Option>
                     <Option value="500">500</Option>
+                    <Option value="700">700</Option>
+                    <Option value="900">900</Option>
                   </Select>
                 </Item>
                 

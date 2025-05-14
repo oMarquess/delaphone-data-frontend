@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { ChevronDownIcon, ChevronUpIcon, Play, Download, ChevronLeft, ChevronRight, Phone, Clock, Calendar, Info, ArrowUp, ArrowDown } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon, Play, Download, ChevronLeft, ChevronRight, Phone, Clock, Calendar, Info, ArrowUp, ArrowDown, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 // Types based on the API response
 export interface CallLog {
@@ -661,15 +661,32 @@ export default function CallLogsTable({
             </div>
             
             <div className="flex flex-wrap space-x-1">
-              {/* Previous Button */}
+              {/* First Page Button */}
               <button 
-                onClick={() => goToPage(currentPage - 1)}
+                onClick={() => goToPage(1)}
                 disabled={currentPage === 1 || isLoading}
-                className={`relative inline-flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                className={`relative inline-flex items-center px-2 py-2 rounded-md text-sm font-medium ${
                   currentPage === 1 || isLoading
                     ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
                     : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
+                aria-label="Go to first page"
+                title="First Page"
+              >
+                <ChevronsLeft size={16} />
+              </button>
+
+              {/* Previous Button */}
+              <button 
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1 || isLoading}
+                className={`relative inline-flex items-center px-2 py-2 rounded-md text-sm font-medium ${
+                  currentPage === 1 || isLoading
+                    ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                aria-label="Go to previous page"
+                title="Previous Page"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -682,9 +699,11 @@ export default function CallLogsTable({
                   disabled={isLoading}
                   className={`relative inline-flex items-center px-3 py-2 rounded-md text-sm font-medium ${
                     page === currentPage
-                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700'
                       : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
+                  aria-label={`Go to page ${page}`}
+                  aria-current={page === currentPage ? "page" : undefined}
                 >
                   {page}
                 </button>
@@ -694,13 +713,30 @@ export default function CallLogsTable({
               <button 
                 onClick={() => goToPage(currentPage + 1)}
                 disabled={currentPage === totalPages || isLoading}
-                className={`relative inline-flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                className={`relative inline-flex items-center px-2 py-2 rounded-md text-sm font-medium ${
                   currentPage === totalPages || isLoading
                     ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
                     : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
+                aria-label="Go to next page"
+                title="Next Page"
               >
                 <ChevronRight size={16} />
+              </button>
+
+              {/* Last Page Button */}
+              <button 
+                onClick={() => goToPage(totalPages)}
+                disabled={currentPage === totalPages || isLoading}
+                className={`relative inline-flex items-center px-2 py-2 rounded-md text-sm font-medium ${
+                  currentPage === totalPages || isLoading
+                    ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                aria-label="Go to last page"
+                title="Last Page"
+              >
+                <ChevronsRight size={16} />
               </button>
             </div>
           </div>
