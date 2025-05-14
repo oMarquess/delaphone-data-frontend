@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Space, Select, InputNumber, Row, Col, ConfigProvider, theme } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Space, Select, InputNumber, Row, Col, ConfigProvider, theme, Button } from 'antd';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import { useTheme } from 'next-themes';
+import { Filter, RotateCcw } from 'lucide-react';
 
 const { Option } = Select;
 
@@ -30,7 +31,7 @@ export const AnalyticsFilterBar: React.FC<AnalyticsFilterBarProps> = ({
   const { resolvedTheme } = useTheme();
   const isDarkMode = resolvedTheme === 'dark';
   
-  const [filters, setFilters] = useState<AnalyticsFilters>({
+  const defaultFilters: AnalyticsFilters = {
     startDate: initialFilters.startDate || '2023-01-01',
     endDate: initialFilters.endDate || '2023-01-10',
     minCalls: initialFilters.minCalls || 3,
@@ -38,26 +39,56 @@ export const AnalyticsFilterBar: React.FC<AnalyticsFilterBarProps> = ({
     direction: initialFilters.direction || 'outbound',
     sortBy: initialFilters.sortBy || 'count',
     limit: initialFilters.limit || 10
-  });
+  };
+  
+  // Keep track of applied filters (sent to API) and local filters (UI state)
+  const [appliedFilters, setAppliedFilters] = useState<AnalyticsFilters>(defaultFilters);
+  const [localFilters, setLocalFilters] = useState<AnalyticsFilters>(defaultFilters);
+  // Track if filters have been modified since last apply
+  const [filtersModified, setFiltersModified] = useState(false);
+
+  // Update local filters when initialFilters change
+  useEffect(() => {
+    const newFilters = {
+      ...defaultFilters,
+      ...initialFilters
+    };
+    setLocalFilters(newFilters);
+    setAppliedFilters(newFilters);
+    setFiltersModified(false);
+  }, [JSON.stringify(initialFilters)]);
 
   // Handle date range changes
   const handleDateChange = (value: any, dateStrings: [string, string]) => {
     if (dateStrings && dateStrings.length === 2) {
       const newFilters = {
-        ...filters,
+        ...localFilters,
         startDate: dateStrings[0],
         endDate: dateStrings[1]
       };
-      setFilters(newFilters);
-      onFilterChange(newFilters);
+      setLocalFilters(newFilters);
+      setFiltersModified(true);
     }
   };
 
   // Handle filter changes
   const handleFilterChange = (field: keyof AnalyticsFilters, value: any) => {
-    const newFilters = { ...filters, [field]: value };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
+    const newFilters = { ...localFilters, [field]: value };
+    setLocalFilters(newFilters);
+    setFiltersModified(true);
+  };
+  
+  // Apply filters and call the parent component's handler
+  const applyFilters = () => {
+    setAppliedFilters(localFilters);
+    onFilterChange(localFilters);
+    setFiltersModified(false);
+  };
+  
+  // Reset filters to initial values
+  const resetFilters = () => {
+    setLocalFilters(defaultFilters);
+    setFiltersModified(true);
   };
 
   return (
@@ -104,7 +135,7 @@ export const AnalyticsFilterBar: React.FC<AnalyticsFilterBarProps> = ({
                 Direction
               </label>
               <Select
-                value={filters.direction}
+                value={localFilters.direction}
                 onChange={(value) => handleFilterChange('direction', value)}
                 className="w-full"
                 popupMatchSelectWidth={false}
@@ -124,7 +155,7 @@ export const AnalyticsFilterBar: React.FC<AnalyticsFilterBarProps> = ({
               </label>
               <InputNumber
                 min={3}
-                value={filters.minCalls}
+                value={localFilters.minCalls}
                 onChange={(value) => handleFilterChange('minCalls', value)}
                 className="w-full"
               />
@@ -139,7 +170,7 @@ export const AnalyticsFilterBar: React.FC<AnalyticsFilterBarProps> = ({
               <InputNumber
                 min={1}
                 max={100}
-                value={filters.limit}
+                value={localFilters.limit}
                 onChange={(value) => handleFilterChange('limit', value)}
                 className="w-full"
               />
@@ -152,7 +183,7 @@ export const AnalyticsFilterBar: React.FC<AnalyticsFilterBarProps> = ({
                 Disposition
               </label>
               <Select
-                value={filters.disposition}
+                value={localFilters.disposition}
                 onChange={(value) => handleFilterChange('disposition', value)}
                 className="w-full"
                 popupMatchSelectWidth={false}
@@ -172,7 +203,7 @@ export const AnalyticsFilterBar: React.FC<AnalyticsFilterBarProps> = ({
                 Sort By
               </label>
               <Select
-                value={filters.sortBy}
+                value={localFilters.sortBy}
                 onChange={(value) => handleFilterChange('sortBy', value)}
                 className="w-full"
                 popupMatchSelectWidth={false}
@@ -184,6 +215,24 @@ export const AnalyticsFilterBar: React.FC<AnalyticsFilterBarProps> = ({
             </div>
           </Col>
         </Row>
+        
+        {/* Action Buttons */}
+        <div className="mt-6 flex flex-wrap gap-3 justify-end">
+          <Button 
+            onClick={resetFilters}
+            icon={<RotateCcw size={16} />}
+          >
+            Reset Filters
+          </Button>
+          <Button 
+            type="primary" 
+            onClick={applyFilters}
+            icon={<Filter size={16} />}
+            disabled={!filtersModified}
+          >
+            Apply Filters
+          </Button>
+        </div>
       </ConfigProvider>
     </div>
   );
