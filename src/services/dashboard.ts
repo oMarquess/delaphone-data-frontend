@@ -166,13 +166,15 @@ export const dashboardService = {
   // Get dashboard metrics
   getDashboardMetrics: async (startDate: string, endDate: string): Promise<DashboardMetrics> => {
     try {
-      // The API endpoint is likely just /call-records with date filters
-      const response = await api.get('/call-records', {
+      // Use the correct endpoint based on backend structure
+      console.log(`Calling dashboard API: ${API_BASE_URL}/call-records/dashboard with dates ${startDate} to ${endDate}`);
+      const response = await api.get('/call-records/dashboard', {
         params: {
           start_date: startDate,
           end_date: endDate,
         }
       });
+      console.log('Dashboard API response:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching dashboard metrics:', error);
@@ -181,15 +183,17 @@ export const dashboardService = {
   },
   
   // Get call records
-  getCallRecords: async (startDate: string, endDate: string, limit: number = 100): Promise<any> => {
+  getCallRecords: async (startDate: string, endDate: string, limit: number = 1000000): Promise<any> => {
     try {
-      const response = await api.get('/call-records', {
+      console.log(`Calling records API: ${API_BASE_URL}/call-records/dashboard with dates ${startDate} to ${endDate} and limit ${limit}`);
+      const response = await api.get('/call-records/dashboard', {
         params: {
           start_date: startDate,
           end_date: endDate,
           limit
         }
       });
+      console.log('Call records API response:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching call records:', error);

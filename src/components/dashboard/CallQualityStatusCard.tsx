@@ -19,6 +19,14 @@ interface CallQualityStatusCardProps {
   isLoading?: boolean;
 }
 
+// Helper to safely format a numeric value with fixed precision
+const safeFormat = (value: any, precision: number = 1): string => {
+  // Ensure we have a numeric value
+  const numValue = typeof value === 'number' ? value : parseFloat(value || '0');
+  // Check if it's a valid number
+  return isNaN(numValue) ? '0.0' : numValue.toFixed(precision);
+};
+
 export default function CallQualityStatusCard({
   answeredCalls = 0,
   noAnswerCalls = 0,
@@ -94,10 +102,10 @@ export default function CallQualityStatusCard({
     <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Call Status Distribution</h3>
-        <div className="flex items-center space-x-1 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">
+        <div className="flex items-center space-x-2 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">
           <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-            {(answerRate || 0).toFixed(1)}% Answer Rate
+            {safeFormat(answerRate)}% Answer Rate
           </span>
         </div>
       </div>

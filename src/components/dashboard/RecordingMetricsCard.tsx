@@ -17,6 +17,11 @@ interface RecordingMetricsCardProps {
   period?: string;
 }
 
+const safeFormat = (value: any, precision: number = 1): string => {
+  const numValue = typeof value === 'number' ? value : parseFloat(value || '0');
+  return isNaN(numValue) ? '0.0' : numValue.toFixed(precision);
+};
+
 export default function RecordingMetricsCard({
   recordingPercentage = 0,
   totalCalls = 0,
@@ -64,7 +69,7 @@ export default function RecordingMetricsCard({
       
       <div className="mt-4 flex items-end">
         <p className="text-2xl font-semibold text-gray-800 dark:text-white">
-          {recordingPercentage.toFixed(1)}%
+          {safeFormat(recordingPercentage)}%
         </p>
         
         {trendData && (
@@ -92,7 +97,7 @@ export default function RecordingMetricsCard({
       </div>
       
       <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-        {recordingPercentage.toFixed(1)}% of calls recorded {period}
+        {safeFormat(recordingPercentage)}% of calls recorded {period}
       </p>
     </div>
   );

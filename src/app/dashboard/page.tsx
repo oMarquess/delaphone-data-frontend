@@ -51,7 +51,15 @@ export default function DashboardPage() {
         value = value[key];
       }
       
-      return value === undefined || value === null ? fallback : value;
+      // Handle non-numeric values
+      if (value === undefined || value === null) return fallback;
+      if (typeof value === 'string') {
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? fallback : parsed;
+      }
+      if (typeof value !== 'number') return fallback;
+      
+      return value;
     } catch (e) {
       console.error(`Error accessing ${path}:`, e);
       return fallback;
@@ -63,11 +71,11 @@ export default function DashboardPage() {
     const hours = Array.from({ length: 24 }, (_, i) => i);
     return hours.map(hour => ({
       hour,
-      total: Math.floor(Math.random() * 50) + 10,
-      inbound: Math.floor(Math.random() * 30) + 5,
-      outbound: Math.floor(Math.random() * 20) + 5,
-      internal: Math.floor(Math.random() * 5),
-      unknown: Math.floor(Math.random() * 8) + 1
+      total: 0,
+      inbound: 0,
+      outbound: 0,
+      internal: 0,
+      unknown: 0
     }));
   };
 
