@@ -6,7 +6,8 @@ import {
   Phone 
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CallRecord {
   calldate: string;
@@ -32,6 +33,10 @@ export default function CallDetailsTable({
 }: CallDetailsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 10;
+  
+  // Calculate pagination indices
+  const startIndex = (currentPage - 1) * recordsPerPage;
+  const endIndex = startIndex + recordsPerPage;
   
   const formatPhoneNumber = (phoneNumber: string) => {
     if (!phoneNumber) return 'Unknown';
@@ -82,12 +87,99 @@ export default function CallDetailsTable({
     }
   };
   
-  const paginatedRecords = records.slice(
+  const currentRecords = records.slice(
     (currentPage - 1) * recordsPerPage,
     currentPage * recordsPerPage
   );
   
   const totalPages = Math.ceil(records.length / recordsPerPage);
+  
+  const columns = useMemo(() => [
+    {
+      header: 'Source',
+      accessorKey: 'src',
+    },
+    {
+      header: 'Destination',
+      accessorKey: 'dst',
+    },
+    {
+      header: 'Date',
+      accessorKey: 'calldate',
+      cell: ({ row }: any) => {
+        const calldate = row.original.calldate;
+        try {
+          // Try to format as a date if possible, otherwise show as is
+          return calldate ? format(new Date(calldate), 'MMM d, yyyy') : 'N/A';
+        } catch (error) {
+          return calldate || 'N/A';
+        }
+      },
+    },
+    {
+      header: 'Calls',
+      accessorKey: 'calls',
+      cell: ({ row }: any) => {
+        const calls = row.original.calls;
+        return <span>{calls || 1}</span>;
+      },
+    },
+    {
+      header: 'Direction',
+      accessorKey: 'direction',
+      cell: ({ row }: any) => {
+        const direction = row.original.direction;
+        const color = 
+          direction === 'inbound' ? 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400' :
+          direction === 'outbound' ? 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400' :
+          direction === 'internal' ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400' :
+          'text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-400';
+        
+        return (
+          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${color}`}>
+            {direction === 'inbound' ? 'Inbound' :
+             direction === 'outbound' ? 'Outbound' :
+             direction === 'internal' ? 'Internal' : 'Unknown'}
+          </span>
+        );
+      },
+    },
+    {
+      header: 'Duration',
+      accessorKey: 'duration',
+      cell: ({ row }: any) => {
+        const duration = row.original.duration;
+        const avg_duration = row.original.avg_duration;
+        
+        // Use avg_duration if it's available and a specific duration isn't
+        const displayDuration = (duration === undefined && avg_duration !== undefined) 
+          ? avg_duration 
+          : duration;
+          
+        return <span>{formatDuration(displayDuration || 0)}</span>;
+      },
+    },
+    {
+      header: 'Status',
+      accessorKey: 'disposition',
+      cell: ({ row }: any) => {
+        const disposition = row.original.disposition;
+        const color = 
+          disposition === 'ANSWERED' ? 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400' :
+          disposition === 'NO ANSWER' ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400' :
+          disposition === 'BUSY' ? 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400' :
+          'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400';
+        
+        return (
+          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${color}`}>
+            {disposition === 'ANSWERED' ? 'Answered' :
+             disposition === 'NO ANSWER' ? 'No Answer' :
+             disposition === 'BUSY' ? 'Busy' : 'Failed'}
+          </span>
+        );
+      },
+    },
+  ], []);
   
   if (isLoading) {
     return (
@@ -130,110 +222,80 @@ export default function CallDetailsTable({
   }
   
   return (
-    <div className="overflow-x-auto">
-      <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg">
-        <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-800 dark:text-white">Recent Call Activity</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Detailed records of recent calls in the system
-          </p>
-        </div>
-        
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-900/50">
+    <div className="overflow-hidden">
+      <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">Call Details</h3>
+      </div>
+      
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead className="text-xs text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 uppercase tracking-wider">
             <tr>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Time
-              </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Direction
-              </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                From
-              </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                To
-              </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Duration
-              </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Status
-              </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Recording
-              </th>
+              {columns.map((column, i) => (
+                <th key={i} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {column.header}
+                </th>
+              ))}
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {paginatedRecords.map((record, index) => (
-              <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                  {record.calldate ? format(new Date(record.calldate), 'MMM d, yyyy HH:mm:ss') : 'Unknown'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                  <div className="flex items-center">
-                    {getDirectionIcon(record.direction)}
-                    <span className="ml-2 capitalize">{record.direction || 'Unknown'}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                  {formatPhoneNumber(record.src)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                  {formatPhoneNumber(record.dst)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                  {formatDuration(record.duration || 0)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(record.disposition)}`}>
-                    {record.disposition || 'Unknown'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                  {record.recordingfile ? (
-                    <span className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
-                      View
-                    </span>
-                  ) : (
-                    <span className="text-gray-400 dark:text-gray-600">None</span>
-                  )}
+          <tbody>
+            {currentRecords.length > 0 ? (
+              currentRecords.map((record, i) => (
+                <tr 
+                  key={i} 
+                  className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
+                >
+                  {columns.map((column, j) => (
+                    <td key={j} className="px-6 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                      {column.cell ? 
+                        column.cell({ row: { original: record } }) : 
+                        record[column.accessorKey as keyof typeof record]}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={columns.length} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  No call records found for the selected time period
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
-        
-        {totalPages > 1 && (
-          <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Showing <span className="font-medium">{(currentPage - 1) * recordsPerPage + 1}</span> to{' '}
-              <span className="font-medium">
-                {Math.min(currentPage * recordsPerPage, records.length)}
-              </span>{' '}
-              of <span className="font-medium">{records.length}</span> results
-            </div>
-            
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+      
+      {records.length > 0 && (
+        <div className="flex justify-between items-center px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Showing {currentRecords.length === 0 ? 0 : startIndex + 1}-{Math.min(endIndex, records.length)} of {records.length} records
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <button 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`p-1 rounded ${
+                currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <ChevronLeft size={18} />
+            </button>
+            
+            <span className="text-sm text-gray-700 dark:text-gray-300">Page {currentPage} of {totalPages}</span>
+            
+            <button 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className={`p-1 rounded ${
+                currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

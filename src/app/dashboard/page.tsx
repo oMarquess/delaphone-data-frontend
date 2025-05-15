@@ -91,20 +91,51 @@ export default function DashboardPage() {
         const startDateStr = format(dateRange.startDate, 'yyyy-MM-dd');
         const endDateStr = format(dateRange.endDate, 'yyyy-MM-dd');
         
-        // Fetch dashboard metrics directly from /call-records/
+        // Fetch dashboard metrics from the dashboard endpoint
         const data = await dashboardService.getDashboardMetrics(startDateStr, endDateStr);
         console.log('Dashboard data:', data); // For debugging
         console.log('Hourly distribution data:', data.hourly_distribution); // Debug hourly distribution
         setDashboardData(data);
         
-        // Set call records from the same response if available
-        if (data && data.records && Array.isArray(data.records)) {
-          setCallRecords(data.records);
+        // Use top_sources instead of records for the table
+        if (data && data.top_sources && Array.isArray(data.top_sources)) {
+          // Transform top_sources data to match expected call records format
+          const formattedRecords = data.top_sources.map(source => ({
+            src: source.src,
+            dst: "N/A", // Not available in top_sources
+            calldate: data.time_period?.start_date || "N/A",
+            duration: source.duration,
+            billsec: source.duration, // Using duration as billsec
+            disposition: "ANSWERED", // Assuming all are answered
+            direction: source.unknown > 0 ? "unknown" : 
+                      source.inbound > 0 ? "inbound" : 
+                      source.outbound > 0 ? "outbound" : "internal",
+            calls: source.calls,
+            avg_duration: source.avg_duration
+          }));
+          setCallRecords(formattedRecords);
         } else {
-          // Fallback to fetch records separately
+          // If no top_sources, try fetching call records separately
           try {
             const callData = await dashboardService.getCallRecords(startDateStr, endDateStr);
-            setCallRecords(callData.records || []);
+            if (callData && callData.top_sources && Array.isArray(callData.top_sources)) {
+              const formattedRecords = callData.top_sources.map(source => ({
+                src: source.src,
+                dst: "N/A",
+                calldate: callData.time_period?.start_date || "N/A",
+                duration: source.duration,
+                billsec: source.duration,
+                disposition: "ANSWERED",
+                direction: source.unknown > 0 ? "unknown" : 
+                          source.inbound > 0 ? "inbound" : 
+                          source.outbound > 0 ? "outbound" : "internal",
+                calls: source.calls,
+                avg_duration: source.avg_duration
+              }));
+              setCallRecords(formattedRecords);
+            } else {
+              setCallRecords([]);
+            }
           } catch (recordError) {
             console.error('Error fetching call records:', recordError);
             setCallRecords([]);
