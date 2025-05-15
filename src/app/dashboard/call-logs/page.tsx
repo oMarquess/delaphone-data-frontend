@@ -8,6 +8,7 @@ import QuickDateSelector from '@/components/analytics/QuickDateSelector';
 import CallLogsAdvancedFilter, { CallLogsFilterValues } from '@/components/dashboard/CallLogsAdvancedFilter';
 import CallLogsTable, { CallLog } from '@/components/dashboard/CallLogsTable';
 import { dashboardService } from '@/services/dashboard';
+import { publishDateChange, publishFilterChange } from '@/components/ai/AIDrawer';
 
 export default function CallLogsPage() {
   const [filterVisible, setFilterVisible] = useState(false);
@@ -105,6 +106,9 @@ export default function CallLogsPage() {
     // Update dates only if we have valid values
     setDateRange({ startDate, endDate });
     
+    // Publish date changes for AI Drawer to sync
+    publishDateChange(startDate, endDate);
+    
     // Reset page and trigger data refetch
     setCurrentPage(1);
   };
@@ -117,7 +121,14 @@ export default function CallLogsPage() {
         startDate: newFilters.startDate,
         endDate: newFilters.endDate
       });
+      
+      // Publish date changes if they're updated
+      publishDateChange(newFilters.startDate, newFilters.endDate);
     }
+    
+    // Publish filter changes for AI Drawer to sync
+    publishFilterChange('Call Logs', newFilters);
+    
     // Reset page and trigger data refetch
     setCurrentPage(1);
   };

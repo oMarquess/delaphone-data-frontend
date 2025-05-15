@@ -26,6 +26,7 @@ import {
 } from '@/services/dashboard';
 import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/config/constants';
+import { publishDateChange } from '@/components/ai/AIDrawer';
 
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -165,6 +166,11 @@ export default function DashboardPage() {
   
   const handleDateRangeChange = (startDate: Date, endDate: Date) => {
     setDateRange({ startDate, endDate });
+    
+    // Publish date change to keep AIDrawer in sync
+    const startDateStr = format(startDate, 'yyyy-MM-dd');
+    const endDateStr = format(endDate, 'yyyy-MM-dd');
+    publishDateChange(startDateStr, endDateStr);
   };
   
   return (

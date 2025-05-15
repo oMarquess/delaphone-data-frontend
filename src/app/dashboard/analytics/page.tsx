@@ -10,6 +10,7 @@ import ActivityTimeline from '@/components/analytics/ActivityTimeline';
 import CallerMetricsCards from '@/components/analytics/CallerMetricsCards';
 import CallPerformanceRadar from '@/components/analytics/CallPerformanceRadar';
 import QuickDateSelector from '@/components/analytics/QuickDateSelector';
+import { publishDateChange, publishFilterChange } from '@/components/ai/AIDrawer';
 
 export default function AnalyticsPage() {
   // Initial filters
@@ -30,6 +31,14 @@ export default function AnalyticsPage() {
 
   const handleFilterChange = (newFilters: AnalyticsFilters) => {
     setFilters(newFilters);
+    
+    // Publish filter changes for AI Drawer to sync
+    publishFilterChange('Call Analytics', newFilters);
+    
+    // Also publish date changes if they're included
+    if (newFilters.startDate && newFilters.endDate) {
+      publishDateChange(newFilters.startDate, newFilters.endDate);
+    }
   };
 
   const handleDateRangeChange = (startDate: string, endDate: string, label: string) => {
@@ -48,15 +57,21 @@ export default function AnalyticsPage() {
       setFilterVisible(false);
     }
     
+    // Publish date changes for AI Drawer to sync
+    publishDateChange(startDate, endDate);
+    
     const newFilters = {
       ...filters,
       startDate,
       endDate
     };
     setFilters(newFilters);
+    
     // If we select a preset, automatically apply the filter
     if (label !== 'Custom') {
-      handleFilterChange(newFilters);
+      // No need to call handleFilterChange here since we're already publishing the date change
+      // and we'll update filters below
+      publishFilterChange('Call Analytics', newFilters);
     }
   };
 
