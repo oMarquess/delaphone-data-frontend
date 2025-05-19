@@ -13,10 +13,13 @@ import QuickDateSelector from '@/components/analytics/QuickDateSelector';
 import { publishDateChange, publishFilterChange } from '@/components/ai/AIDrawer';
 
 export default function AnalyticsPage() {
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+  
   // Initial filters
   const initialFilters: AnalyticsFilters = {
-    startDate: '2023-01-01',
-    endDate: '2023-01-10',
+    startDate: today,
+    endDate: today,
     minCalls: 30,
     disposition: 'ANSWERED',
     direction: 'outbound',
