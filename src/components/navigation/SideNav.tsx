@@ -52,6 +52,11 @@ const SideNav = () => {
       icon: <BarChartOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
     },
     {
+      path: '/dashboard/agent-analytics', 
+      name: 'Agent Analytics', 
+      icon: <UserOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
+    },
+    {
       path: '/dashboard/reports', 
       name: 'Reports',
       icon: <FileTextOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />

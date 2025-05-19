@@ -54,17 +54,92 @@ export interface AnalyticsResponse {
     direction: string;
     min_calls: number;
     disposition: string;
+    agent?: string;
   };
   summary: {
     total_callers: number;
     total_calls: number;
     total_duration: number;
     avg_calls_per_caller: number;
+    // Agent analytics fields
+    total_agents?: number;
+    avg_calls_per_agent?: number;
+    avg_handle_time?: number;
+    avg_resolution_rate?: number;
+    avg_answer_rate?: number;
+    avg_handling_time?: number;
+    team_averages?: {
+      answer_rate: number;
+      call_duration: number;
+      recording_rate: number;
+      calls_per_day: number;
+    }
   };
   top_callers: CallerData[];
   top_callers_by_frequency: CallerData[];
   top_callers_by_duration: CallerData[];
   top_callers_by_avg_duration: CallerData[];
+  // Agent analytics fields
+  agents?: Array<{
+    agent: string;
+    agent_cnam: string;
+    call_count: number;
+    answered_calls: number;
+    no_answer_calls: number;
+    busy_calls: number;
+    failed_calls: number;
+    total_duration: number;
+    total_billsec: number;
+    outbound_calls: number;
+    inbound_calls: number;
+    internal_calls: number;
+    recording_count: number;
+    unique_destination_count: number;
+    answer_rate: number;
+    recording_rate: number;
+    avg_duration: number;
+    avg_billsec: number;
+    efficiency_score: number;
+    performance_level: string;
+    calls_per_day: number;
+  }>;
+  disposition_data?: Array<{
+    agent: string;
+    agent_cnam: string;
+    ANSWERED: number;
+    NO_ANSWER: number;
+    BUSY: number;
+    FAILED: number;
+    total: number;
+  }>;
+  direction_data?: Array<{
+    agent: string;
+    agent_cnam: string;
+    OUTBOUND: number;
+    INBOUND: number;
+    INTERNAL: number;
+    total: number;
+  }>;
+  gauge_metrics?: {
+    answer_rate: Array<{
+      agent: string;
+      agent_cnam: string;
+      value: number;
+      vs_team: number;
+    }>;
+    efficiency_score: Array<{
+      agent: string;
+      agent_cnam: string;
+      value: number;
+      level: string;
+    }>;
+    calls_per_day: Array<{
+      agent: string;
+      agent_cnam: string;
+      value: number;
+      vs_team: number;
+    }>;
+  };
 }
 
 // Helper function to build the query string
@@ -103,9 +178,10 @@ const fetcher = async (url: string) => {
 };
 
 // Custom hook to fetch analytics data
-export const useAnalyticsData = (filters: AnalyticsFilters) => {
+export const useAnalyticsData = (filters: AnalyticsFilters, type: 'caller' | 'agent' = 'caller') => {
   const queryString = buildQueryString(filters);
-  const url = `/call-records/caller-analysis?${queryString}`;
+  const endpoint = type === 'agent' ? 'agent-performance' : 'caller-analysis';
+  const url = `/call-records/${endpoint}?${queryString}`;
 
   const { data, error, isLoading, mutate } = useSWR<AnalyticsResponse>(
     url,

@@ -164,6 +164,13 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
             filters.disposition
           );
           break;
+        case 'Agent Analytics':
+          data = await dashboardService.getAgentMetrics(
+            dates.startDate, 
+            dates.endDate,
+            filters.disposition
+          );
+          break;
         default:
           data = await dashboardService.getDashboardMetrics(dates.startDate, dates.endDate);
       }
@@ -273,6 +280,13 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
           break;
         case 'Caller Analytics':
           data = await dashboardService.getCallMetrics(
+            dateRange.startDate, 
+            dateRange.endDate,
+            activeFilters[activeTab]?.disposition
+          );
+          break;
+        case 'Agent Analytics':
+          data = await dashboardService.getAgentMetrics(
             dateRange.startDate, 
             dateRange.endDate,
             activeFilters[activeTab]?.disposition

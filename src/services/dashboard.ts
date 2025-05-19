@@ -315,6 +315,23 @@ export const dashboardService = {
       throw error;
     }
   },
+  
+  // Get agent metrics
+  getAgentMetrics: async (startDate: string, endDate: string, disposition?: string): Promise<any> => {
+    try {
+      const response = await api.get('/call-records/agent-metrics', {
+        params: {
+          start_date: startDate,
+          end_date: endDate,
+          disposition,
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching agent metrics:', error);
+      throw error;
+    }
+  },
 };
 
 /**
