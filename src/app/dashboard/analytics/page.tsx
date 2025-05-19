@@ -17,11 +17,11 @@ export default function AnalyticsPage() {
   const initialFilters: AnalyticsFilters = {
     startDate: '2023-01-01',
     endDate: '2023-01-10',
-    minCalls: 3,
+    minCalls: 30,
     disposition: 'ANSWERED',
     direction: 'outbound',
     sortBy: 'count',
-    limit: 10
+    limit: 100
   };
 
   const [filters, setFilters] = useState<AnalyticsFilters>(initialFilters);

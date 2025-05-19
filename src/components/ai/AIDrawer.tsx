@@ -209,6 +209,12 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
         processedData = dataWithoutDaily;
       }
       
+      if (activeTab === 'Call Logs' && processedData) {
+        // Remove records array from Call Logs data
+        const { records, ...dataWithoutRecords } = processedData;
+        processedData = dataWithoutRecords;
+      }
+      
       // Convert the data to a string
       const stringifiedData = JSON.stringify(processedData);
       
@@ -305,6 +311,12 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
           // Remove daily_data as requested
           const { daily_data, ...dataWithoutDaily } = processedData;
           processedData = dataWithoutDaily;
+        }
+        
+        if (activeTab === 'Call Logs' && processedData) {
+          // Remove records array from Call Logs data
+          const { records, ...dataWithoutRecords } = processedData;
+          processedData = dataWithoutRecords;
         }
         
         // Convert the data to a string
