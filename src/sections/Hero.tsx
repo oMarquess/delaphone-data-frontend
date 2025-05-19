@@ -77,7 +77,16 @@ export const Hero = () => {
     {/* Text */}
  
     <div className="container relative mt-16">
-      <h1 className="text-6xl leading-tight md:text-7xl md:leading-[1.1] font-semibold tracking-tighter bg-[radial-gradient(100%_100%_at_top_left,_white,_#FFFFFF,_rgba(255,87,87,0.5))] text-transparent bg-clip-text text-center">AI Insights From Every Customer Call</h1>
+      <h1 className="text-6xl leading-tight md:text-7xl md:leading-[1.1] font-semibold tracking-tighter bg-[radial-gradient(100%_100%_at_top_left,_white,_#FFFFFF,_rgba(255,87,87,0.5))] text-transparent bg-clip-text text-center">
+        <span className="relative inline-block perspective-1000">
+          <span className="relative z-10 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-transparent bg-clip-text transform-gpu hover:scale-105 transition-transform duration-300 inline-block [transform-style:preserve-3d] [transform:rotateX(10deg)_rotateY(-10deg)] hover:[transform:rotateX(15deg)_rotateY(-15deg)]">
+            AI
+            <span className="absolute inset-0 bg-gradient-to-r from-purple-400/20 via-pink-500/20 to-red-500/20 blur-xl [transform:translateZ(-20px)]"></span>
+            <span className="absolute inset-0 bg-gradient-to-r from-purple-400/10 via-pink-500/10 to-red-500/10 [transform:translateZ(-10px)]"></span>
+          </span>
+        </span>{" "}
+        Insights From Every Customer Call
+      </h1>
       <p className="text-lg md:text-xl text-white/70 mt-5 text-center max-w-xl mx-auto">Turn conversations into data. Turn data into decisions.</p>
       <div className="flex gap-4 justify-center mt-5">
       <Button onClick={() => router.push('/login')}>Try for free</Button>

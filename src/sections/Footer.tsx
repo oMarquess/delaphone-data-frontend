@@ -56,7 +56,7 @@ export const Footer = () => {
           <div className="border h-10 w-10 rounded-lg inline-flex items-center justify-center">
             <Image src={LogoIcon} alt="Dela Logo" className="w-6 h-6" />
           </div>
-          <div className={`${pressStart2P.className} text-xs text-white leading-relaxed`}>Delaphone AI</div>
+          <div className={`${pressStart2P.className} text-xs text-white leading-relaxed`}>DLP.AI</div>
         </div>
         
         <nav className="flex items-center gap-5 md:gap-8 text-white/70">
@@ -73,7 +73,7 @@ export const Footer = () => {
           </div>
           
           <div className="text-xs text-white/50 whitespace-nowrap">
-            © {new Date().getFullYear()} Delaphone.AI
+            © {new Date().getFullYear()} DLP.AI
           </div>
         </div>
       </div>
