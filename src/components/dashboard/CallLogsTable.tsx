@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ChevronDownIcon, ChevronUpIcon, Play, Download, ChevronLeft, ChevronRight, Phone, Clock, Calendar, Info, ArrowUp, ArrowDown, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import React from 'react';
 
 // Types based on the API response
 export interface CallLog {
@@ -516,9 +517,8 @@ export default function CallLogsTable({
                 </tr>
               ) : sortedRecords.length > 0 ? (
                 sortedRecords.map((record) => (
-                  <>
+                  <React.Fragment key={record.uniqueid}>
                     <tr 
-                      key={record.uniqueid}
                       className={`group hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer ${
                         expandedRow === record.uniqueid ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                       }`}
@@ -566,7 +566,7 @@ export default function CallLogsTable({
                       </td>
                     </tr>
                     {expandedRow === record.uniqueid && (
-                      <tr className="bg-gray-50 dark:bg-gray-700/70">
+                      <tr key={`${record.uniqueid}-expanded`} className="bg-gray-50 dark:bg-gray-700/70">
                         <td colSpan={8} className="px-6 py-4">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-600">
@@ -638,7 +638,7 @@ export default function CallLogsTable({
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 ))
               ) : (
                 <tr>

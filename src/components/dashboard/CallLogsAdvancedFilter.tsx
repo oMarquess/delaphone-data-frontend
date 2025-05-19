@@ -147,7 +147,7 @@ export default function CallLogsAdvancedFilter({
               <Select
                 value={localFilters.callDirection}
                 onChange={(value) => handleLocalFilterChange('callDirection', value)}
-                dropdownMatchSelectWidth={true}
+                popupMatchSelectWidth={true}
               >
                 <Option value="all">All</Option>
                 <Option value="inbound">Inbound</Option>
@@ -160,7 +160,7 @@ export default function CallLogsAdvancedFilter({
               <Select
                 value={localFilters.callStatus}
                 onChange={(value) => handleLocalFilterChange('callStatus', value)}
-                dropdownMatchSelectWidth={true}
+                popupMatchSelectWidth={true}
               >
                 <Option value="all">All</Option>
                 <Option value="ANSWERED">Answered</Option>
@@ -201,174 +201,175 @@ export default function CallLogsAdvancedFilter({
             ghost 
             defaultActiveKey={['1']} 
             className="border-0 pt-0"
-          >
-            {/* Phone Numbers Section */}
-            <Panel 
-              header={
-                <div className="flex items-center gap-2">
-                  <Phone size={16} className="text-blue-500 dark:text-blue-400" /> 
-                  <span className="font-medium">Phone Numbers</span>
-                </div>
-              } 
-              key="1" 
-              className="pb-0"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <Item label="Source Number" className="m-0">
-                    <Input
-                      value={localFilters.sourceNumber}
-                      onChange={(e) => handleLocalFilterChange('sourceNumber', e.target.value)}
-                      placeholder="Filter by source number"
-                    />
-                  </Item>
-                  
-                  <Item label="DID Number" className="m-0">
-                    <Input
-                      value={localFilters.did}
-                      onChange={(e) => handleLocalFilterChange('did', e.target.value)}
-                      placeholder="Filter by DID number"
-                    />
-                  </Item>
-                </div>
-                
-                <div className="space-y-4">
-                  <Item label="Destination Number" className="m-0">
-                    <Input
-                      value={localFilters.destinationNumber}
-                      onChange={(e) => handleLocalFilterChange('destinationNumber', e.target.value)}
-                      placeholder="Filter by destination number"
-                    />
-                  </Item>
-                  
-                  <Item label="Extension (≤ 5 digits)" className="m-0">
-                    <Input
-                      value={localFilters.extension}
-                      onChange={(e) => handleLocalFilterChange('extension', e.target.value)}
-                      placeholder="Filter by extension"
-                      maxLength={5}
-                    />
-                  </Item>
-                </div>
-              </div>
-            </Panel>
-            
-            {/* Call Details Section */}
-            <Panel 
-              header={
-                <div className="flex items-center gap-2">
-                  <Clock size={16} className="text-blue-500 dark:text-blue-400" /> 
-                  <span className="font-medium">Call Details</span>
-                </div>
-              } 
-              key="2"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <Item label="Min Duration (seconds)" className="m-0">
-                    <InputNumber
-                      style={commonStyles}
-                      value={localFilters.minDuration ? parseInt(localFilters.minDuration) : null}
-                      onChange={(value) => handleLocalFilterChange('minDuration', value?.toString() || '')}
-                      placeholder="Minimum"
-                      min={0}
-                    />
-                  </Item>
-                  
-                  <Item label="Caller Name" className="m-0">
-                    <Input
-                      value={localFilters.callerName}
-                      onChange={(e) => handleLocalFilterChange('callerName', e.target.value)}
-                      placeholder="Filter by caller name"
-                    />
-                  </Item>
-                </div>
-                
-                <div className="space-y-4">
-                  <Item label="Max Duration (seconds)" className="m-0">
-                    <InputNumber
-                      style={commonStyles}
-                      value={localFilters.maxDuration ? parseInt(localFilters.maxDuration) : null}
-                      onChange={(value) => handleLocalFilterChange('maxDuration', value?.toString() || '')}
-                      placeholder="Maximum"
-                      min={0}
-                    />
-                  </Item>
-                  
-                  <Item label="Queue" className="m-0">
-                    <Input
-                      value={localFilters.queue}
-                      onChange={(e) => handleLocalFilterChange('queue', e.target.value)}
-                      placeholder="Filter by queue number"
-                    />
-                  </Item>
-                </div>
-              </div>
-            </Panel>
-            
-            {/* Result Options Section */}
-            <Panel 
-              header={
-                <div className="flex items-center gap-2">
-                  <Filter size={16} className="text-blue-500 dark:text-blue-400" /> 
-                  <span className="font-medium">Result Options</span>
-                </div>
-              } 
-              key="3"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Item label="Results Limit" className="m-0">
-                  <Select
-                    value={localFilters.limit}
-                    onChange={(value) => handleLocalFilterChange('limit', value)}
-                    dropdownMatchSelectWidth={true}
-                  >
-                    <Option value="50">50</Option>
-                    <Option value="100">100</Option>
-                    <Option value="250">250</Option>
-                    <Option value="500">500</Option>
-                    <Option value="700">700</Option>
-                    <Option value="900">900</Option>
-                  </Select>
-                </Item>
-                
-                <Item label="Sort By" className="m-0">
-                  <Select
-                    value={localFilters.sortBy}
-                    onChange={(value) => handleLocalFilterChange('sortBy', value)}
-                    dropdownMatchSelectWidth={true}
-                  >
-                    <Option value="calldate">Call Date</Option>
-                    <Option value="duration">Duration</Option>
-                    <Option value="billsec">Billing Duration</Option>
-                    <Option value="src">Source</Option>
-                    <Option value="dst">Destination</Option>
-                  </Select>
-                </Item>
-                
-                <Item label="Sort Order" className="m-0">
-                  <Select
-                    value={localFilters.sortOrder}
-                    onChange={(value) => handleLocalFilterChange('sortOrder', value)}
-                    dropdownMatchSelectWidth={true}
-                  >
-                    <Option value="desc">Descending</Option>
-                    <Option value="asc">Ascending</Option>
-                  </Select>
-                </Item>
-              </div>
-              
-              <div className="mt-4 ml-1">
-                <Switch
-                  checked={localFilters.uniqueCallersOnly}
-                  onChange={(checked) => handleLocalFilterChange('uniqueCallersOnly', checked)}
-                />
-                <span className="ml-2 text-sm">
-                  Show unique callers only
-                </span>
-              </div>
-            </Panel>
-          </Collapse>
+            items={[
+              {
+                key: '1',
+                label: (
+                  <div className="flex items-center gap-2">
+                    <Phone size={16} className="text-blue-500 dark:text-blue-400" /> 
+                    <span className="font-medium">Phone Numbers</span>
+                  </div>
+                ),
+                className: "pb-0",
+                children: (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      <Item label="Source Number" className="m-0">
+                        <Input
+                          value={localFilters.sourceNumber}
+                          onChange={(e) => handleLocalFilterChange('sourceNumber', e.target.value)}
+                          placeholder="Filter by source number"
+                        />
+                      </Item>
+                      
+                      <Item label="DID Number" className="m-0">
+                        <Input
+                          value={localFilters.did}
+                          onChange={(e) => handleLocalFilterChange('did', e.target.value)}
+                          placeholder="Filter by DID number"
+                        />
+                      </Item>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <Item label="Destination Number" className="m-0">
+                        <Input
+                          value={localFilters.destinationNumber}
+                          onChange={(e) => handleLocalFilterChange('destinationNumber', e.target.value)}
+                          placeholder="Filter by destination number"
+                        />
+                      </Item>
+                      
+                      <Item label="Extension (≤ 5 digits)" className="m-0">
+                        <Input
+                          value={localFilters.extension}
+                          onChange={(e) => handleLocalFilterChange('extension', e.target.value)}
+                          placeholder="Filter by extension"
+                          maxLength={5}
+                        />
+                      </Item>
+                    </div>
+                  </div>
+                )
+              },
+              {
+                key: '2',
+                label: (
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-blue-500 dark:text-blue-400" /> 
+                    <span className="font-medium">Call Details</span>
+                  </div>
+                ),
+                children: (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      <Item label="Min Duration (seconds)" className="m-0">
+                        <InputNumber
+                          style={commonStyles}
+                          value={localFilters.minDuration ? parseInt(localFilters.minDuration) : null}
+                          onChange={(value) => handleLocalFilterChange('minDuration', value?.toString() || '')}
+                          placeholder="Minimum"
+                          min={0}
+                        />
+                      </Item>
+                      
+                      <Item label="Caller Name" className="m-0">
+                        <Input
+                          value={localFilters.callerName}
+                          onChange={(e) => handleLocalFilterChange('callerName', e.target.value)}
+                          placeholder="Filter by caller name"
+                        />
+                      </Item>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <Item label="Max Duration (seconds)" className="m-0">
+                        <InputNumber
+                          style={commonStyles}
+                          value={localFilters.maxDuration ? parseInt(localFilters.maxDuration) : null}
+                          onChange={(value) => handleLocalFilterChange('maxDuration', value?.toString() || '')}
+                          placeholder="Maximum"
+                          min={0}
+                        />
+                      </Item>
+                      
+                      <Item label="Queue" className="m-0">
+                        <Input
+                          value={localFilters.queue}
+                          onChange={(e) => handleLocalFilterChange('queue', e.target.value)}
+                          placeholder="Filter by queue number"
+                        />
+                      </Item>
+                    </div>
+                  </div>
+                )
+              },
+              {
+                key: '3',
+                label: (
+                  <div className="flex items-center gap-2">
+                    <Filter size={16} className="text-blue-500 dark:text-blue-400" /> 
+                    <span className="font-medium">Result Options</span>
+                  </div>
+                ),
+                children: (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Item label="Results Limit" className="m-0">
+                        <Select
+                          value={localFilters.limit}
+                          onChange={(value) => handleLocalFilterChange('limit', value)}
+                          popupMatchSelectWidth={true}
+                        >
+                          <Option value="50">50</Option>
+                          <Option value="100">100</Option>
+                          <Option value="250">250</Option>
+                          <Option value="500">500</Option>
+                          <Option value="700">700</Option>
+                          <Option value="900">900</Option>
+                        </Select>
+                      </Item>
+                      
+                      <Item label="Sort By" className="m-0">
+                        <Select
+                          value={localFilters.sortBy}
+                          onChange={(value) => handleLocalFilterChange('sortBy', value)}
+                          popupMatchSelectWidth={true}
+                        >
+                          <Option value="calldate">Call Date</Option>
+                          <Option value="duration">Duration</Option>
+                          <Option value="billsec">Billing Duration</Option>
+                          <Option value="src">Source</Option>
+                          <Option value="dst">Destination</Option>
+                        </Select>
+                      </Item>
+                      
+                      <Item label="Sort Order" className="m-0">
+                        <Select
+                          value={localFilters.sortOrder}
+                          onChange={(value) => handleLocalFilterChange('sortOrder', value)}
+                          popupMatchSelectWidth={true}
+                        >
+                          <Option value="desc">Descending</Option>
+                          <Option value="asc">Ascending</Option>
+                        </Select>
+                      </Item>
+                    </div>
+                    
+                    <div className="mt-4 ml-1">
+                      <Switch
+                        checked={localFilters.uniqueCallersOnly}
+                        onChange={(checked) => handleLocalFilterChange('uniqueCallersOnly', checked)}
+                      />
+                      <span className="ml-2 text-sm">
+                        Show unique callers only
+                      </span>
+                    </div>
+                  </>
+                )
+              }
+            ]}
+          />
           
           {/* Action Buttons */}
           <div className="mt-6 flex flex-wrap gap-3 justify-end">

@@ -43,7 +43,16 @@ export default function LoginPage() {
             transition={{ duration: 0.5 }}
             className="text-2xl font-bold text-white mb-2"
           >
-            Welcome to Delaphone
+            <span className="text-white font-medium">Welcome to </span>
+            <span className="relative inline-flex items-center">
+              <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 text-transparent bg-clip-text font-extrabold tracking-tight">DLP</span>
+              <span className="mx-1 text-white/50">.</span>
+              <span className="relative">
+                <span className="relative z-10 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-transparent bg-clip-text font-extrabold tracking-tight inline-block [transform-style:preserve-3d] [transform:rotateX(10deg)_rotateY(-10deg)] hover:[transform:rotateX(15deg)_rotateY(-15deg)] transition-transform duration-300">AI</span>
+                <span className="absolute inset-0 bg-gradient-to-r from-purple-400/20 via-pink-500/20 to-red-500/20 blur-xl [transform:translateZ(-20px)]"></span>
+                <span className="absolute inset-0 bg-gradient-to-r from-purple-400/10 via-pink-500/10 to-red-500/10 [transform:translateZ(-10px)]"></span>
+              </span>
+            </span>
           </motion.h1>
         </div>
         <LoginForm />
