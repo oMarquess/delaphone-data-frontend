@@ -157,7 +157,7 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
             page: filters.page
           });
           break;
-        case 'Call Analytics':
+        case 'Caller Analytics':
           data = await dashboardService.getCallMetrics(
             dates.startDate, 
             dates.endDate,
@@ -271,7 +271,7 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
             }
           );
           break;
-        case 'Call Analytics':
+        case 'Caller Analytics':
           data = await dashboardService.getCallMetrics(
             dateRange.startDate, 
             dateRange.endDate,

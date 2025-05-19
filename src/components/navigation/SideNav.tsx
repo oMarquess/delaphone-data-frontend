@@ -48,7 +48,7 @@ const SideNav = () => {
     },
     {
       path: '/dashboard/analytics', 
-      name: 'Call Analytics', 
+      name: 'Caller Analytics', 
       icon: <BarChartOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
     },
     {

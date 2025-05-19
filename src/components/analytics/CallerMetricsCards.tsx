@@ -33,6 +33,10 @@ export default function CallerMetricsCards({
     try {
       if (!callers || callers.length === 0) return null;
       
+      // Calculate the total calls and average calls per caller
+      const totalCalls = callers.reduce((sum, caller) => sum + caller.call_count, 0);
+      const averageCalls = totalCalls / callers.length;
+      
       return {
         mostActive: callers.reduce((prev, current) => 
           prev.call_count > current.call_count ? prev : current),
@@ -47,7 +51,11 @@ export default function CallerMetricsCards({
           prev.recording_rate > current.recording_rate ? prev : current),
         
         bestAnswerRate: callers.reduce((prev, current) => 
-          prev.answer_rate > current.answer_rate ? prev : current)
+          prev.answer_rate > current.answer_rate ? prev : current),
+        
+        // Add these to the returned object
+        totalCalls,
+        averageCalls
       };
     } catch (error) {
       console.error('Error calculating top performer metrics:', error);
@@ -93,10 +101,14 @@ export default function CallerMetricsCards({
     {
       title: "Most Active Caller",
       caller: topPerformers.mostActive,
-      metric: `${topPerformers.mostActive.call_count} calls`,
+      metric: `${topPerformers.mostActive.call_count} ${topPerformers.mostActive.call_count === 1 ? 'call' : 'calls'}`,
       icon: <PhoneIcon className="h-6 w-6 text-blue-500" />,
       color: "blue",
-      description: `${Math.round(topPerformers.mostActive.call_count / callers.length)} times the average`
+      description: topPerformers.averageCalls ? 
+        `${(topPerformers.mostActive.call_count / topPerformers.averageCalls).toFixed(1)} ${
+          (topPerformers.mostActive.call_count / topPerformers.averageCalls) === 1 ? 'time' : 'times'
+        } the average` : 
+        'Highest call volume'
     },
     {
       title: "Longest Total Duration",
@@ -104,7 +116,7 @@ export default function CallerMetricsCards({
       metric: formatDuration(topPerformers.longestCalls.total_duration),
       icon: <ClockIcon className="h-6 w-6 text-purple-500" />,
       color: "purple",
-      description: `${topPerformers.longestCalls.call_count} calls total`
+      description: `${topPerformers.longestCalls.call_count} ${topPerformers.longestCalls.call_count === 1 ? 'call' : 'calls'} total`
     },
     {
       title: "Longest Avg Duration",
@@ -112,7 +124,7 @@ export default function CallerMetricsCards({
       metric: formatDuration(topPerformers.highestAvgDuration.avg_duration),
       icon: <TrendingUpIcon className="h-6 w-6 text-green-500" />,
       color: "green",
-      description: `${topPerformers.highestAvgDuration.call_count} calls analyzed`
+      description: `${topPerformers.highestAvgDuration.call_count} ${topPerformers.highestAvgDuration.call_count === 1 ? 'call' : 'calls'} analyzed`
     },
     {
       title: "Best Recording Rate",
@@ -120,7 +132,7 @@ export default function CallerMetricsCards({
       metric: `${topPerformers.bestRecordingRate.recording_rate.toFixed(1)}%`,
       icon: <MicIcon className="h-6 w-6 text-amber-500" />,
       color: "amber",
-      description: `${topPerformers.bestRecordingRate.has_recording} recordings`
+      description: `${topPerformers.bestRecordingRate.has_recording} ${topPerformers.bestRecordingRate.has_recording === 1 ? 'recording' : 'recordings'}`
     },
     {
       title: "Best Answer Rate",
@@ -128,7 +140,7 @@ export default function CallerMetricsCards({
       metric: `${topPerformers.bestAnswerRate.answer_rate.toFixed(1)}%`,
       icon: <CheckCircleIcon className="h-6 w-6 text-emerald-500" />,
       color: "emerald",
-      description: `${topPerformers.bestAnswerRate.answered_calls} answered calls`
+      description: `${topPerformers.bestAnswerRate.answered_calls} ${topPerformers.bestAnswerRate.answered_calls === 1 ? 'answered call' : 'answered calls'}`
     }
   ];
 

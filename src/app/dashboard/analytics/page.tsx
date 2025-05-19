@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { PhoneIcon, UserIcon, ClockIcon, BarChartIcon, FilterIcon, ChevronDownIcon, CalendarIcon } from 'lucide-react';
+import { PhoneIcon, UserIcon, ClockIcon, BarChartIcon, FilterIcon, ChevronDownIcon, CalendarIcon, CheckCircleIcon } from 'lucide-react';
 import SummaryCard from '@/components/dashboard/SummaryCard';
 import { AnalyticsFilterBar, AnalyticsFilters } from '@/components/analytics/AnalyticsFilterBar';
 import { useAnalyticsData, formatDuration } from '@/services/analytics';
@@ -20,9 +20,9 @@ export default function AnalyticsPage() {
   const initialFilters: AnalyticsFilters = {
     startDate: today,
     endDate: today,
-    minCalls: 30,
-    disposition: 'ANSWERED',
-    direction: 'outbound',
+    minCalls: 1,
+    disposition: 'all',
+    direction: 'all',
     sortBy: 'count',
     limit: 100
   };
@@ -32,11 +32,14 @@ export default function AnalyticsPage() {
   const [filterVisible, setFilterVisible] = useState(false);
   const [dateRangeLabel, setDateRangeLabel] = useState('Custom');
 
+  // State for tab selection in the detailed analysis section
+  const [analysisTab, setAnalysisTab] = useState<string>('comparison');
+
   const handleFilterChange = (newFilters: AnalyticsFilters) => {
     setFilters(newFilters);
     
     // Publish filter changes for AI Drawer to sync
-    publishFilterChange('Call Analytics', newFilters);
+    publishFilterChange('Caller Analytics', newFilters);
     
     // Also publish date changes if they're included
     if (newFilters.startDate && newFilters.endDate) {
@@ -74,26 +77,26 @@ export default function AnalyticsPage() {
     if (label !== 'Custom') {
       // No need to call handleFilterChange here since we're already publishing the date change
       // and we'll update filters below
-      publishFilterChange('Call Analytics', newFilters);
+      publishFilterChange('Caller Analytics', newFilters);
     }
   };
 
-  // Format duration from seconds to minutes for display
+  // Format duration from seconds to minutes for display with proper grammar
   const formatDurationDisplay = (seconds: number = 0) => {
     const minutes = Math.floor(seconds / 60);
-    return `${minutes} min`;
+    return minutes === 1 ? `${minutes} min` : `${minutes} mins`;
   };
 
   return (
     <div className="space-y-6">
       {/* Header with filter toggle */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Call Analytics</h1>
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Caller Analytics</h1>
         
         <div className="flex flex-col sm:flex-row gap-3">
           <button 
             onClick={() => setFilterVisible(!filterVisible)}
-            className="flex items-center gap-2 py-2 px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="flex items-center gap-2 py-2 px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             <FilterIcon size={16} />
             <span>Advanced Filters</span>
@@ -137,103 +140,198 @@ export default function AnalyticsPage() {
         </div>
       )}
       
-      {/* Dashboard status */}
-      <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
-        <div className="text-sm text-blue-800 dark:text-blue-300">
-          <span className="font-medium">Period:</span> {filters.startDate} to {filters.endDate}{' '}
-          <span className="mx-2">•</span>
-          <span className="font-medium">Direction:</span> {filters.direction}{' '}
-          <span className="mx-2">•</span>
-          <span className="font-medium">Call Type:</span> {filters.disposition}{' '}
+      {/* Dashboard status with improved styling */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+        <div className="text-sm text-blue-800 dark:text-blue-300 space-y-1 sm:space-y-0">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span className="inline-flex items-center">
+              <CalendarIcon size={14} className="mr-1.5" />
+              <span className="font-medium">Period:</span> {filters.startDate} to {filters.endDate}
+            </span>
+            
+            <span className="hidden sm:inline-block text-blue-300 dark:text-blue-700">|</span>
+            
+            <span className="inline-flex items-center">
+              <PhoneIcon size={14} className="mr-1.5" />
+              <span className="font-medium">Direction:</span> {filters.direction}
+            </span>
+            
+            <span className="hidden sm:inline-block text-blue-300 dark:text-blue-700">|</span>
+            
+            <span className="inline-flex items-center">
+              <CheckCircleIcon size={14} className="mr-1.5" />
+              <span className="font-medium">Call Type:</span> {filters.disposition}
+            </span>
+          </div>
         </div>
+        
         {isLoading && (
-          <div className="flex items-center text-blue-700 dark:text-blue-400">
+          <div className="flex items-center text-blue-700 dark:text-blue-400 mt-2 sm:mt-0">
             <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-blue-500 rounded-full mr-2"></div>
-            <span className="text-sm">Loading...</span>
+            <span className="text-sm">Loading insights...</span>
           </div>
         )}
       </div>
       
-      {/* Key Metrics Section */}
-      <section aria-labelledby="summary-metrics">
+      {/* Key Metrics Cards - Redesigned with gradient backgrounds */}
+      <section aria-labelledby="summary-metrics" className="pt-2">
         <div className="sr-only" id="summary-metrics">Summary Metrics</div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <SummaryCard 
-            title="Total Calls"
-            value={data?.summary?.total_calls || 0}
-            icon={<PhoneIcon size={18} />}
-            isLoading={isLoading}
-          />
-          
-          <SummaryCard 
-            title="Total Callers"
-            value={data?.summary?.total_callers || 0}
-            icon={<UserIcon size={18} />}
-            isLoading={isLoading}
-          />
-          
-          <SummaryCard 
-            title="Total Duration"
-            value={formatDurationDisplay(data?.summary?.total_duration)}
-            icon={<ClockIcon size={18} />}
-            isLoading={isLoading}
-          />
-          
-          <SummaryCard 
-            title="Avg Calls/Caller"
-            value={(data?.summary?.avg_calls_per_caller || 0).toFixed(2)}
-            icon={<BarChartIcon size={18} />}
-            isLoading={isLoading}
-          />
-        </div>
-      </section>
-      
-      {/* Top Performers Section */}
-      <section aria-labelledby="top-performers" className="pt-2">
-        <h2 id="top-performers" className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 px-1">Top Performers</h2>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <CallerMetricsCards 
-            callers={data?.top_callers} 
-            isLoading={isLoading} 
-          />
-        </div>
-      </section>
-      
-      {/* Detailed Analysis Section - Side by side charts */}
-      <section aria-labelledby="detailed-analysis" className="pt-2">
-        <h2 id="detailed-analysis" className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 px-1">Detailed Analysis</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            <h3 className="text-md font-medium text-gray-800 dark:text-gray-100 mb-4">Top Caller Comparison</h3>
-            <TopCallerComparisonChart 
-              callers={data?.top_callers} 
-              isLoading={isLoading} 
-              sortMetric="call_count"
-            />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-xl shadow-sm border border-blue-100 dark:border-blue-800/50 transition-all hover:shadow-md">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-sm font-medium text-blue-700 dark:text-blue-400">Total Calls</h3>
+              <div className="p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm">
+                <PhoneIcon size={18} className="text-blue-500 dark:text-blue-400" />
+              </div>
+            </div>
+            
+            <div className="text-3xl font-bold text-gray-800 dark:text-white mb-1">
+              {isLoading ? 
+                <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div> : 
+                data?.summary?.total_calls || 0
+              }
+            </div>
+            
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {data?.time_period?.total_days ? 
+                `Over ${data.time_period.total_days} ${data.time_period.total_days === 1 ? 'day' : 'days'}` : 
+                'All calls'}
+            </div>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            <h3 className="text-md font-medium text-gray-800 dark:text-gray-100 mb-4">Caller Performance Radar</h3>
-            <CallPerformanceRadar 
-              callers={data?.top_callers} 
-              isLoading={isLoading} 
-              maxCallers={3}
-            />
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-6 rounded-xl shadow-sm border border-purple-100 dark:border-purple-800/50 transition-all hover:shadow-md">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-sm font-medium text-purple-700 dark:text-purple-400">Total Callers</h3>
+              <div className="p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm">
+                <UserIcon size={18} className="text-purple-500 dark:text-purple-400" />
+              </div>
+            </div>
+            
+            <div className="text-3xl font-bold text-gray-800 dark:text-white mb-1">
+              {isLoading ? 
+                <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div> : 
+                data?.summary?.total_callers || 0
+              }
+            </div>
+            
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {data?.summary?.total_callers === 1 ? 'Unique caller' : 'Unique callers'}
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 p-6 rounded-xl shadow-sm border border-green-100 dark:border-green-800/50 transition-all hover:shadow-md">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-sm font-medium text-green-700 dark:text-green-400">Total Duration</h3>
+              <div className="p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm">
+                <ClockIcon size={18} className="text-green-500 dark:text-green-400" />
+              </div>
+            </div>
+            
+            <div className="text-3xl font-bold text-gray-800 dark:text-white mb-1">
+              {isLoading ? 
+                <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div> : 
+                formatDurationDisplay(data?.summary?.total_duration)
+              }
+            </div>
+            
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Total talk time
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-6 rounded-xl shadow-sm border border-amber-100 dark:border-amber-800/50 transition-all hover:shadow-md">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-sm font-medium text-amber-700 dark:text-amber-400">Avg Calls/Caller</h3>
+              <div className="p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm">
+                <BarChartIcon size={18} className="text-amber-500 dark:text-amber-400" />
+              </div>
+            </div>
+            
+            <div className="text-3xl font-bold text-gray-800 dark:text-white mb-1">
+              {isLoading ? 
+                <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div> : 
+                Math.round(data?.summary?.avg_calls_per_caller || 0)
+              }
+            </div>
+            
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {Math.round(data?.summary?.avg_calls_per_caller || 0) === 1 ? 
+                'Call per caller' : 
+                'Calls per caller'}
+            </div>
           </div>
         </div>
       </section>
       
-      {/* Activity Timeline Section - Full width */}
-      <section aria-labelledby="activity-timeline" className="pt-2">
-        <h2 id="activity-timeline" className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 px-1">Activity Over Time</h2>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <ActivityTimeline 
-            data={{
-              top_callers: data?.top_callers,
-              time_period: data?.time_period
-            }} 
-            isLoading={isLoading}
-          />
+      
+      {/* Tabbed Chart Section - combines the old charts in a tabbed interface */}
+      <section aria-labelledby="detailed-analysis" className="pt-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          {/* Tab navigation */}
+          <div className="flex border-b border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setAnalysisTab('comparison')}
+              className={`px-4 py-3 text-sm font-medium transition-colors ${
+                analysisTab === 'comparison'
+                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+              }`}
+            >
+              Top Caller Comparison
+            </button>
+            <button
+              onClick={() => setAnalysisTab('radar')}
+              className={`px-4 py-3 text-sm font-medium transition-colors ${
+                analysisTab === 'radar'
+                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+              }`}
+            >
+              Performance Radar
+            </button>
+            <button
+              onClick={() => setAnalysisTab('topPerformers')}
+              className={`px-4 py-3 text-sm font-medium transition-colors ${
+                analysisTab === 'topPerformers'
+                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+              }`}
+            >
+              Top Performer Metrics
+            </button>
+          </div>
+          
+          {/* Tab content */}
+          <div className="p-6">
+            {analysisTab === 'comparison' && (
+              <div className="h-[400px]">
+                <TopCallerComparisonChart 
+                  callers={data?.top_callers} 
+                  isLoading={isLoading} 
+                  sortMetric="call_count"
+                />
+              </div>
+            )}
+            
+            {analysisTab === 'radar' && (
+              <div className="h-[400px]">
+                <CallPerformanceRadar 
+                  callers={data?.top_callers} 
+                  isLoading={isLoading} 
+                  maxCallers={5}
+                />
+              </div>
+            )}
+            
+            {analysisTab === 'topPerformers' && (
+              <div>
+                <CallerMetricsCards 
+                  callers={data?.top_callers} 
+                  isLoading={isLoading} 
+                />
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </div>

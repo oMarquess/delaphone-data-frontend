@@ -7,10 +7,9 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 interface CallEntry {
   number: string;
@@ -38,6 +37,9 @@ export default function ActivityTimeline({
   data,
   isLoading = false,
 }: ActivityTimelineProps) {
+  const [activeCallers, setActiveCallers] = useState<Record<string, boolean>>({});
+  const [showLegend, setShowLegend] = useState(true);
+  
   const timelineData = useMemo(() => {
     if (!data?.top_callers || !data.time_period) return [];
 
@@ -54,9 +56,16 @@ export default function ActivityTimeline({
         dateRange.push(currentDate.toISOString().split('T')[0]);
       }
 
+      // Define the type for our date objects that includes an index signature
+      interface DailyCallData {
+        date: string;
+        total: number;
+        [key: string]: string | number; // Allow any string key with string or number values
+      }
+
       // For each caller, find their calls on each day
       const dailyCallCounts = dateRange.map(date => {
-        const dateObj = {
+        const dateObj: DailyCallData = {
           date,
           total: 0,
         };
@@ -142,8 +151,89 @@ export default function ActivityTimeline({
     return null;
   };
 
+  // Handle caller visibility toggle
+  const handleLegendToggle = (caller: string) => {
+    setActiveCallers(prev => ({
+      ...prev,
+      [caller]: !prev[caller]
+    }));
+  };
+
+  // Custom legend at the top of the chart
+  const CustomLegend = () => {
+    if (!data?.top_callers) return null;
+    
+    // Hide the legend automatically if there are more than 10 items
+    const shouldAutoHide = data.top_callers.length > 10;
+    
+    // Only show the legend items if we're not auto-hiding or the user has explicitly toggled it on
+    const displayItems = !shouldAutoHide || (shouldAutoHide && showLegend);
+    
+    return (
+      <div className="mb-4">
+        {shouldAutoHide && (
+          <div className="flex justify-end mb-2">
+            <button 
+              onClick={() => setShowLegend(!showLegend)}
+              className="text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 flex items-center gap-1 hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              {showLegend ? (
+                <>
+                  <span>Hide Legend</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m18 15-6-6-6 6"/>
+                  </svg>
+                </>
+              ) : (
+                <>
+                  <span>Show Legend ({data.top_callers.length} callers)</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m6 9 6 6 6-6"/>
+                  </svg>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+        
+        {displayItems && (
+          <div className="flex flex-wrap gap-2 justify-center">
+            {/* Legend item for total */}
+            <div 
+              className={`inline-flex items-center px-2 py-1 rounded cursor-pointer border transition-all
+                ${activeCallers['total'] ? 'opacity-50' : 'opacity-100'}
+                border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700`}
+              onClick={() => handleLegendToggle('total')}
+            >
+              <div className="w-3 h-3 mr-2 rounded-sm" style={{ backgroundColor: '#4B5563' }}></div>
+              <span className="text-xs font-medium">Total Calls</span>
+            </div>
+            
+            {/* Legend items for each caller */}
+            {data.top_callers.map((caller) => (
+              <div 
+                key={caller.number}
+                className={`inline-flex items-center px-2 py-1 rounded cursor-pointer border transition-all
+                  ${activeCallers[caller.number] ? 'opacity-50' : 'opacity-100'}
+                  border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700`}
+                onClick={() => handleLegendToggle(caller.number)}
+              >
+                <div 
+                  className="w-3 h-3 mr-2 rounded-sm" 
+                  style={{ backgroundColor: callerColors[caller.number] }}
+                ></div>
+                <span className="text-xs font-medium">Caller {caller.number}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="h-[400px] w-full">
+      <CustomLegend />
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={timelineData}
@@ -153,39 +243,49 @@ export default function ActivityTimeline({
             left: 20,
             bottom: 20,
           }}
+          className="[&_.recharts-cartesian-grid-horizontal]:stroke-muted [&_.recharts-cartesian-grid-vertical]:stroke-muted"
         >
-          <CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted/20" />
           <XAxis
             dataKey="date"
             tickFormatter={formatDate}
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 11 }}
             tickLine={false}
-            axisLine={{ stroke: '#E2E8F0' }}
+            axisLine={{ stroke: 'hsl(var(--border))' }}
+            dy={10}
+            className="text-muted-foreground fill-muted-foreground text-xs"
           />
           <YAxis
-            label={{ 
-              value: 'Calls', 
-              angle: -90, 
-              position: 'insideLeft',
-              style: { textAnchor: 'middle', fill: '#64748B', fontSize: 12 }
-            }}
-            tick={{ fontSize: 12 }}
+            tickFormatter={(value) => `${value}`}
+            tick={{ fontSize: 11 }}
             tickLine={false}
-            axisLine={{ stroke: '#E2E8F0' }}
-            allowDecimals={false}
+            axisLine={{ stroke: 'hsl(var(--border))' }}
+            width={40}
+            className="text-muted-foreground fill-muted-foreground text-xs"
           />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend />
-
-          {/* Line for total calls */}
+          <Tooltip 
+            content={<CustomTooltip />} 
+            cursor={{ stroke: 'hsl(var(--muted))' }}
+          />
+          
+          {/* Total calls line */}
           <Line 
             type="monotone" 
             dataKey="total" 
             name="Total Calls" 
             stroke="#4B5563" 
             strokeWidth={2}
-            dot={{ r: 3 }}
-            activeDot={{ r: 5 }}
+            dot={{ 
+              r: 3, 
+              strokeWidth: 2, 
+              fill: 'white' 
+            }}
+            activeDot={{ 
+              r: 5, 
+              strokeWidth: 2, 
+              fill: 'white' 
+            }}
+            hide={activeCallers['total']}
           />
           
           {/* Lines for each caller */}
@@ -197,8 +297,18 @@ export default function ActivityTimeline({
               name={`Caller ${caller.number}`}
               stroke={callerColors[caller.number]}
               strokeWidth={1.5}
-              dot={{ r: 2 }}
-              activeDot={{ r: 4 }}
+              dot={{ 
+                r: 2, 
+                strokeWidth: 2, 
+                fill: 'white' 
+              }}
+              activeDot={{ 
+                r: 4, 
+                strokeWidth: 2, 
+                fill: 'white' 
+              }}
+              hide={activeCallers[caller.number]}
+              connectNulls
             />
           ))}
         </LineChart>
