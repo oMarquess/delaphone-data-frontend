@@ -101,10 +101,12 @@ export const AgentAnalyticsFilterBar: React.FC<AgentAnalyticsFilterBarProps> = (
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
         <Row gutter={[16, 16]} align="middle">
           <Col xs={24} md={8}>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Date Range</label>
+            <div className="mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Date Range</label>
               <DateRangePicker
                 onChange={handleDateChange}
+                startDate={localFilters.startDate}
+                endDate={localFilters.endDate}
               />
             </div>
           </Col>
@@ -112,8 +114,8 @@ export const AgentAnalyticsFilterBar: React.FC<AgentAnalyticsFilterBarProps> = (
           <Col xs={24} md={16}>
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={12} md={8}>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Agent</label>
+                <div className="mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Agent</label>
                   <Select
                     value={localFilters.agent}
                     onChange={(value) => handleFilterChange('agent', value)}
@@ -131,8 +133,8 @@ export const AgentAnalyticsFilterBar: React.FC<AgentAnalyticsFilterBarProps> = (
               </Col>
               
               <Col xs={24} sm={12} md={8}>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Call Direction</label>
+                <div className="mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Call Direction</label>
                   <Select
                     value={localFilters.direction}
                     onChange={(value) => handleFilterChange('direction', value)}
@@ -147,8 +149,8 @@ export const AgentAnalyticsFilterBar: React.FC<AgentAnalyticsFilterBarProps> = (
               </Col>
               
               <Col xs={24} sm={12} md={8}>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Call Disposition</label>
+                <div className="mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Call Disposition</label>
                   <Select
                     value={localFilters.disposition}
                     onChange={(value) => handleFilterChange('disposition', value)}
@@ -168,8 +170,8 @@ export const AgentAnalyticsFilterBar: React.FC<AgentAnalyticsFilterBarProps> = (
         
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} md={6}>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Min Calls</label>
+            <div className="mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Min Calls</label>
               <InputNumber
                 value={localFilters.minCalls}
                 onChange={(value) => handleFilterChange('minCalls', value)}
@@ -181,8 +183,8 @@ export const AgentAnalyticsFilterBar: React.FC<AgentAnalyticsFilterBarProps> = (
           </Col>
           
           <Col xs={24} sm={12} md={6}>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sort By</label>
+            <div className="mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Sort By</label>
               <Select
                 value={localFilters.sortBy}
                 onChange={(value) => handleFilterChange('sortBy', value)}
@@ -197,8 +199,8 @@ export const AgentAnalyticsFilterBar: React.FC<AgentAnalyticsFilterBarProps> = (
           </Col>
           
           <Col xs={24} sm={12} md={6}>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Limit</label>
+            <div className="mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Limit</label>
               <InputNumber
                 value={localFilters.limit}
                 onChange={(value) => handleFilterChange('limit', value)}

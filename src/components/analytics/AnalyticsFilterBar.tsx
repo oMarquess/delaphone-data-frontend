@@ -125,6 +125,8 @@ export const AnalyticsFilterBar: React.FC<AnalyticsFilterBarProps> = ({
               </label>
               <DateRangePicker
                 onChange={handleDateChange}
+                startDate={localFilters.startDate}
+                endDate={localFilters.endDate}
               />
             </div>
           </Col>
