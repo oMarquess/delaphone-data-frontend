@@ -146,7 +146,7 @@ export default function AnalyticsPage() {
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span className="inline-flex items-center">
               <CalendarIcon size={14} className="mr-1.5" />
-              <span className="font-medium">Period:</span> {filters.startDate} to {filters.endDate}
+              <span className="font-medium mr-1.5">Period:</span> {filters.startDate} to {filters.endDate}
             </span>
             
             <span className="hidden sm:inline-block text-blue-300 dark:text-blue-700">|</span>

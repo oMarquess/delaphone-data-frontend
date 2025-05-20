@@ -197,7 +197,10 @@ export default function CallLogsPage() {
       {/* Dashboard status */}
       <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
         <div className="text-sm text-blue-800 dark:text-blue-300">
-          <span className="font-medium">Period:</span> {dateRange.startDate} to {dateRange.endDate}
+          <span className="inline-flex items-center">
+            <CalendarIcon size={14} className="mr-1.5" />
+            <span className="font-medium mr-1.5">Period:</span> {dateRange.startDate} to {dateRange.endDate}
+          </span>
           <span className="mx-2">•</span>
           <span className="font-medium">Results:</span> {callLogsData.filteredCount} calls
           {data?.summary && (
