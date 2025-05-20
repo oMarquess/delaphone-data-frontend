@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useSidebar } from './SidebarContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext'; 
 import { 
   DashboardOutlined, 
@@ -13,7 +13,8 @@ import {
   UserOutlined,
   LogoutOutlined,
   PhoneOutlined,
-  BulbOutlined
+  BulbOutlined,
+  DownOutlined
 } from '@ant-design/icons';
 
 interface NavItem {
@@ -26,6 +27,7 @@ const SideNav = () => {
   const pathname = usePathname();
   const { collapsed, mobileNavOpen, setActiveTab, toggleMobileNav } = useSidebar();
   const { user, logout } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   
   // Close mobile nav when route changes
   useEffect(() => {
@@ -34,6 +36,21 @@ const SideNav = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (dropdownOpen && !target.closest('.user-profile-dropdown')) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   const navItems = [
     {
@@ -83,6 +100,11 @@ const SideNav = () => {
 
   const handleLogout = () => {
     logout();
+    setDropdownOpen(false);
+  };
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
   };
 
   return (
@@ -121,21 +143,51 @@ const SideNav = () => {
           
           {/* User profile section */}
           <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 relative w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-                <UserOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '20px' }} />
+            {collapsed ? (
+              <div className="relative user-profile-dropdown">
+                <button 
+                  onClick={toggleDropdown}
+                  className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  aria-label="User profile menu"
+                >
+                  <UserOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '20px' }} />
+                </button>
+                
+                {dropdownOpen && (
+                  <div className="absolute bottom-full left-0 mb-2 w-40 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {user?.username || 'User'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {user?.email || 'user@example.com'}
+                      </p>
+                    </div>
+                    <button 
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                      onClick={handleLogout}
+                    >
+                      <LogoutOutlined className="mr-2" style={{ fontSize: '16px' }} />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
               </div>
-              {!collapsed && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                    {user?.username || 'User'}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {user?.email || 'user@example.com'}
-                  </p>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                    <UserOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '20px' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {user?.username || 'User'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {user?.email || 'user@example.com'}
+                    </p>
+                  </div>
                 </div>
-              )}
-              {!collapsed && (
                 <button 
                   className="p-1 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                   onClick={handleLogout}
@@ -143,19 +195,10 @@ const SideNav = () => {
                 >
                   <LogoutOutlined style={{ fontSize: '18px' }} />
                 </button>
-              )}
-              {collapsed && (
-                <button 
-                  className="p-1 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                  onClick={handleLogout}
-                  aria-label="Logout"
-                >
-                  <LogoutOutlined style={{ fontSize: '18px' }} />
-                </button>
-              )}
-        </div>
-      </div>
-    </nav>
+              </div>
+            )}
+          </div>
+        </nav>
       </div>
       
       {/* Mobile overlay - only render when needed */}
