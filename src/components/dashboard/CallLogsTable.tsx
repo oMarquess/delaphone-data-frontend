@@ -404,7 +404,7 @@ export default function CallLogsTable({
                     >
                       {expandedRow === record.uniqueid ? 'Hide details' : 'View details'}
                     </button>
-                    {record.recordingfile && (
+                    {record.recordingfile && record.disposition !== 'FAILED' && record.disposition !== 'NO ANSWER' && (
                       <button 
                         className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
                         onClick={(e) => e.stopPropagation()}
@@ -453,14 +453,16 @@ export default function CallLogsTable({
                         <div className="text-xs text-gray-600 dark:text-gray-400 break-words">{record.accountcode || 'N/A'}</div>
                       </div>
                     </div>
-                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end">
-                      <button 
-                        className="p-1 rounded bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Download size={14} />
-                      </button>
-                    </div>
+                    {record.disposition !== 'FAILED' && record.disposition !== 'NO ANSWER' && (
+                      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                        <button 
+                          className="p-1 rounded bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Download size={14} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -571,9 +573,14 @@ export default function CallLogsTable({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-white">
                         <div className="flex space-x-2">
-                          <button className="p-1 rounded bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
-                            <Download size={16} />
-                          </button>
+                          {record.disposition !== 'FAILED' && record.disposition !== 'NO ANSWER' && (
+                            <button 
+                              className="p-1 rounded bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Download size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -634,7 +641,7 @@ export default function CallLogsTable({
                                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Account Code:</span>
                                   <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.accountcode || 'N/A'}</span>
                                 </div>
-                                {record.recordingfile && (
+                                {record.recordingfile && record.disposition !== 'FAILED' && record.disposition !== 'NO ANSWER' && (
                                   <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                                     <button 
                                       className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
