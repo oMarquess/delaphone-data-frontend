@@ -188,9 +188,12 @@ export const useAnalyticsData = (filters: AnalyticsFilters, type: 'caller' | 'ag
     fetcher,
     {
       revalidateOnFocus: false,
-      dedupingInterval: 60000, // 1 minute
+      dedupingInterval: 300000, // 5 minutes instead of 1 minute
       shouldRetryOnError: true,
-      errorRetryCount: 3
+      errorRetryCount: 3,
+      revalidateIfStale: false,
+      revalidateOnReconnect: true,
+      keepPreviousData: true // Important: keep showing previous data while fetching new data
     }
   );
 
