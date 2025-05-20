@@ -21,6 +21,7 @@ interface NavItem {
   name: string;
   path: string;
   icon: React.ReactNode;
+  themeColor?: string; // Add theme color for each nav item
 }
 
 const SideNav = () => {
@@ -52,41 +53,48 @@ const SideNav = () => {
     };
   }, [dropdownOpen]);
 
-  const navItems = [
+  const navItems: NavItem[] = [
     {
       path: '/dashboard',
       name: 'Overview', 
-      icon: <DashboardOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
+      icon: <DashboardOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />,
+      themeColor: 'border-gray-400'
     },
     {
       path: '/dashboard/call-logs',
       name: 'Call Logs', 
-      icon: <PhoneOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
+      icon: <PhoneOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />,
+      themeColor: 'border-blue-400'
     },
     {
       path: '/dashboard/analytics', 
       name: 'Caller Analytics', 
-      icon: <BarChartOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
+      icon: <BarChartOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />,
+      themeColor: 'border-blue-500'
     },
     {
       path: '/dashboard/agent-analytics', 
       name: 'Agent Analytics', 
-      icon: <UserOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
+      icon: <UserOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />,
+      themeColor: 'border-green-500'
     },
     {
       path: '/dashboard/reports', 
       name: 'Reports',
-      icon: <FileTextOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
+      icon: <FileTextOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />,
+      themeColor: 'border-purple-400'
     },
     {
       path: '/dashboard/ai-insights', 
       name: 'AI Insights',
-      icon: <BulbOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
+      icon: <BulbOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />,
+      themeColor: 'border-amber-500'
     },
     {
       path: '/dashboard/settings', 
       name: 'Settings',
-      icon: <SettingOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />
+      icon: <SettingOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />,
+      themeColor: 'border-gray-500'
     },
   ];
 
@@ -126,11 +134,11 @@ const SideNav = () => {
                 href={item.path}
                       className={`flex items-center p-3 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
                   isActive
-                          ? 'bg-gray-100 dark:bg-gray-700 font-medium text-gray-900 dark:text-gray-100'
-                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                          ? `bg-gray-100 dark:bg-gray-700 font-medium text-gray-900 dark:text-gray-100 border-l-[3px] ${item.themeColor}`
+                          : `text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 ${isActive ? '' : 'border-l-[3px] border-transparent hover:border-l-[3px] hover:' + item.themeColor}`
                 }`}
               >
-                      <div className="flex items-center">
+                      <div className="flex items-center w-full">
                         <div className="mr-3">{item.icon}</div>
                         {!collapsed && <span>{item.name}</span>}
                       </div>
