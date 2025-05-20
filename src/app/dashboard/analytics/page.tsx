@@ -271,30 +271,30 @@ export default function AnalyticsPage() {
           <div className="flex border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setAnalysisTab('comparison')}
-              className={`px-4 py-3 text-sm font-medium transition-colors ${
+              className={`px-4 py-3 text-sm font-medium transition-all ${
                 analysisTab === 'comparison'
-                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10'
               }`}
             >
               Top Caller Comparison
             </button>
             <button
               onClick={() => setAnalysisTab('radar')}
-              className={`px-4 py-3 text-sm font-medium transition-colors ${
+              className={`px-4 py-3 text-sm font-medium transition-all ${
                 analysisTab === 'radar'
-                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10'
               }`}
             >
               Performance Radar
             </button>
             <button
               onClick={() => setAnalysisTab('topPerformers')}
-              className={`px-4 py-3 text-sm font-medium transition-colors ${
+              className={`px-4 py-3 text-sm font-medium transition-all ${
                 analysisTab === 'topPerformers'
-                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10'
               }`}
             >
               Top Performer Metrics

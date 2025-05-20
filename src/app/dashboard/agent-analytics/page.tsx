@@ -134,22 +134,22 @@ export default function AgentAnalyticsPage() {
       )}
       
       {/* Dashboard status with improved styling */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
-        <div className="text-sm text-blue-800 dark:text-blue-300 space-y-1 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 p-4 rounded-lg border border-green-100 dark:border-green-800">
+        <div className="text-sm text-green-800 dark:text-green-300 space-y-1 sm:space-y-0">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span className="inline-flex items-center">
               <CalendarIcon size={14} className="mr-1.5" />
               <span className="font-medium mr-1.5">Period:</span> {filters.startDate} to {filters.endDate}
             </span>
             
-            <span className="hidden sm:inline-block text-blue-300 dark:text-blue-700">|</span>
+            <span className="hidden sm:inline-block text-green-300 dark:text-green-700">|</span>
             
             <span className="inline-flex items-center">
               <PhoneIcon size={14} className="mr-1.5" />
               <span className="font-medium">Direction:</span> {filters.direction}
             </span>
             
-            <span className="hidden sm:inline-block text-blue-300 dark:text-blue-700">|</span>
+            <span className="hidden sm:inline-block text-green-300 dark:text-green-700">|</span>
             
             <span className="inline-flex items-center">
               <CheckCircleIcon size={14} className="mr-1.5" />
@@ -159,8 +159,8 @@ export default function AgentAnalyticsPage() {
         </div>
         
         {isLoading && (
-          <div className="flex items-center text-blue-700 dark:text-blue-400 mt-2 sm:mt-0">
-            <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-blue-500 rounded-full mr-2"></div>
+          <div className="flex items-center text-green-700 dark:text-green-400 mt-2 sm:mt-0">
+            <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-green-500 rounded-full mr-2"></div>
             <span className="text-sm">Loading insights...</span>
           </div>
         )}
@@ -262,30 +262,30 @@ export default function AgentAnalyticsPage() {
           <div className="flex border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setAnalysisTab('performance')}
-              className={`px-4 py-3 text-sm font-medium transition-colors ${
+              className={`px-4 py-3 text-sm font-medium transition-all ${
                 analysisTab === 'performance'
-                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                  ? 'bg-green-50 dark:bg-green-900/20 border-b-2 border-green-500 dark:border-green-400 text-green-600 dark:text-green-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 hover:bg-green-50/50 dark:hover:bg-green-900/10'
               }`}
             >
               Agent Performance
             </button>
             <button
               onClick={() => setAnalysisTab('efficiency')}
-              className={`px-4 py-3 text-sm font-medium transition-colors ${
+              className={`px-4 py-3 text-sm font-medium transition-all ${
                 analysisTab === 'efficiency'
-                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                  ? 'bg-green-50 dark:bg-green-900/20 border-b-2 border-green-500 dark:border-green-400 text-green-600 dark:text-green-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 hover:bg-green-50/50 dark:hover:bg-green-900/10'
               }`}
             >
               Efficiency Metrics
             </button>
             <button
               onClick={() => setAnalysisTab('satisfaction')}
-              className={`px-4 py-3 text-sm font-medium transition-colors ${
+              className={`px-4 py-3 text-sm font-medium transition-all ${
                 analysisTab === 'satisfaction'
-                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                  ? 'bg-green-50 dark:bg-green-900/20 border-b-2 border-green-500 dark:border-green-400 text-green-600 dark:text-green-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 hover:bg-green-50/50 dark:hover:bg-green-900/10'
               }`}
             >
               Customer Satisfaction
