@@ -235,12 +235,12 @@ export default function CallLogsPage() {
         isLoading={isLoading}
       />
       
-      <AudioPlayer 
+      {/* <AudioPlayer 
         src="path/to/your/audio.mp3"
         autoPlay={false}
         onEnd={() => console.log('Audio finished playing')}
         className="w-full max-w-md"
-      />
+      /> */}
     </div>
   );
 } 

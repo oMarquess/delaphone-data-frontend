@@ -24,23 +24,33 @@ export default function AudioPlayer({ src, autoPlay = false, onEnd, className = 
   
   useEffect(() => {
     // Initialize Howler sound
-    soundRef.current = new Howl({
-      src: [src],
-      html5: true,
-      onload: () => {
-        setIsLoading(false);
-        setDuration(soundRef.current?.duration() || 0);
-      },
-      onend: () => {
-        setIsPlaying(false);
-        setCurrentTime(0);
-        onEnd?.();
-      },
-      onplayerror: () => {
-        setIsPlaying(false);
-        setIsLoading(false);
-      }
-    });
+    if (src) {
+      setIsLoading(true);
+      soundRef.current = new Howl({
+        src: [src],
+        html5: true,
+        format: ['wav'],
+        onload: () => {
+          console.log('Audio loaded successfully');
+          setIsLoading(false);
+          setDuration(soundRef.current?.duration() || 0);
+        },
+        onloaderror: (id, error) => {
+          console.error('Error loading audio:', error);
+          setIsLoading(false);
+        },
+        onend: () => {
+          setIsPlaying(false);
+          setCurrentTime(0);
+          onEnd?.();
+        },
+        onplayerror: (id, error) => {
+          console.error('Error playing audio:', error);
+          setIsPlaying(false);
+          setIsLoading(false);
+        }
+      });
+    }
     
     // Cleanup on unmount
     return () => {
@@ -131,6 +141,7 @@ export default function AudioPlayer({ src, autoPlay = false, onEnd, className = 
           value={currentTime}
           onChange={handleSeek}
           className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+          disabled={isLoading}
         />
         <span className="text-xs text-gray-500 dark:text-gray-400 w-12">
           {formatTime(duration)}
@@ -143,21 +154,29 @@ export default function AudioPlayer({ src, autoPlay = false, onEnd, className = 
           <button
             onClick={() => skip(-10)}
             className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            disabled={isLoading}
           >
             <SkipBack size={20} />
           </button>
           
           <button
             onClick={togglePlay}
-            disabled={isLoading}
-            className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white disabled:opacity-50"
+            disabled={isLoading || !src}
+            className={`p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white disabled:opacity-50 ${isLoading ? 'cursor-wait' : ''}`}
           >
-            {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+            {isLoading ? (
+              <div className="w-6 h-6 border-2 border-t-transparent border-blue-500 rounded-full animate-spin" />
+            ) : isPlaying ? (
+              <Pause size={24} />
+            ) : (
+              <Play size={24} />
+            )}
           </button>
           
           <button
             onClick={() => skip(10)}
             className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            disabled={isLoading}
           >
             <SkipForward size={20} />
           </button>
@@ -167,6 +186,7 @@ export default function AudioPlayer({ src, autoPlay = false, onEnd, className = 
           <button
             onClick={toggleMute}
             className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            disabled={isLoading}
           >
             {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
           </button>
@@ -179,6 +199,7 @@ export default function AudioPlayer({ src, autoPlay = false, onEnd, className = 
             value={volume}
             onChange={handleVolumeChange}
             className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+            disabled={isLoading}
           />
         </div>
       </div>
