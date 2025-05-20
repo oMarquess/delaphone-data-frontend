@@ -134,22 +134,22 @@ export default function AgentAnalyticsPage() {
       )}
       
       {/* Dashboard status with improved styling */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 p-4 rounded-lg border border-green-100 dark:border-green-800">
-        <div className="text-sm text-green-800 dark:text-green-300 space-y-1 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+        <div className="text-sm text-blue-800 dark:text-blue-300 space-y-1 sm:space-y-0">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span className="inline-flex items-center">
               <CalendarIcon size={14} className="mr-1.5" />
               <span className="font-medium">Period:</span> {filters.startDate} to {filters.endDate}
             </span>
             
-            <span className="hidden sm:inline-block text-green-300 dark:text-green-700">|</span>
+            <span className="hidden sm:inline-block text-blue-300 dark:text-blue-700">|</span>
             
             <span className="inline-flex items-center">
               <PhoneIcon size={14} className="mr-1.5" />
               <span className="font-medium">Direction:</span> {filters.direction}
             </span>
             
-            <span className="hidden sm:inline-block text-green-300 dark:text-green-700">|</span>
+            <span className="hidden sm:inline-block text-blue-300 dark:text-blue-700">|</span>
             
             <span className="inline-flex items-center">
               <CheckCircleIcon size={14} className="mr-1.5" />
@@ -159,8 +159,8 @@ export default function AgentAnalyticsPage() {
         </div>
         
         {isLoading && (
-          <div className="flex items-center text-green-700 dark:text-green-400 mt-2 sm:mt-0">
-            <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-green-500 rounded-full mr-2"></div>
+          <div className="flex items-center text-blue-700 dark:text-blue-400 mt-2 sm:mt-0">
+            <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-blue-500 rounded-full mr-2"></div>
             <span className="text-sm">Loading insights...</span>
           </div>
         )}
@@ -170,11 +170,11 @@ export default function AgentAnalyticsPage() {
       <section aria-labelledby="summary-metrics" className="pt-2">
         <div className="sr-only" id="summary-metrics">Agent Summary Metrics</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 p-6 rounded-xl shadow-sm border border-green-100 dark:border-green-800/50 transition-all hover:shadow-md">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-xl shadow-sm border border-blue-100 dark:border-blue-800/50 transition-all hover:shadow-md">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-sm font-medium text-green-700 dark:text-green-400">Total Agents</h3>
+              <h3 className="text-sm font-medium text-blue-700 dark:text-blue-400">Total Agents</h3>
               <div className="p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm">
-                <UserIcon size={18} className="text-green-500 dark:text-green-400" />
+                <UserIcon size={18} className="text-blue-500 dark:text-blue-400" />
               </div>
             </div>
             
@@ -190,11 +190,11 @@ export default function AgentAnalyticsPage() {
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 p-6 rounded-xl shadow-sm border border-teal-100 dark:border-teal-800/50 transition-all hover:shadow-md">
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-6 rounded-xl shadow-sm border border-purple-100 dark:border-purple-800/50 transition-all hover:shadow-md">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-sm font-medium text-teal-700 dark:text-teal-400">Avg Calls/Agent</h3>
+              <h3 className="text-sm font-medium text-purple-700 dark:text-purple-400">Avg Calls/Agent</h3>
               <div className="p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm">
-                <PhoneIcon size={18} className="text-teal-500 dark:text-teal-400" />
+                <PhoneIcon size={18} className="text-purple-500 dark:text-purple-400" />
               </div>
             </div>
             
@@ -212,11 +212,11 @@ export default function AgentAnalyticsPage() {
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 p-6 rounded-xl shadow-sm border border-cyan-100 dark:border-cyan-800/50 transition-all hover:shadow-md">
+          <div className="bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 p-6 rounded-xl shadow-sm border border-green-100 dark:border-green-800/50 transition-all hover:shadow-md">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-sm font-medium text-cyan-700 dark:text-cyan-400">Avg Handle Time</h3>
+              <h3 className="text-sm font-medium text-green-700 dark:text-green-400">Avg Handle Time</h3>
               <div className="p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm">
-                <ClockIcon size={18} className="text-cyan-500 dark:text-cyan-400" />
+                <ClockIcon size={18} className="text-green-500 dark:text-green-400" />
               </div>
             </div>
             
@@ -233,11 +233,11 @@ export default function AgentAnalyticsPage() {
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-xl shadow-sm border border-blue-100 dark:border-blue-800/50 transition-all hover:shadow-md">
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-6 rounded-xl shadow-sm border border-amber-100 dark:border-amber-800/50 transition-all hover:shadow-md">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-sm font-medium text-blue-700 dark:text-blue-400">Avg Resolution Rate</h3>
+              <h3 className="text-sm font-medium text-amber-700 dark:text-amber-400">Avg Resolution Rate</h3>
               <div className="p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm">
-                <CheckCircleIcon size={18} className="text-blue-500 dark:text-blue-400" />
+                <CheckCircleIcon size={18} className="text-amber-500 dark:text-amber-400" />
               </div>
             </div>
             
@@ -264,8 +264,8 @@ export default function AgentAnalyticsPage() {
               onClick={() => setAnalysisTab('performance')}
               className={`px-4 py-3 text-sm font-medium transition-colors ${
                 analysisTab === 'performance'
-                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-green-500 dark:border-green-400 text-green-600 dark:text-green-400'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
               }`}
             >
               Agent Performance
@@ -274,8 +274,8 @@ export default function AgentAnalyticsPage() {
               onClick={() => setAnalysisTab('efficiency')}
               className={`px-4 py-3 text-sm font-medium transition-colors ${
                 analysisTab === 'efficiency'
-                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-green-500 dark:border-green-400 text-green-600 dark:text-green-400'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
               }`}
             >
               Efficiency Metrics
@@ -284,8 +284,8 @@ export default function AgentAnalyticsPage() {
               onClick={() => setAnalysisTab('satisfaction')}
               className={`px-4 py-3 text-sm font-medium transition-colors ${
                 analysisTab === 'satisfaction'
-                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-green-500 dark:border-green-400 text-green-600 dark:text-green-400'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                  ? 'bg-gray-50 dark:bg-gray-700/50 border-b-2 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/30'
               }`}
             >
               Customer Satisfaction
