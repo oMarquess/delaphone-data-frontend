@@ -9,6 +9,7 @@ import CallLogsAdvancedFilter, { CallLogsFilterValues } from '@/components/dashb
 import CallLogsTable, { CallLog } from '@/components/dashboard/CallLogsTable';
 import { dashboardService } from '@/services/dashboard';
 import { publishDateChange, publishFilterChange } from '@/components/ai/AIDrawer';
+import AudioPlayer from '@/components/ui/AudioPlayer';
 
 export default function CallLogsPage() {
   const [filterVisible, setFilterVisible] = useState(false);
@@ -232,6 +233,13 @@ export default function CallLogsPage() {
         onPageChange={handlePageChange}
         pageSize={pageSize}
         isLoading={isLoading}
+      />
+      
+      <AudioPlayer 
+        src="path/to/your/audio.mp3"
+        autoPlay={false}
+        onEnd={() => console.log('Audio finished playing')}
+        className="w-full max-w-md"
       />
     </div>
   );

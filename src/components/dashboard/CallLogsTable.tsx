@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { ChevronDownIcon, ChevronUpIcon, Play, Download, ChevronLeft, ChevronRight, Phone, Clock, Calendar, Info, ArrowUp, ArrowDown, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import React from 'react';
+import AudioPlayer from '@/components/ui/AudioPlayer';
 
 // Types based on the API response
 export interface CallLog {
@@ -44,6 +45,7 @@ export default function CallLogsTable({
   const [sortField, setSortField] = useState<string>('calldate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [playingRecording, setPlayingRecording] = useState<string | null>(null);
   
   // Calculate total pages
   const totalPages = Math.ceil(filteredCount / pageSize);
@@ -213,6 +215,15 @@ export default function CallLogsTable({
 
   // Debug pagination data
   console.log('Pagination Debug:', { filteredCount, pageSize, totalPages, currentPage });
+
+  const handlePlayRecording = (e: React.MouseEvent, recordingfile: string) => {
+    e.stopPropagation();
+    setPlayingRecording(recordingfile);
+  };
+
+  const handleRecordingEnd = () => {
+    setPlayingRecording(null);
+  };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -393,22 +404,15 @@ export default function CallLogsTable({
                     >
                       {expandedRow === record.uniqueid ? 'Hide details' : 'View details'}
                     </button>
-                    <div className="flex space-x-2">
-                      {record.recordingfile && (
-                        <button 
-                          className="p-1 rounded bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Play size={14} />
-                        </button>
-                      )}
+                    {record.recordingfile && (
                       <button 
-                        className="p-1 rounded bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
                         onClick={(e) => e.stopPropagation()}
+                        title={record.recordingfile}
                       >
-                        <Download size={14} />
+                        <Play size={12} /> Play recording
                       </button>
-                    </div>
+                    )}
                   </div>
                 </div>
                 
@@ -448,6 +452,14 @@ export default function CallLogsTable({
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Account Code</div>
                         <div className="text-xs text-gray-600 dark:text-gray-400 break-words">{record.accountcode || 'N/A'}</div>
                       </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                      <button 
+                        className="p-1 rounded bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Download size={14} />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -627,6 +639,7 @@ export default function CallLogsTable({
                                     <button 
                                       className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
                                       onClick={(e) => e.stopPropagation()}
+                                      title={record.recordingfile}
                                     >
                                       <Play size={12} /> Play recording
                                     </button>
