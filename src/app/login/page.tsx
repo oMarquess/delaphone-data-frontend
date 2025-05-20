@@ -3,7 +3,7 @@
 import LoginForm from '@/components/auth/LoginForm';
 import { motion } from 'framer-motion';
 import Image from "next/image";
-import LogoIcon from "@/assets/logo-dela.png";
+import LogoIcon from "@/assets/dlp-logo.png";
 
 export default function LoginPage() {
   return (

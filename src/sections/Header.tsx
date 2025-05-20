@@ -1,5 +1,5 @@
 import Image from "next/image";
-import LogoIcon from "@/assets/logo-dela.png";
+import LogoIcon from "@/assets/dlp-logo.png";
 import MenuIcon from "@/assets/icon-menu.svg";
 import { Button } from "@/components/Buttons";
 

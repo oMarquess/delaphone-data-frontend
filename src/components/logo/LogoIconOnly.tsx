@@ -5,7 +5,7 @@ export default function LogoIconOnly() {
   return (
     <Link href="/dashboard" className="flex items-center">
       <Image 
-        src="/assets/logo-dela.png" 
+        src="/assets/dlp-logo.png" 
         alt="Delaphone Logo" 
         width={32} 
         height={32}

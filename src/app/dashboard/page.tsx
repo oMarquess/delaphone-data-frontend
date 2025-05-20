@@ -99,12 +99,12 @@ export default function DashboardPage() {
         setDashboardData(data);
         
         // Use top_sources instead of records for the table
-        if (data && data.top_sources && Array.isArray(data.top_sources)) {
+        if (data && (data as any).top_sources && Array.isArray((data as any).top_sources)) {
           // Transform top_sources data to match expected call records format
-          const formattedRecords = data.top_sources.map(source => ({
+          const formattedRecords = (data as any).top_sources.map((source: any) => ({
             src: source.src,
             dst: "N/A", // Not available in top_sources
-            calldate: data.time_period?.start_date || "N/A",
+            calldate: (data as any).time_period?.start_date || "N/A",
             duration: source.duration,
             billsec: source.duration, // Using duration as billsec
             disposition: "ANSWERED", // Assuming all are answered
@@ -119,11 +119,11 @@ export default function DashboardPage() {
           // If no top_sources, try fetching call records separately
           try {
             const callData = await dashboardService.getCallRecords(startDateStr, endDateStr);
-            if (callData && callData.top_sources && Array.isArray(callData.top_sources)) {
-              const formattedRecords = callData.top_sources.map(source => ({
+            if (callData && (callData as any).top_sources && Array.isArray((callData as any).top_sources)) {
+              const formattedRecords = (callData as any).top_sources.map((source: any) => ({
                 src: source.src,
                 dst: "N/A",
-                calldate: callData.time_period?.start_date || "N/A",
+                calldate: (callData as any).time_period?.start_date || "N/A",
                 duration: source.duration,
                 billsec: source.duration,
                 disposition: "ANSWERED",

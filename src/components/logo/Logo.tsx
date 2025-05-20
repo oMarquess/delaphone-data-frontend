@@ -5,8 +5,8 @@ export default function Logo() {
   return (
     <Link href="/dashboard" className="flex items-center">
       <Image 
-        src="/assets/logo-dela.png" 
-        alt="Delaphone Logo" 
+        src="/assets/dlp-logo.png" 
+        alt="Dlp Logo" 
         width={28} 
         height={28}
       />

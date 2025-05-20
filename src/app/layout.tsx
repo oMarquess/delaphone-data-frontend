@@ -18,12 +18,12 @@ export const metadata: Metadata = {
   title: "DLP.AI | Call Intelligence Platform",
   description: "Transform your customer conversations into actionable insights. Boost revenue and reduce costs with AI-powered call analytics.",
   icons: {
-    icon: '/assets/logo-dela.png',
-    apple: '/assets/logo-dela.png',
-    shortcut: '/assets/logo-dela.png',
+    icon: '/assets/dlp-logo.png',
+    apple: '/assets/dlp-logo.png',
+    shortcut: '/assets/dlp-logo.png',
   },
   openGraph: {
-    images: '/assets/logo-dela.png',
+    images: '/assets/dlp-logo.png',
   },
 };
 

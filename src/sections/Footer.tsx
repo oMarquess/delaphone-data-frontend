@@ -1,6 +1,6 @@
 'use client';
 import Logo from "@/assets/logo.svg";
-import LogoIcon from "@/assets/logo-dela.png";
+import LogoIcon from "@/assets/dlp-logo.png";
 import Image from "next/image";
 import InstagramIcon from "@/assets/social-instagram.svg";
 import YoutubeIcon from "@/assets/social-youtube.svg";

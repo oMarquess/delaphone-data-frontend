@@ -3,7 +3,7 @@
 import SignUpForm from '@/components/auth/SignUpForm';
 import { motion } from 'framer-motion';
 import Image from "next/image";
-import LogoIcon from "@/assets/logo-dela.png";
+import LogoIcon from "@/assets/dlp-logo.png";
 
 export default function SignUpPage() {
   return (
