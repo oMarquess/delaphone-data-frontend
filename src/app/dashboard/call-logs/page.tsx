@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
-import { FilterIcon, ChevronDownIcon, CalendarIcon, Download } from 'lucide-react';
+import { FilterIcon, ChevronDownIcon, CalendarIcon, Download, Settings } from 'lucide-react';
 import useSWR from 'swr';
 import QuickDateSelector from '@/components/analytics/QuickDateSelector';
 import CallLogsAdvancedFilter, { CallLogsFilterValues } from '@/components/dashboard/CallLogsAdvancedFilter';
@@ -10,6 +10,8 @@ import CallLogsTable, { CallLog } from '@/components/dashboard/CallLogsTable';
 import { dashboardService } from '@/services/dashboard';
 import { publishDateChange, publishFilterChange } from '@/components/ai/AIDrawer';
 import AudioPlayer from '@/components/ui/AudioPlayer';
+import { DateRangePicker } from '@/components/DateRangePicker';
+import { motion } from 'framer-motion';
 
 export default function CallLogsPage() {
   const [filterVisible, setFilterVisible] = useState(false);
@@ -116,16 +118,6 @@ export default function CallLogsPage() {
   
   const handleFilterChange = (newFilters: CallLogsFilterValues) => {
     setFilters(newFilters);
-    // If the advanced filter includes date changes, update the dateRange state too
-    if (newFilters.startDate && newFilters.endDate) {
-      setDateRange({
-        startDate: newFilters.startDate,
-        endDate: newFilters.endDate
-      });
-      
-      // Publish date changes if they're updated
-      publishDateChange(newFilters.startDate, newFilters.endDate);
-    }
     
     // Publish filter changes for AI Drawer to sync
     publishFilterChange('Call Logs', newFilters);
@@ -151,26 +143,29 @@ export default function CallLogsPage() {
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Call Logs</h1>
         
         <div className="flex flex-col sm:flex-row gap-3">
-          <button 
+          <motion.button 
             onClick={() => setFilterVisible(!filterVisible)}
-            className="flex items-center gap-2 py-2 px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="p-2 text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            animate={{ rotate: filterVisible ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
           >
-            <FilterIcon size={16} />
-            <span>Advanced Filters</span>
-            <ChevronDownIcon size={16} className={`transition-transform ${filterVisible ? 'rotate-180' : ''}`} />
-          </button>
+            <Settings size={20} className="text-blue-500 dark:text-blue-400" />
+          </motion.button>
           
-          <div className="flex items-center gap-2 py-2 px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
-            <CalendarIcon size={16} className="text-gray-500 dark:text-gray-400" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {dateRange.startDate} to {dateRange.endDate}
-            </span>
+          <div className="flex items-center">
+            <DateRangePicker 
+              onChange={(value: any, dateStrings: [string, string]) => handleDateRangeChange(dateStrings[0], dateStrings[1], 'Custom')}
+              startDate={dateRange.startDate}
+              endDate={dateRange.endDate}
+            />
           </div>
           
-          <button className="flex items-center gap-2 py-2 px-4 bg-gray-800 dark:bg-gray-700 text-white rounded-md">
+          {/* <button className="flex items-center gap-2 py-2 px-4 bg-gray-800 dark:bg-gray-700 text-white rounded-md">
             <Download size={16} />
             <span>Download Logs</span>
-          </button>
+          </button> */}
         </div>
       </div>
       
@@ -192,6 +187,7 @@ export default function CallLogsPage() {
           visible={filterVisible} 
           onFilterChange={handleFilterChange} 
           initialValues={filters}
+          currentDateRange={dateRange}
         />
       </div>
       

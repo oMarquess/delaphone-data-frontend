@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Switch, Select, Input, InputNumber, ConfigProvider, Form, Space, Button, Collapse, theme } from 'antd';
-import { DateRangePicker } from '@/components/DateRangePicker';
 import { ChevronDown, Filter, Phone, Clock, CalendarClock, Search, RotateCcw } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
@@ -14,6 +13,10 @@ interface CallLogsAdvancedFilterProps {
   visible: boolean;
   onFilterChange: (filters: CallLogsFilterValues) => void;
   initialValues?: CallLogsFilterValues;
+  currentDateRange: {
+    startDate: string;
+    endDate: string;
+  };
 }
 
 export interface CallLogsFilterValues {
@@ -33,8 +36,6 @@ export interface CallLogsFilterValues {
   limit: string;
   sortBy: string;
   sortOrder: string;
-  startDate?: string;
-  endDate?: string;
 }
 
 export default function CallLogsAdvancedFilter({
@@ -56,10 +57,9 @@ export default function CallLogsAdvancedFilter({
     uniqueCallersOnly: false,
     limit: '100',
     sortBy: 'calldate',
-    sortOrder: 'desc',
-    startDate: '',
-    endDate: ''
-  }
+    sortOrder: 'desc'
+  },
+  currentDateRange
 }: CallLogsAdvancedFilterProps) {
   // Local state for filter values
   const [localFilters, setLocalFilters] = useState<CallLogsFilterValues>(initialValues);
@@ -77,15 +77,6 @@ export default function CallLogsAdvancedFilter({
   
   const handleLocalFilterChange = (key: keyof CallLogsFilterValues, value: any) => {
     setLocalFilters(prev => ({ ...prev, [key]: value }));
-    setFiltersModified(true);
-  };
-
-  const handleDateRangeChange = (value: any, dateStrings: [string, string]) => {
-    setLocalFilters(prev => ({ 
-      ...prev, 
-      startDate: dateStrings[0], 
-      endDate: dateStrings[1]
-    }));
     setFiltersModified(true);
   };
 
@@ -131,14 +122,16 @@ export default function CallLogsAdvancedFilter({
     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
       <ConfigProvider theme={{ algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
         <Form layout="vertical" colon={false}>
-          {/* Date Range Section */}
+          {/* Date Range Display */}
           <div className="mb-4 flex items-center gap-2">
             <CalendarClock size={18} className="text-blue-500 dark:text-blue-400" />
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Date Range</h3>
           </div>
           
-          <div className="mb-4">
-            <DateRangePicker onChange={handleDateRangeChange} />
+          <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-md">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {currentDateRange.startDate} to {currentDateRange.endDate}
+            </span>
           </div>
           
           {/* Quick Filters Section */}
