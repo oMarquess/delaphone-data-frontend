@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { BarChartIcon, PhoneIcon, ClockIcon, UserIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
 import DateRangePicker from '@/components/dashboard/DateRangePicker';
 import SummaryCard from '@/components/dashboard/SummaryCard';
 import CallVolumeChart from '@/components/dashboard/CallVolumeChart';
@@ -29,16 +30,89 @@ import { ROUTES } from '@/config/constants';
 import { publishDateChange } from '@/components/ai/AIDrawer';
 
 export default function DashboardPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState<DashboardMetrics | null>(null);
-  const [callRecords, setCallRecords] = useState<any[]>([]);
   const [dateRange, setDateRange] = useState({
     startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
     endDate: new Date(),
   });
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  
+
+  // Create a unique key for SWR based on date range
+  const swrKey = useCallback(() => {
+    const startDateStr = format(dateRange.startDate, 'yyyy-MM-dd');
+    const endDateStr = format(dateRange.endDate, 'yyyy-MM-dd');
+    return isAuthenticated ? [startDateStr, endDateStr] : null;
+  }, [dateRange.startDate, dateRange.endDate, isAuthenticated]);
+
+  // Fetcher function for dashboard metrics
+  const metricsFetcher = async ([startDate, endDate]: [string, string]) => {
+    try {
+      const data = await dashboardService.getDashboardMetrics(startDate, endDate);
+      return data;
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        router.push(ROUTES.AUTH.LOGIN);
+      }
+      throw error;
+    }
+  };
+
+  // Fetcher function for call records
+  const callRecordsFetcher = async ([startDate, endDate]: [string, string]) => {
+    try {
+      const data = await dashboardService.getCallRecords(startDate, endDate);
+      return data;
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        router.push(ROUTES.AUTH.LOGIN);
+      }
+      throw error;
+    }
+  };
+
+  // Use SWR for dashboard metrics
+  const { 
+    data: dashboardData, 
+    error: dashboardError, 
+    isLoading: isDashboardLoading 
+  } = useSWR(
+    swrKey(),
+    metricsFetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5000,
+      shouldRetryOnError: false,
+      onError: (error) => {
+        toast.error('Failed to load dashboard data', {
+          description: error.message || 'An unknown error occurred.'
+        });
+      }
+    }
+  );
+
+  // Use SWR for call records
+  const { 
+    data: callRecordsData, 
+    error: callRecordsError, 
+    isLoading: isCallRecordsLoading 
+  } = useSWR(
+    swrKey(),
+    callRecordsFetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5000,
+      shouldRetryOnError: false,
+      onError: (error) => {
+        toast.error('Failed to load call records', {
+          description: error.message || 'An unknown error occurred.'
+        });
+      }
+    }
+  );
+
+  // Combine loading states
+  const isLoading = isDashboardLoading || isCallRecordsLoading;
+
   // Helper function to safely access nested properties
   const getSafeMetric = (path: string, fallback: any = 0) => {
     try {
@@ -80,90 +154,6 @@ export default function DashboardPage() {
     }));
   };
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!isAuthenticated) {
-        router.push(ROUTES.AUTH.LOGIN);
-        return;
-      }
-      
-      setIsLoading(true);
-      try {
-        const startDateStr = format(dateRange.startDate, 'yyyy-MM-dd');
-        const endDateStr = format(dateRange.endDate, 'yyyy-MM-dd');
-        
-        // Fetch dashboard metrics from the dashboard endpoint
-        const data = await dashboardService.getDashboardMetrics(startDateStr, endDateStr);
-        console.log('Dashboard data:', data); // For debugging
-        console.log('Hourly distribution data:', data.hourly_distribution); // Debug hourly distribution
-        setDashboardData(data);
-        
-        // Use top_sources instead of records for the table
-        if (data && (data as any).top_sources && Array.isArray((data as any).top_sources)) {
-          // Transform top_sources data to match expected call records format
-          const formattedRecords = (data as any).top_sources.map((source: any) => ({
-            src: source.src,
-            dst: "N/A", // Not available in top_sources
-            calldate: (data as any).time_period?.start_date || "N/A",
-            duration: source.duration,
-            billsec: source.duration, // Using duration as billsec
-            disposition: "ANSWERED", // Assuming all are answered
-            direction: source.unknown > 0 ? "unknown" : 
-                      source.inbound > 0 ? "inbound" : 
-                      source.outbound > 0 ? "outbound" : "internal",
-            calls: source.calls,
-            avg_duration: source.avg_duration
-          }));
-          setCallRecords(formattedRecords);
-        } else {
-          // If no top_sources, try fetching call records separately
-          try {
-            const callData = await dashboardService.getCallRecords(startDateStr, endDateStr);
-            if (callData && (callData as any).top_sources && Array.isArray((callData as any).top_sources)) {
-              const formattedRecords = (callData as any).top_sources.map((source: any) => ({
-                src: source.src,
-                dst: "N/A",
-                calldate: (callData as any).time_period?.start_date || "N/A",
-                duration: source.duration,
-                billsec: source.duration,
-                disposition: "ANSWERED",
-                direction: source.unknown > 0 ? "unknown" : 
-                          source.inbound > 0 ? "inbound" : 
-                          source.outbound > 0 ? "outbound" : "internal",
-                calls: source.calls,
-                avg_duration: source.avg_duration
-              }));
-              setCallRecords(formattedRecords);
-            } else {
-              setCallRecords([]);
-            }
-          } catch (recordError) {
-            console.error('Error fetching call records:', recordError);
-            setCallRecords([]);
-          }
-        }
-      } catch (error: any) {
-        console.error('Error fetching dashboard data:', error);
-        
-        // Handle different types of errors
-        if (error.response?.status === 401) {
-          toast.error('Authentication error', { 
-            description: 'Your session has expired. Please log in again.'
-          });
-          router.push(ROUTES.AUTH.LOGIN);
-        } else {
-          toast.error('Failed to load dashboard data', {
-            description: error.message || 'An unknown error occurred.'
-          });
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchDashboardData();
-  }, [dateRange, isAuthenticated, router]);
-  
   const handleDateRangeChange = (startDate: Date, endDate: Date) => {
     setDateRange({ startDate, endDate });
     
@@ -172,7 +162,22 @@ export default function DashboardPage() {
     const endDateStr = format(endDate, 'yyyy-MM-dd');
     publishDateChange(startDateStr, endDateStr);
   };
-  
+
+  // Format call records for the table
+  const formattedCallRecords = callRecordsData?.top_sources?.map((source: any) => ({
+    src: source.src,
+    dst: "N/A",
+    calldate: callRecordsData?.time_period?.start_date || "N/A",
+    duration: source.duration,
+    billsec: source.duration,
+    disposition: "ANSWERED",
+    direction: source.unknown > 0 ? "unknown" : 
+              source.inbound > 0 ? "inbound" : 
+              source.outbound > 0 ? "outbound" : "internal",
+    calls: source.calls,
+    avg_duration: source.avg_duration
+  })) || [];
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -216,7 +221,7 @@ export default function DashboardPage() {
         {/* Hourly Distribution - Full width on large screens */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 lg:col-span-3">
           <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Hourly Call Distribution</h2>
-          <div className="h-[400px]"> {/* Increased height for better visibility */}
+          <div className="h-[400px]">
             <HourlyDistributionLineChart 
               data={(dashboardData?.hourly_distribution && dashboardData.hourly_distribution.length > 0) 
                 ? dashboardData.hourly_distribution 
@@ -269,7 +274,7 @@ export default function DashboardPage() {
       {/* Call details table - full width */}
       <div className="bg-white dark:bg-gray-800 p-0 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <CallDetailsTable 
-          records={callRecords}
+          records={formattedCallRecords}
           isLoading={isLoading}
         />
       </div>
