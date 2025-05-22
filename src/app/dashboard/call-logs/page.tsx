@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay } from 'date-fns';
 import { FilterIcon, ChevronDownIcon, CalendarIcon, Download, Settings } from 'lucide-react';
 import useSWR from 'swr';
-import QuickDateSelector from '@/components/analytics/QuickDateSelector';
 import CallLogsAdvancedFilter, { CallLogsFilterValues } from '@/components/dashboard/CallLogsAdvancedFilter';
 import CallLogsTable, { CallLog } from '@/components/dashboard/CallLogsTable';
 import { dashboardService } from '@/services/dashboard';
@@ -15,10 +14,12 @@ import { motion } from 'framer-motion';
 
 export default function CallLogsPage() {
   const [filterVisible, setFilterVisible] = useState(false);
-  const [dateRangeLabel, setDateRangeLabel] = useState('Last 7 Days');
-  const [dateRange, setDateRange] = useState({
-    startDate: format(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-    endDate: format(new Date(), 'yyyy-MM-dd')
+  const [dateRange, setDateRange] = useState(() => {
+    const today = new Date();
+    return {
+      startDate: format(startOfDay(today), 'yyyy-MM-dd'),
+      endDate: format(endOfDay(today), 'yyyy-MM-dd')
+    };
   });
   const [filters, setFilters] = useState<CallLogsFilterValues>({
     callDirection: 'all',
@@ -90,27 +91,11 @@ export default function CallLogsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
-  const handleDateRangeChange = (startDate: string, endDate: string, label: string) => {
-    setDateRangeLabel(label);
-    
-    // If Custom is selected, open the advanced filters section
-    if (label === 'Custom') {
-      setFilterVisible(true);
-      
-      // Don't update date range if no dates provided (this prevents API call with empty dates)
-      if (!startDate || !endDate) {
-        return;
-      }
-    } else {
-      // If any preset is selected, close the advanced filters
-      setFilterVisible(false);
-    }
-    
-    // Update dates only if we have valid values
-    setDateRange({ startDate, endDate });
+  const handleDateRangeChange = (value: any, dateStrings: [string, string]) => {
+    setDateRange({ startDate: dateStrings[0], endDate: dateStrings[1] });
     
     // Publish date changes for AI Drawer to sync
-    publishDateChange(startDate, endDate);
+    publishDateChange(dateStrings[0], dateStrings[1]);
     
     // Reset page and trigger data refetch
     setCurrentPage(1);
@@ -156,28 +141,11 @@ export default function CallLogsPage() {
           
           <div className="flex items-center">
             <DateRangePicker 
-              onChange={(value: any, dateStrings: [string, string]) => handleDateRangeChange(dateStrings[0], dateStrings[1], 'Custom')}
+              onChange={handleDateRangeChange}
               startDate={dateRange.startDate}
               endDate={dateRange.endDate}
             />
           </div>
-          
-          {/* <button className="flex items-center gap-2 py-2 px-4 bg-gray-800 dark:bg-gray-700 text-white rounded-md">
-            <Download size={16} />
-            <span>Download Logs</span>
-          </button> */}
-        </div>
-      </div>
-      
-      {/* Quick date range selector */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Quick Select:</span>
-          <QuickDateSelector 
-            onChange={handleDateRangeChange} 
-            activeLabel={dateRangeLabel}
-            filterVisible={filterVisible}
-          />
         </div>
       </div>
       
