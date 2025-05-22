@@ -130,13 +130,20 @@ export default function CallLogsPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <motion.button 
             onClick={() => setFilterVisible(!filterVisible)}
-            className="p-2 text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400"
+            className={`p-2 transition-colors ${
+              filterVisible 
+                ? 'text-blue-500 dark:text-blue-400' 
+                : 'text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400'
+            }`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             animate={{ rotate: filterVisible ? 180 : 0 }}
             transition={{ duration: 0.2 }}
           >
-            <Settings size={20} className="text-blue-500 dark:text-blue-400" />
+            <Settings 
+              size={20} 
+              className={filterVisible ? 'text-blue-500 dark:text-blue-400' : ''} 
+            />
           </motion.button>
           
           <div className="flex items-center">

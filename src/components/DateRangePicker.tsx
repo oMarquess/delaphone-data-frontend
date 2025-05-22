@@ -92,7 +92,13 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     const today = new Date();
     return [dayjs(startOfDay(today)), dayjs(endOfDay(today))];
   });
+  const [presetOpen, setPresetOpen] = useState(false);
   
+  // Disable future dates
+  const disabledDate = (current: Dayjs) => {
+    return current && current > dayjs().endOf('day');
+  };
+
   const handlePresetSelect = (preset: typeof datePresets[0]) => {
     const { startDate, endDate } = preset.getValue();
     const newRange: [Dayjs, Dayjs] = [dayjs(startDate), dayjs(endDate)];
@@ -100,6 +106,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     if (onChange) {
       onChange(newRange, [startDate, endDate]);
     }
+    setPresetOpen(false);
   };
 
   const handleApplyFilter = () => {
@@ -113,12 +120,12 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   const presetContent = (
-    <div className="p-2 space-y-2 min-w-[200px]">
+    <div className="p-2 space-y-1 w-[160px]">
       {datePresets.map((preset) => (
         <button
           key={preset.label}
           onClick={() => handlePresetSelect(preset)}
-          className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="w-full text-left px-3 py-1.5 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
           {preset.label}
         </button>
@@ -145,6 +152,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
           content={presetContent}
           trigger="click"
           placement="bottomLeft"
+          open={presetOpen}
+          onOpenChange={setPresetOpen}
         >
           <Button
             icon={<CalendarClock size={16} />}
@@ -158,6 +167,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
           }}
           value={localDateRange}
           style={{ width: '100%' }}
+          disabledDate={disabledDate}
         />
         <Button
           type="primary"
