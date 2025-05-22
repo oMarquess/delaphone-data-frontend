@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { CalendarClock, Filter } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
 
@@ -93,6 +94,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     return [dayjs(startOfDay(today)), dayjs(endOfDay(today))];
   });
   const [presetOpen, setPresetOpen] = useState(false);
+  const [isFilterActive, setIsFilterActive] = useState(false);
   
   // Disable future dates
   const disabledDate = (current: Dayjs) => {
@@ -116,21 +118,35 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
       if (onChange) {
         onChange(localDateRange, [startDate, endDate]);
       }
+      setIsFilterActive(true);
+      setPresetOpen(false);
+      setTimeout(() => setIsFilterActive(false), 1000);
     }
   };
 
   const presetContent = (
-    <div className="p-2 space-y-1 w-[160px]">
-      {datePresets.map((preset) => (
-        <button
+    <motion.div 
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
+      className="p-2 space-y-1 w-[160px]"
+    >
+      {datePresets.map((preset, index) => (
+        <motion.button
           key={preset.label}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: index * 0.05 }}
           onClick={() => handlePresetSelect(preset)}
           className="w-full text-left px-3 py-1.5 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
           {preset.label}
-        </button>
+        </motion.button>
       ))}
-    </div>
+    </motion.div>
   );
 
   return (
@@ -155,26 +171,50 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
           open={presetOpen}
           onOpenChange={setPresetOpen}
         >
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button
+              icon={<CalendarClock size={16} />}
+              className="flex items-center justify-center"
+            />
+          </motion.div>
+        </Popover>
+        <motion.div
+          className="flex-1"
+          initial={false}
+          animate={{
+            scale: isFilterActive ? [1, 1.02, 1] : 1,
+            transition: { duration: 0.3 }
+          }}
+        >
+          <RangePicker
+            format="YYYY-MM-DD"
+            onChange={(dates) => {
+              setLocalDateRange(dates);
+            }}
+            value={localDateRange}
+            style={{ width: '100%' }}
+            disabledDate={disabledDate}
+            popupClassName="date-picker-popup"
+          />
+        </motion.div>
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          animate={{
+            rotate: isFilterActive ? [0, 360] : 0,
+            transition: { duration: 0.5 }
+          }}
+        >
           <Button
-            icon={<CalendarClock size={16} />}
+            type="primary"
+            icon={<Filter size={16} />}
+            onClick={handleApplyFilter}
             className="flex items-center justify-center"
           />
-        </Popover>
-        <RangePicker
-          format="YYYY-MM-DD"
-          onChange={(dates) => {
-            setLocalDateRange(dates);
-          }}
-          value={localDateRange}
-          style={{ width: '100%' }}
-          disabledDate={disabledDate}
-        />
-        <Button
-          type="primary"
-          icon={<Filter size={16} />}
-          onClick={handleApplyFilter}
-          className="flex items-center justify-center"
-        />
+        </motion.div>
       </Space.Compact>
     </ConfigProvider>
   );

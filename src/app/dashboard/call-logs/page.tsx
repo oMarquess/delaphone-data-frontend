@@ -10,7 +10,7 @@ import { dashboardService } from '@/services/dashboard';
 import { publishDateChange, publishFilterChange } from '@/components/ai/AIDrawer';
 import AudioPlayer from '@/components/ui/AudioPlayer';
 import { DateRangePicker } from '@/components/DateRangePicker';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CallLogsPage() {
   const [filterVisible, setFilterVisible] = useState(false);
@@ -64,7 +64,11 @@ export default function CallLogsPage() {
   const { data, error, isLoading, mutate } = useSWR(swrKey(), fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 5000,
-    shouldRetryOnError: false
+    shouldRetryOnError: false,
+    onSuccess: () => {
+      // Close the advanced filters section when data is successfully loaded
+      setFilterVisible(false);
+    }
   });
   
   // Add debugging to see API response
@@ -78,6 +82,8 @@ export default function CallLogsPage() {
         pageSize: parseInt(filters.limit || '100'),
         totalPages: Math.ceil((data.filtered_count || 0) / parseInt(filters.limit || '100'))
       });
+      // Ensure filters are closed after data is loaded
+      setFilterVisible(false);
     }
   }, [data, filters.limit]);
   
@@ -92,6 +98,10 @@ export default function CallLogsPage() {
   };
   
   const handleDateRangeChange = (value: any, dateStrings: [string, string]) => {
+    // Close the advanced filters section first
+    setFilterVisible(false);
+    
+    // Update the date range
     setDateRange({ startDate: dateStrings[0], endDate: dateStrings[1] });
     
     // Publish date changes for AI Drawer to sync
@@ -157,14 +167,24 @@ export default function CallLogsPage() {
       </div>
       
       {/* Collapsible filter section */}
-      <div className={`transition-all duration-300 overflow-hidden ${filterVisible ? 'max-h-[1200px] opacity-100 mb-10' : 'max-h-0 opacity-0'}`}>
-        <CallLogsAdvancedFilter 
-          visible={filterVisible} 
-          onFilterChange={handleFilterChange} 
-          initialValues={filters}
-          currentDateRange={dateRange}
-        />
-      </div>
+      <AnimatePresence>
+        {filterVisible && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <CallLogsAdvancedFilter 
+              visible={filterVisible} 
+              onFilterChange={handleFilterChange} 
+              initialValues={filters}
+              currentDateRange={dateRange}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Dashboard status */}
       <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
