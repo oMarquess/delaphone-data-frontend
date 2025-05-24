@@ -48,6 +48,7 @@ export default function CallLogsTable({
   const [sortField, setSortField] = useState<string>('calldate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [loadingRecording, setLoadingRecording] = useState<string | null>(null);
   
   // Use the global audio player
   const { playAudio } = useAudioPlayer();
@@ -224,6 +225,7 @@ export default function CallLogsTable({
   // Updated to use global audio player
   const handlePlayRecording = async (recordingfile: string, callInfo?: { src: string; dst: string; calldate: string }) => {
     try {
+      setLoadingRecording(recordingfile);
       const token = await tokenManager.getValidToken();
       const audioUrl = `${API_BASE_URL}/sftp-stream-audio?full_path=${encodeURIComponent(recordingfile)}`;
       console.log('Streaming audio from:', audioUrl);
@@ -250,6 +252,8 @@ export default function CallLogsTable({
       
     } catch (error) {
       console.error('Error getting token or streaming audio:', error);
+    } finally {
+      setLoadingRecording(null);
     }
   };
 
@@ -435,14 +439,19 @@ export default function CallLogsTable({
                     {record.recordingfile && record.disposition !== 'FAILED' && record.disposition !== 'NO ANSWER' && (
                       <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                         <button 
-                          className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                          className={`flex items-center gap-1 text-xs hover:underline ${
+                            loadingRecording === record.recordingfile 
+                              ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                              : 'text-blue-600 dark:text-blue-400'
+                          }`}
                           onClick={(e) => {
                             e.stopPropagation();
                             handlePlayRecording(record.recordingfile, { src: record.src, dst: record.dst, calldate: record.calldate });
                           }}
+                          disabled={loadingRecording === record.recordingfile}
                           title={record.recordingfile}
                         >
-                          <Play size={12} /> Play recording
+                          <Play size={12} /> {loadingRecording === record.recordingfile ? 'Loading...' : 'Play recording'}
                         </button>
                       </div>
                     )}
@@ -616,14 +625,19 @@ export default function CallLogsTable({
                               </button>
                               {record.recordingfile && (
                                 <button 
-                                  className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                  className={`flex items-center gap-1 text-xs hover:underline ${
+                                    loadingRecording === record.recordingfile 
+                                      ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                                      : 'text-blue-600 dark:text-blue-400'
+                                  }`}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handlePlayRecording(record.recordingfile, { src: record.src, dst: record.dst, calldate: record.calldate });
                                   }}
+                                  disabled={loadingRecording === record.recordingfile}
                                   title={record.recordingfile}
                                 >
-                                  <Play size={12} /> Play recording
+                                  <Play size={12} /> {loadingRecording === record.recordingfile ? 'Loading...' : 'Play recording'}
                                 </button>
                               )}
                             </>
