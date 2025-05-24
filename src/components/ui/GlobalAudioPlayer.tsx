@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 import { Howl } from 'howler';
-import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, X, Move } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, X, Move, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface AudioPlayerState {
@@ -414,6 +414,24 @@ function FloatingAudioPlayer() {
               disabled={state.isLoading}
             >
               <SkipForward size={20} />
+            </button>
+
+            <button
+              onClick={() => {
+                if (state.currentTrack?.src) {
+                  const link = document.createElement('a');
+                  link.href = state.currentTrack.src;
+                  link.download = state.currentTrack.title || 'recording.wav';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }
+              }}
+              className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              disabled={state.isLoading || !state.currentTrack}
+              title="Download audio"
+            >
+              <Download size={20} />
             </button>
           </div>
 
