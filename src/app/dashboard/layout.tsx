@@ -1,5 +1,6 @@
 import { SidebarProvider } from '@/components/navigation/SidebarContext';
 import DashboardContent from '@/components/dashboard/DashboardContent';
+import { AudioPlayerProvider } from '@/components/ui/GlobalAudioPlayer';
 import { Fira_Sans } from "next/font/google";
 import { Metadata } from 'next';
 
@@ -25,9 +26,11 @@ export default function DashboardLayout({
 }) {
   return (
     <SidebarProvider>
-      <div className={`${firaSans.variable} font-fira-sans`}>
-        <DashboardContent>{children}</DashboardContent>
-      </div>
+      <AudioPlayerProvider>
+        <div className={`${firaSans.variable} font-fira-sans`}>
+          <DashboardContent>{children}</DashboardContent>
+        </div>
+      </AudioPlayerProvider>
     </SidebarProvider>
   );
 } 

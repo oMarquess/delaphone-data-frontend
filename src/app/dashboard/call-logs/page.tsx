@@ -8,7 +8,6 @@ import CallLogsAdvancedFilter, { CallLogsFilterValues } from '@/components/dashb
 import CallLogsTable, { CallLog } from '@/components/dashboard/CallLogsTable';
 import { dashboardService } from '@/services/dashboard';
 import { publishDateChange, publishFilterChange } from '@/components/ai/AIDrawer';
-import AudioPlayer from '@/components/ui/AudioPlayer';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -249,13 +248,6 @@ export default function CallLogsPage() {
         pageSize={pageSize}
         isLoading={isLoading}
       />
-      
-      {/* <AudioPlayer 
-        src="path/to/your/audio.mp3"
-        autoPlay={false}
-        onEnd={() => console.log('Audio finished playing')}
-        className="w-full max-w-md"
-      /> */}
     </div>
   );
 } 

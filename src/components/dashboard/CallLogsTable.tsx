@@ -4,12 +4,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { ChevronDownIcon, ChevronUpIcon, Play, Download, ChevronLeft, ChevronRight, Phone, Clock, Calendar, Info, ArrowUp, ArrowDown, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import React from 'react';
-import AudioPlayer from '@/components/ui/AudioPlayer';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { useAudioPlayer } from '@/components/ui/GlobalAudioPlayer';
 import { API_BASE_URL } from '@/config/constants';
 import tokenManager from '@/services/tokenManager';
 import axios from 'axios';
@@ -53,8 +48,9 @@ export default function CallLogsTable({
   const [sortField, setSortField] = useState<string>('calldate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
-  const [playingRecording, setPlayingRecording] = useState<string | null>(null);
-  const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
+  
+  // Use the global audio player
+  const { playAudio } = useAudioPlayer();
   
   // Calculate total pages
   const totalPages = Math.ceil(filteredCount / pageSize);
@@ -225,7 +221,8 @@ export default function CallLogsTable({
   // Debug pagination data
   console.log('Pagination Debug:', { filteredCount, pageSize, totalPages, currentPage });
 
-  const handlePlayRecording = async (recordingfile: string) => {
+  // Updated to use global audio player
+  const handlePlayRecording = async (recordingfile: string, callInfo?: { src: string; dst: string; calldate: string }) => {
     try {
       const token = await tokenManager.getValidToken();
       const audioUrl = `${API_BASE_URL}/sftp-stream-audio?full_path=${encodeURIComponent(recordingfile)}`;
@@ -243,17 +240,17 @@ export default function CallLogsTable({
       const blob = new Blob([response.data], { type: 'audio/wav' });
       const objectUrl = URL.createObjectURL(blob);
       
-      // Store the URL in state
-      setAudioUrls(prev => ({ ...prev, [recordingfile]: objectUrl }));
-      return objectUrl;
+      // Create title for the audio player
+      const title = callInfo 
+        ? `${formatPhoneNumber(callInfo.src)} → ${formatPhoneNumber(callInfo.dst)} (${formatDate(callInfo.calldate)})`
+        : 'Call Recording';
+      
+      // Play audio using global player
+      playAudio(objectUrl, title);
+      
     } catch (error) {
       console.error('Error getting token or streaming audio:', error);
-      return '';
     }
-  };
-
-  const handleRecordingEnd = () => {
-    setPlayingRecording(null);
   };
 
   return (
@@ -437,28 +434,16 @@ export default function CallLogsTable({
                     </button>
                     {record.recordingfile && record.disposition !== 'FAILED' && record.disposition !== 'NO ANSWER' && (
                       <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <button 
-                              className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePlayRecording(record.recordingfile);
-                              }}
-                              title={record.recordingfile}
-                            >
-                              <Play size={12} /> Play recording
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-80 p-0 border-0" align="start">
-                            <AudioPlayer 
-                              src={audioUrls[record.recordingfile] || ''}
-                              autoPlay={false}
-                              onEnd={() => console.log('Audio finished playing')}
-                              className="w-full rounded-md"
-                            />
-                          </PopoverContent>
-                        </Popover>
+                        <button 
+                          className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePlayRecording(record.recordingfile, { src: record.src, dst: record.dst, calldate: record.calldate });
+                          }}
+                          title={record.recordingfile}
+                        >
+                          <Play size={12} /> Play recording
+                        </button>
                       </div>
                     )}
                   </div>
@@ -630,28 +615,16 @@ export default function CallLogsTable({
                                 <Download size={16} />
                               </button>
                               {record.recordingfile && (
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <button 
-                                      className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handlePlayRecording(record.recordingfile);
-                                      }}
-                                      title={record.recordingfile}
-                                    >
-                                      <Play size={12} /> Play recording
-                                    </button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-80 p-0 border-0" align="start">
-                                    <AudioPlayer 
-                                      src={audioUrls[record.recordingfile] || ''}
-                                      autoPlay={false}
-                                      onEnd={() => console.log('Audio finished playing')}
-                                      className="w-full rounded-md"
-                                    />
-                                  </PopoverContent>
-                                </Popover>
+                                <button 
+                                  className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePlayRecording(record.recordingfile, { src: record.src, dst: record.dst, calldate: record.calldate });
+                                  }}
+                                  title={record.recordingfile}
+                                >
+                                  <Play size={12} /> Play recording
+                                </button>
                               )}
                             </>
                           )}

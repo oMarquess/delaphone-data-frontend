@@ -8,10 +8,11 @@ interface AudioPlayerProps {
   src: string;
   autoPlay?: boolean;
   onEnd?: () => void;
+  onClose?: () => void;
   className?: string;
 }
 
-export default function AudioPlayer({ src, autoPlay = false, onEnd, className = '' }: AudioPlayerProps) {
+export default function AudioPlayer({ src, autoPlay = false, onEnd, onClose, className = '' }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
