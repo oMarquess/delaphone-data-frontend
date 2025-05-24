@@ -220,7 +220,7 @@ export default function CallLogsTable({
   };
 
   // Debug pagination data
-  console.log('Pagination Debug:', { filteredCount, pageSize, totalPages, currentPage });
+  // console.log('Pagination Debug:', { filteredCount, pageSize, totalPages, currentPage });
 
   // Updated to use global audio player
   const handlePlayRecording = async (recordingfile: string, callInfo?: { src: string; dst: string; calldate: string }) => {
