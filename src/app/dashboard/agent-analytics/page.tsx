@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { PhoneIcon, UserIcon, ClockIcon, BarChartIcon, FilterIcon, ChevronDownIcon, CalendarIcon, CheckCircleIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { PhoneIcon, UserIcon, ClockIcon, BarChartIcon, FilterIcon, ChevronDownIcon, CalendarIcon, CheckCircleIcon, Settings } from 'lucide-react';
 import { AnalyticsFilters } from '@/components/analytics/AnalyticsFilterBar';
 import { AgentAnalyticsFilterBar, AgentAnalyticsFilters } from '@/components/analytics/AgentAnalyticsFilterBar';
 import { useAnalyticsData, formatDuration } from '@/services/analytics';
@@ -10,6 +10,9 @@ import { publishDateChange, publishFilterChange } from '@/components/ai/AIDrawer
 import AgentPerformanceChart from '@/components/analytics/AgentPerformanceChart';
 import AgentDispositionChart from '@/components/analytics/AgentDispositionChart';
 import AgentEfficiencyGauges from '@/components/analytics/AgentEfficiencyGauges';
+import { dashboardService } from '@/services/dashboard';
+import { DateRangePicker } from '@/components/DateRangePicker';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AgentAnalyticsPage() {
   // Get today's date in YYYY-MM-DD format
@@ -28,56 +31,110 @@ export default function AgentAnalyticsPage() {
   };
 
   const [filters, setFilters] = useState<AgentAnalyticsFilters>(initialFilters);
-  const { data, isLoading, isError } = useAnalyticsData(filters, 'agent');
+  const { data, isLoading, isError, mutate } = useAnalyticsData(filters, 'agent');
   const [filterVisible, setFilterVisible] = useState(false);
   const [dateRangeLabel, setDateRangeLabel] = useState('Custom');
+  const [dateRange, setDateRange] = useState({ startDate: today, endDate: today });
 
   // State for tab selection in the detailed analysis section
   const [analysisTab, setAnalysisTab] = useState<string>('performance');
 
+  // Debug current filters and data
+  useEffect(() => {
+    console.log('Current Filters:', filters);
+    console.log('Current Data:', data);
+  }, [filters, data]);
+
   const handleFilterChange = (newFilters: AgentAnalyticsFilters) => {
-    setFilters(newFilters);
+    console.group('Filter Change Process');
+    console.log('1. New filters received from filter bar:', newFilters);
+    
+    // Ensure we keep the current date range when applying filters
+    const updatedFilters = {
+      ...newFilters,
+      startDate: filters.startDate,
+      endDate: filters.endDate
+    };
+    
+    console.log('2. Updated filters with date range:', updatedFilters);
+    setFilters(updatedFilters);
     
     // Publish filter changes for AI Drawer to sync
-    publishFilterChange('Agent Analytics', newFilters);
+    console.log('3. Publishing filter changes to AI Drawer');
+    publishFilterChange('Agent Analytics', updatedFilters);
     
     // Also publish date changes if they're included
-    if (newFilters.startDate && newFilters.endDate) {
-      publishDateChange(newFilters.startDate, newFilters.endDate);
+    if (updatedFilters.startDate && updatedFilters.endDate) {
+      console.log('4. Publishing date changes:', {
+        startDate: updatedFilters.startDate,
+        endDate: updatedFilters.endDate
+      });
+      publishDateChange(updatedFilters.startDate, updatedFilters.endDate);
     }
+
+    // Force a re-fetch of the data
+    console.log('5. Triggering data refetch with filters:', updatedFilters);
+    mutate(undefined, {
+      revalidate: true,
+      rollbackOnError: true
+    }).then(() => {
+      console.log('6. Data refetch completed');
+      // Close the filter panel after successful data fetch
+      setFilterVisible(false);
+    }).catch(error => {
+      console.error('6. Error during data refetch:', error);
+    });
+    console.groupEnd();
   };
 
-  const handleDateRangeChange = (startDate: string, endDate: string, label: string) => {
-    setDateRangeLabel(label);
-    
-    // If Custom is selected, open the advanced filters section
-    if (label === 'Custom') {
-      setFilterVisible(true);
-      
-      if (!startDate) {
-        // If custom is selected but no dates provided, just update the label and keep current dates
-        return;
-      }
-    } else {
-      // If any preset is selected, close the advanced filters
-      setFilterVisible(false);
+  // Debug data fetching
+  useEffect(() => {
+    if (isLoading) {
+      console.log('Data is loading...');
     }
+    if (isError) {
+      console.error('Error loading data');
+    }
+    if (data) {
+      console.log('New data received:', {
+        timePeriod: data.time_period,
+        filters: data.filters,
+        summary: data.summary,
+        agents: data.agents
+      });
+    }
+  }, [data, isLoading, isError]);
+
+  const handleDateRangeChange = (value: any, dateStrings: [string, string]) => {
+    // Update the date range
+    setDateRangeLabel('Custom');
+    setDateRange({ startDate: dateStrings[0], endDate: dateStrings[1] });
     
     // Publish date changes for AI Drawer to sync
-    publishDateChange(startDate, endDate);
+    publishDateChange(dateStrings[0], dateStrings[1]);
     
+    // Update filters with new date range
     const newFilters = {
       ...filters,
-      startDate,
-      endDate
+      startDate: dateStrings[0],
+      endDate: dateStrings[1]
     };
     setFilters(newFilters);
     
-    // If we select a preset, automatically apply the filter
-    if (label !== 'Custom') {
-      publishFilterChange('Agent Analytics', newFilters);
-    }
+    // Publish filter changes
+    publishFilterChange('Agent Analytics', newFilters);
   };
+
+  // Count active filters (excluding empty strings, 'all' values, and date range)
+  const activeFilterCount = Object.entries(filters).reduce((count, [key, value]) => {
+    // Skip date range and default values
+    if (key === 'startDate' || key === 'endDate') return count;
+    if (value === 'all' || value === '' || value === null || value === undefined) return count;
+    if (key === 'minCalls' && value === 5) return count; // Skip default minCalls
+    if (key === 'limit' && value === 100) return count; // Skip default limit
+    if (key === 'sortBy' && value === 'call_count') return count; // Skip default sort
+    return count + 1;
+  }, 0);
 
   return (
     <div className="space-y-6">
@@ -86,26 +143,40 @@ export default function AgentAnalyticsPage() {
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Agent Analytics</h1>
         
         <div className="flex flex-col sm:flex-row gap-3">
-          <button 
-            onClick={() => setFilterVisible(!filterVisible)}
-            className="flex items-center gap-2 py-2 px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          >
-            <FilterIcon size={16} />
-            <span>Advanced Filters</span>
-            <ChevronDownIcon size={16} className={`transition-transform ${filterVisible ? 'rotate-180' : ''}`} />
-          </button>
-          
-          <div className="flex items-center gap-2 py-2 px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
-            <CalendarIcon size={16} className="text-gray-500 dark:text-gray-400" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {data?.time_period?.start_date} to {data?.time_period?.end_date}
-            </span>
+          <div className="flex items-center">
+            <DateRangePicker 
+              onChange={handleDateRangeChange}
+              startDate={dateRange.startDate}
+              endDate={dateRange.endDate}
+            />
           </div>
+          <motion.button 
+            onClick={() => setFilterVisible(!filterVisible)}
+            className={`p-2 transition-colors relative ${
+              filterVisible 
+                ? 'text-blue-500 dark:text-blue-400' 
+                : 'text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400'
+            }`}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            animate={{ rotate: filterVisible ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Settings 
+              size={20} 
+              className={filterVisible ? 'text-blue-500 dark:text-blue-400' : ''} 
+            />
+            {activeFilterCount > 0 && !filterVisible && (
+              <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
+          </motion.button>
         </div>
       </div>
       
       {/* Quick date range selector */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      {/* <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Quick Select:</span>
           <QuickDateSelector 
@@ -114,16 +185,26 @@ export default function AgentAnalyticsPage() {
             filterVisible={filterVisible}
           />
         </div>
-      </div>
+      </div> */}
       
       {/* Collapsible filter section */}
-      <div className={`transition-all duration-300 overflow-hidden ${filterVisible ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-        <AgentAnalyticsFilterBar 
-          onFilterChange={handleFilterChange} 
-          initialFilters={initialFilters}
-          agents={data?.agents || []}
-        />
-      </div>
+      <AnimatePresence>
+        {filterVisible && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <AgentAnalyticsFilterBar 
+              onFilterChange={handleFilterChange} 
+              initialFilters={filters}
+              agents={data?.agents || []}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Error message */}
       {isError && (
@@ -139,7 +220,7 @@ export default function AgentAnalyticsPage() {
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span className="inline-flex items-center">
               <CalendarIcon size={14} className="mr-1.5" />
-              <span className="font-medium mr-1.5">Period:</span> {filters.startDate} to {filters.endDate}
+              <span className="font-medium mr-1.5">Period:</span> {dateRange.startDate} to {dateRange.endDate}
             </span>
             
             <span className="hidden sm:inline-block text-green-300 dark:text-green-700">|</span>

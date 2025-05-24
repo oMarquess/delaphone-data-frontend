@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Space, Select, InputNumber, Row, Col, ConfigProvider, theme, Button } from 'antd';
-import { DateRangePicker } from '@/components/DateRangePicker';
 import { useTheme } from 'next-themes';
-import { Filter, RotateCcw } from 'lucide-react';
+import { Filter, RotateCcw, Phone, Clock, CalendarClock } from 'lucide-react';
 import { AnalyticsFilters } from './AnalyticsFilterBar';
 
 const { Option } = Select;
@@ -46,6 +45,9 @@ export const AgentAnalyticsFilterBar: React.FC<AgentAnalyticsFilterBarProps> = (
     agent: initialFilters.agent || 'all'
   });
 
+  // Track if filters have been modified since last apply
+  const [filtersModified, setFiltersModified] = useState(false);
+
   // Update local filters when initialFilters changes
   useEffect(() => {
     if (initialFilters) {
@@ -56,28 +58,44 @@ export const AgentAnalyticsFilterBar: React.FC<AgentAnalyticsFilterBarProps> = (
     }
   }, [initialFilters]);
 
-  const handleDateChange = (value: any, dateStrings: [string, string]) => {
-    if (dateStrings[0] && dateStrings[1]) {
-      setLocalFilters(prev => ({
-        ...prev,
-        startDate: dateStrings[0],
-        endDate: dateStrings[1]
-      }));
-    }
-  };
-
   const handleFilterChange = (field: keyof AgentAnalyticsFilters, value: any) => {
-    setLocalFilters(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    console.group('Filter Bar - Filter Change');
+    console.log('1. Field changed:', field);
+    console.log('2. New value:', value);
+    
+    // Format values to match API expectations
+    let formattedValue = value;
+    if (field === 'disposition' && value !== 'all') {
+      formattedValue = value.replace(' ', '_').toUpperCase();
+      console.log('3. Formatted disposition value:', formattedValue);
+    } else if (field === 'direction' && value !== 'all') {
+      formattedValue = value.toUpperCase();
+      console.log('3. Formatted direction value:', formattedValue);
+    }
+    
+    setLocalFilters(prev => {
+      const newFilters = {
+        ...prev,
+        [field]: formattedValue
+      };
+      console.log('4. Updated local filters:', newFilters);
+      return newFilters;
+    });
+    setFiltersModified(true);
+    console.groupEnd();
   };
 
   const handleApplyFilters = () => {
+    console.group('Filter Bar - Apply Filters');
+    console.log('1. Current local filters:', localFilters);
+    console.log('2. Calling onFilterChange with filters');
     onFilterChange(localFilters);
+    setFiltersModified(false);
+    console.groupEnd();
   };
 
   const handleResetFilters = () => {
+    console.group('Filter Bar - Reset Filters');
     const resetFilters: AgentAnalyticsFilters = {
       startDate: initialFilters.startDate || '',
       endDate: initialFilters.endDate || '',
@@ -88,8 +106,12 @@ export const AgentAnalyticsFilterBar: React.FC<AgentAnalyticsFilterBarProps> = (
       limit: 100,
       agent: 'all'
     };
+    console.log('1. Reset filters to:', resetFilters);
     setLocalFilters(resetFilters);
+    setFiltersModified(true);
+    console.log('2. Calling onFilterChange with reset filters');
     onFilterChange(resetFilters);
+    console.groupEnd();
   };
 
   return (
@@ -99,137 +121,112 @@ export const AgentAnalyticsFilterBar: React.FC<AgentAnalyticsFilterBarProps> = (
       }}
     >
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
-        <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} md={8}>
-            <div className="mb-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Date Range</label>
-              <DateRangePicker
-                onChange={handleDateChange}
-                startDate={localFilters.startDate}
-                endDate={localFilters.endDate}
-              />
-            </div>
-          </Col>
+        {/* Quick Filters Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Agent</label>
+            <Select
+              value={localFilters.agent}
+              onChange={(value) => handleFilterChange('agent', value)}
+              className="w-full"
+              placeholder="Select agent"
+            >
+              <Option value="all">All Agents</Option>
+              {agents.map(agent => (
+                <Option key={agent.agent} value={agent.agent}>
+                  {agent.agent_cnam || `Agent ${agent.agent}`}
+                </Option>
+              ))}
+            </Select>
+          </div>
           
-          <Col xs={24} md={16}>
-            <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={8}>
-                <div className="mb-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Agent</label>
-                  <Select
-                    value={localFilters.agent}
-                    onChange={(value) => handleFilterChange('agent', value)}
-                    className="w-full"
-                    placeholder="Select agent"
-                  >
-                    <Option value="all">All Agents</Option>
-                    {agents.map(agent => (
-                      <Option key={agent.agent} value={agent.agent}>
-                        {agent.agent_cnam || `Agent ${agent.agent}`}
-                      </Option>
-                    ))}
-                  </Select>
-                </div>
-              </Col>
-              
-              <Col xs={24} sm={12} md={8}>
-                <div className="mb-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Call Direction</label>
-                  <Select
-                    value={localFilters.direction}
-                    onChange={(value) => handleFilterChange('direction', value)}
-                    className="w-full"
-                  >
-                    <Option value="all">All Directions</Option>
-                    <Option value="inbound">Inbound</Option>
-                    <Option value="outbound">Outbound</Option>
-                    <Option value="internal">Internal</Option>
-                  </Select>
-                </div>
-              </Col>
-              
-              <Col xs={24} sm={12} md={8}>
-                <div className="mb-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Call Disposition</label>
-                  <Select
-                    value={localFilters.disposition}
-                    onChange={(value) => handleFilterChange('disposition', value)}
-                    className="w-full"
-                  >
-                    <Option value="all">All Dispositions</Option>
-                    <Option value="ANSWERED">Answered</Option>
-                    <Option value="NO ANSWER">No Answer</Option>
-                    <Option value="BUSY">Busy</Option>
-                    <Option value="FAILED">Failed</Option>
-                  </Select>
-                </div>
-              </Col>
-            </Row>
-          </Col>
-        </Row>
+          <div className="mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Call Direction</label>
+            <Select
+              value={localFilters.direction}
+              onChange={(value) => handleFilterChange('direction', value)}
+              className="w-full"
+            >
+              <Option value="all">All Directions</Option>
+              <Option value="inbound">Inbound</Option>
+              <Option value="outbound">Outbound</Option>
+              <Option value="internal">Internal</Option>
+            </Select>
+          </div>
+          
+          <div className="mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Call Disposition</label>
+            <Select
+              value={localFilters.disposition}
+              onChange={(value) => handleFilterChange('disposition', value)}
+              className="w-full"
+            >
+              <Option value="all">All Dispositions</Option>
+              <Option value="ANSWERED">Answered</Option>
+              <Option value="NO_ANSWER">No Answer</Option>
+              <Option value="BUSY">Busy</Option>
+              <Option value="FAILED">Failed</Option>
+            </Select>
+          </div>
+        </div>
         
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={6}>
-            <div className="mb-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Min Calls</label>
-              <InputNumber
-                value={localFilters.minCalls}
-                onChange={(value) => handleFilterChange('minCalls', value)}
-                className="w-full"
-                min={1}
-                max={1000}
-              />
-            </div>
-          </Col>
+        {/* Result Options */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Min Calls</label>
+            <InputNumber
+              value={localFilters.minCalls}
+              onChange={(value) => handleFilterChange('minCalls', value)}
+              className="w-full"
+              min={1}
+              max={1000}
+            />
+          </div>
           
-          <Col xs={24} sm={12} md={6}>
-            <div className="mb-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Sort By</label>
-              <Select
-                value={localFilters.sortBy}
-                onChange={(value) => handleFilterChange('sortBy', value)}
-                className="w-full"
-              >
-                <Option value="call_count">Call Count</Option>
-                <Option value="answer_rate">Answer Rate</Option>
-                <Option value="avg_duration">Average Duration</Option>
-                <Option value="efficiency_score">Efficiency Score</Option>
-              </Select>
-            </div>
-          </Col>
+          <div className="mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Sort By</label>
+            <Select
+              value={localFilters.sortBy}
+              onChange={(value) => handleFilterChange('sortBy', value)}
+              className="w-full"
+            >
+              <Option value="call_count">Call Count</Option>
+              <Option value="answer_rate">Answer Rate</Option>
+              <Option value="avg_duration">Average Duration</Option>
+              <Option value="efficiency_score">Efficiency Score</Option>
+            </Select>
+          </div>
           
-          <Col xs={24} sm={12} md={6}>
-            <div className="mb-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Limit</label>
-              <InputNumber
-                value={localFilters.limit}
-                onChange={(value) => handleFilterChange('limit', value)}
-                className="w-full"
-                min={1}
-                max={100}
-              />
-            </div>
-          </Col>
-          
-          <Col xs={24} sm={12} md={6} className="flex items-end">
-            <Space className="w-full">
-              <Button 
-                type="primary" 
-                onClick={handleApplyFilters}
-                className="bg-green-600 hover:bg-green-700 border-green-600"
-                icon={<Filter className="h-4 w-4 mr-1" />}
-              >
-                Apply Filters
-              </Button>
-              <Button 
-                onClick={handleResetFilters}
-                icon={<RotateCcw className="h-4 w-4 mr-1" />}
-              >
-                Reset
-              </Button>
-            </Space>
-          </Col>
-        </Row>
+          <div className="mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Limit</label>
+            <InputNumber
+              value={localFilters.limit}
+              onChange={(value) => handleFilterChange('limit', value)}
+              className="w-full"
+              min={1}
+              max={100}
+            />
+          </div>
+        </div>
+        
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3">
+          <Button 
+            onClick={handleResetFilters}
+            icon={<RotateCcw size={16} />}
+          >
+            Reset Filters
+          </Button>
+          <Button 
+            type="primary" 
+            onClick={handleApplyFilters}
+            icon={<Filter size={16} />}
+            disabled={!filtersModified}
+            className="bg-green-600 hover:bg-green-700 border-green-600"
+          >
+            Apply Filters
+          </Button>
+        </div>
       </div>
     </ConfigProvider>
   );

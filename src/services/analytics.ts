@@ -143,7 +143,7 @@ export interface AnalyticsResponse {
 }
 
 // Helper function to build the query string
-const buildQueryString = (filters: AnalyticsFilters): string => {
+const buildQueryString = (filters: AnalyticsFilters & { agent?: string }): string => {
   const queryParams = new URLSearchParams();
 
   // Add all filter parameters
@@ -161,6 +161,11 @@ const buildQueryString = (filters: AnalyticsFilters): string => {
   if (filters.disposition !== 'all') {
     // Ensure disposition is uppercase to match API expectations
     queryParams.append('disposition', filters.disposition.toUpperCase());
+  }
+
+  // Add agent filter if it's not 'all'
+  if (filters.agent && filters.agent !== 'all') {
+    queryParams.append('agent', filters.agent);
   }
 
   return queryParams.toString();
