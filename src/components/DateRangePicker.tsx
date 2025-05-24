@@ -15,11 +15,10 @@ type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
 const { RangePicker } = DatePicker;
 
 interface DateRangePickerProps {
-  onChange?: (value: RangePickerProps['value'], dateString: [string, string]) => void;
-  onOk?: (value: DatePickerProps['value'] | RangePickerProps['value']) => void;
-  startDate?: string;
-  endDate?: string;
-  defaultValue?: [string, string];
+  onChange: (value: any, dateStrings: [string, string]) => void;
+  startDate: string;
+  endDate: string;
+  disabled?: boolean;
 }
 
 const datePresets = [
@@ -73,21 +72,17 @@ const datePresets = [
   }}
 ];
 
-export const DateRangePicker: React.FC<DateRangePickerProps> = ({ 
-  onChange, 
-  onOk, 
-  startDate, 
+export const DateRangePicker: React.FC<DateRangePickerProps> = ({
+  onChange,
+  startDate,
   endDate,
-  defaultValue 
+  disabled = false
 }) => {
   const { resolvedTheme } = useTheme();
   const isDarkMode = resolvedTheme === 'dark';
   const [localDateRange, setLocalDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(() => {
     if (startDate && endDate) {
       return [dayjs(startDate), dayjs(endDate)];
-    }
-    if (defaultValue) {
-      return [dayjs(defaultValue[0]), dayjs(defaultValue[1])];
     }
     // Default to Today
     const today = new Date();
@@ -154,13 +149,14 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
       theme={{
         algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
         components: {
-          DatePicker: isDarkMode ? {
-            colorBgContainer: '#1f2937',
-            colorText: '#f3f4f6',
-            colorBorder: '#374151',
+          DatePicker: {
+            colorBgContainer: isDarkMode ? '#1f2937' : '#ffffff',
+            colorText: isDarkMode ? '#f3f4f6' : '#111827',
+            colorBorder: isDarkMode ? '#374151' : '#d1d5db',
             colorPrimary: '#3b82f6',
-          } : undefined,
-        },
+            colorTextPlaceholder: isDarkMode ? '#9ca3af' : '#6b7280',
+          }
+        }
       }}
     >
       <Space.Compact className="w-full">
@@ -197,7 +193,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             value={localDateRange}
             style={{ width: '100%' }}
             disabledDate={disabledDate}
-            popupClassName="date-picker-popup"
+            popupClassName={isDarkMode ? 'dark-date-picker' : ''}
           />
         </motion.div>
         <motion.div

@@ -155,11 +155,12 @@ const buildQueryString = (filters: AnalyticsFilters): string => {
   
   // Only add direction and disposition if they're not 'all'
   if (filters.direction !== 'all') {
-    queryParams.append('direction', filters.direction);
+    queryParams.append('direction', filters.direction.toUpperCase());
   }
   
   if (filters.disposition !== 'all') {
-    queryParams.append('disposition', filters.disposition);
+    // Ensure disposition is uppercase to match API expectations
+    queryParams.append('disposition', filters.disposition.toUpperCase());
   }
 
   return queryParams.toString();

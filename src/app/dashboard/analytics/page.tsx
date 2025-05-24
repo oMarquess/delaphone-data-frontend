@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { PhoneIcon, UserIcon, ClockIcon, BarChartIcon, FilterIcon, ChevronDownIcon, CalendarIcon, CheckCircleIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { PhoneIcon, UserIcon, ClockIcon, BarChartIcon, Settings, CalendarIcon, CheckCircleIcon } from 'lucide-react';
 import SummaryCard from '@/components/dashboard/SummaryCard';
 import { AnalyticsFilterBar, AnalyticsFilters } from '@/components/analytics/AnalyticsFilterBar';
 import { useAnalyticsData, formatDuration } from '@/services/analytics';
@@ -11,13 +11,16 @@ import CallerMetricsCards from '@/components/analytics/CallerMetricsCards';
 import CallPerformanceRadar from '@/components/analytics/CallPerformanceRadar';
 import QuickDateSelector from '@/components/analytics/QuickDateSelector';
 import { publishDateChange, publishFilterChange } from '@/components/ai/AIDrawer';
+import { DateRangePicker } from '@/components/DateRangePicker';
+import { motion } from 'framer-motion';
 
 export default function AnalyticsPage() {
   // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split('T')[0];
   
-  // Initial filters
-  const initialFilters: AnalyticsFilters = {
+  // Load saved filters from localStorage or use defaults
+  const savedFilters = typeof window !== 'undefined' ? localStorage.getItem('analyticsFilters') : null;
+  const initialFilters: AnalyticsFilters = savedFilters ? JSON.parse(savedFilters) : {
     startDate: today,
     endDate: today,
     minCalls: 1,
@@ -28,12 +31,17 @@ export default function AnalyticsPage() {
   };
 
   const [filters, setFilters] = useState<AnalyticsFilters>(initialFilters);
-  const { data, isLoading, isError } = useAnalyticsData(filters);
+  const { data, isLoading, isError, mutate } = useAnalyticsData(filters);
   const [filterVisible, setFilterVisible] = useState(false);
   const [dateRangeLabel, setDateRangeLabel] = useState('Custom');
 
   // State for tab selection in the detailed analysis section
   const [analysisTab, setAnalysisTab] = useState<string>('comparison');
+
+  // Save filters to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('analyticsFilters', JSON.stringify(filters));
+  }, [filters]);
 
   const handleFilterChange = (newFilters: AnalyticsFilters) => {
     setFilters(newFilters);
@@ -45,9 +53,31 @@ export default function AnalyticsPage() {
     if (newFilters.startDate && newFilters.endDate) {
       publishDateChange(newFilters.startDate, newFilters.endDate);
     }
+
+    // Force a re-fetch of the data
+    mutate();
   };
 
-  const handleDateRangeChange = (startDate: string, endDate: string, label: string) => {
+  const handleDateRangeChange = (value: any, dateStrings: [string, string]) => {
+    // Update the date range
+    const newFilters = {
+      ...filters,
+      startDate: dateStrings[0],
+      endDate: dateStrings[1]
+    };
+    setFilters(newFilters);
+    
+    // Publish date changes for AI Drawer to sync
+    publishDateChange(dateStrings[0], dateStrings[1]);
+    
+    // Also publish filter changes
+    publishFilterChange('Caller Analytics', newFilters);
+
+    // Force a re-render of the data
+    mutate();
+  };
+
+  const handlePresetDateChange = (startDate: string, endDate: string, label: string) => {
     setDateRangeLabel(label);
     
     // If Custom is selected, open the advanced filters section
@@ -63,9 +93,7 @@ export default function AnalyticsPage() {
       setFilterVisible(false);
     }
     
-    // Publish date changes for AI Drawer to sync
-    publishDateChange(startDate, endDate);
-    
+    // Update the date range
     const newFilters = {
       ...filters,
       startDate,
@@ -73,12 +101,11 @@ export default function AnalyticsPage() {
     };
     setFilters(newFilters);
     
-    // If we select a preset, automatically apply the filter
-    if (label !== 'Custom') {
-      // No need to call handleFilterChange here since we're already publishing the date change
-      // and we'll update filters below
-      publishFilterChange('Caller Analytics', newFilters);
-    }
+    // Publish date changes for AI Drawer to sync
+    publishDateChange(startDate, endDate);
+    
+    // Also publish filter changes
+    publishFilterChange('Caller Analytics', newFilters);
   };
 
   // Format duration from seconds to minutes for display with proper grammar
@@ -87,6 +114,14 @@ export default function AnalyticsPage() {
     return minutes === 1 ? `${minutes} min` : `${minutes} mins`;
   };
 
+  // Count active filters (excluding date range)
+  const activeFilterCount = Object.entries(filters).reduce((count, [key, value]) => {
+    if (key !== 'startDate' && key !== 'endDate' && value !== 'all' && value !== 1) {
+      return count + 1;
+    }
+    return count;
+  }, 0);
+
   return (
     <div className="space-y-6">
       {/* Header with filter toggle */}
@@ -94,41 +129,64 @@ export default function AnalyticsPage() {
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Caller Analytics</h1>
         
         <div className="flex flex-col sm:flex-row gap-3">
-          <button 
-            onClick={() => setFilterVisible(!filterVisible)}
-            className="flex items-center gap-2 py-2 px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          >
-            <FilterIcon size={16} />
-            <span>Advanced Filters</span>
-            <ChevronDownIcon size={16} className={`transition-transform ${filterVisible ? 'rotate-180' : ''}`} />
-          </button>
-          
-          <div className="flex items-center gap-2 py-2 px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
-            <CalendarIcon size={16} className="text-gray-500 dark:text-gray-400" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {data?.time_period?.start_date} to {data?.time_period?.end_date}
-            </span>
+          <div className="flex items-center">
+            <DateRangePicker 
+              onChange={handleDateRangeChange}
+              startDate={filters.startDate}
+              endDate={filters.endDate}
+              disabled={isLoading}
+            />
           </div>
+
+          <motion.button 
+            onClick={() => setFilterVisible(!filterVisible)}
+            className={`p-2 transition-colors relative ${
+              filterVisible 
+                ? 'text-blue-500 dark:text-blue-400' 
+                : 'text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400'
+            }`}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            animate={{ rotate: filterVisible ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+            disabled={isLoading}
+          >
+            <Settings 
+              size={20} 
+              className={filterVisible ? 'text-blue-500 dark:text-blue-400' : ''} 
+            />
+            {activeFilterCount > 0 && !filterVisible && (
+              <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
+          </motion.button>
         </div>
       </div>
       
       {/* Quick date range selector */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      {/* <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Quick Select:</span>
           <QuickDateSelector 
-            onChange={handleDateRangeChange} 
+            onChange={handlePresetDateChange} 
             activeLabel={dateRangeLabel}
             filterVisible={filterVisible}
           />
         </div>
-      </div>
+      </div> */}
       
       {/* Collapsible filter section */}
-      <div className={`transition-all duration-300 overflow-hidden ${filterVisible ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+      <div className={`transition-all duration-300 overflow-hidden ${filterVisible ? 'opacity-100 h-auto' : 'opacity-0 h-0'}`}>
         <AnalyticsFilterBar 
           onFilterChange={handleFilterChange} 
-          initialFilters={initialFilters}
+          initialFilters={filters}
+          currentDateRange={{
+            startDate: filters.startDate,
+            endDate: filters.endDate
+          }}
+          onApply={() => setFilterVisible(false)}
+          isLoading={isLoading}
         />
       </div>
       
@@ -153,14 +211,14 @@ export default function AnalyticsPage() {
             
             <span className="inline-flex items-center">
               <PhoneIcon size={14} className="mr-1.5" />
-              <span className="font-medium">Direction:</span> {filters.direction}
+              <span className="font-medium">Direction:</span> {filters.direction === 'all' ? 'All' : filters.direction.charAt(0).toUpperCase() + filters.direction.slice(1)}
             </span>
             
             <span className="hidden sm:inline-block text-blue-300 dark:text-blue-700">|</span>
             
             <span className="inline-flex items-center">
               <CheckCircleIcon size={14} className="mr-1.5" />
-              <span className="font-medium">Call Type:</span> {filters.disposition}
+              <span className="font-medium">Call Type:</span> {filters.disposition === 'all' ? 'All' : filters.disposition.replace('_', ' ')}
             </span>
           </div>
         </div>

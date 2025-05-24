@@ -41,6 +41,17 @@ export default function CallLogsPage() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   
+  // Count active filters (excluding empty strings and 'all' values)
+  const activeFilterCount = Object.entries(filters).reduce((count, [key, value]) => {
+    if (key === 'uniqueCallersOnly') {
+      return value ? count + 1 : count;
+    }
+    if (value && value !== 'all' && value !== '') {
+      return count + 1;
+    }
+    return count;
+  }, 0);
+  
   // Create a unique key for SWR based on filters, date range, and pagination
   const swrKey = useCallback(() => {
     return [
@@ -138,9 +149,17 @@ export default function CallLogsPage() {
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Call Logs</h1>
         
         <div className="flex flex-col sm:flex-row gap-3">
+         
+         <div className="flex items-center">
+            <DateRangePicker 
+              onChange={handleDateRangeChange}
+              startDate={dateRange.startDate}
+              endDate={dateRange.endDate}
+            />
+          </div>
           <motion.button 
             onClick={() => setFilterVisible(!filterVisible)}
-            className={`p-2 transition-colors ${
+            className={`p-2 transition-colors relative ${
               filterVisible 
                 ? 'text-blue-500 dark:text-blue-400' 
                 : 'text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400'
@@ -154,15 +173,14 @@ export default function CallLogsPage() {
               size={20} 
               className={filterVisible ? 'text-blue-500 dark:text-blue-400' : ''} 
             />
+            {activeFilterCount > 0 && !filterVisible && (
+              <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
           </motion.button>
           
-          <div className="flex items-center">
-            <DateRangePicker 
-              onChange={handleDateRangeChange}
-              startDate={dateRange.startDate}
-              endDate={dateRange.endDate}
-            />
-          </div>
+
         </div>
       </div>
       
@@ -195,10 +213,16 @@ export default function CallLogsPage() {
           </span>
           <span className="mx-2">•</span>
           <span className="font-medium">Results:</span> {callLogsData.filteredCount} calls
-          {data?.summary && (
+          {data?.summary && filters.callStatus === 'all' && (
             <>
               <span className="mx-2">•</span>
               <span className="font-medium">Answered:</span> {data.summary.answered_calls} ({data.summary.answer_rate}%)
+            </>
+          )}
+          {data?.summary && filters.callStatus !== 'all' && (
+            <>
+              <span className="mx-2">•</span>
+              <span className="font-medium">Filtered by:</span> {filters.callStatus.replace('_', ' ').toLowerCase()}
             </>
           )}
         </div>
