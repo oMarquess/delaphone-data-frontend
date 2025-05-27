@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { authService, RegisterCredentials } from '@/services/auth';
+import authService from '@/services/auth';
 import { VALIDATION } from '@/config/constants';
 import { toast } from 'sonner';
 import debounce from 'lodash/debounce';
@@ -54,7 +54,14 @@ export default function SignUpForm() {
       try {
         setEmailStatus('checking');
         setIsCheckingEmail(true);
+        
+        // Ensure authService is available
+        if (!authService) {
+          throw new Error('Authentication service not available');
+        }
+        
         const result = await authService.checkEmailAvailability(email);
+        console.log('Email availability check result:', result);
         
         if (result.isAvailable) {
           setEmailStatus('available');
@@ -67,12 +74,16 @@ export default function SignUpForm() {
           setEmailStatus('taken');
           setErrors(prev => ({ 
             ...prev, 
-            email: 'Email already registered. Please use a different email.' 
+            email: result.message || 'Email already registered. Please use a different email.' 
           }));
         }
       } catch (error) {
         console.error('Error checking email:', error);
         setEmailStatus('idle');
+        setErrors(prev => ({ 
+          ...prev, 
+          email: 'Unable to verify email availability. Please try again.' 
+        }));
       } finally {
         setIsCheckingEmail(false);
       }
@@ -160,74 +171,57 @@ export default function SignUpForm() {
       setStep(step + 1);
     } else {
       setIsLoading(true);
-      
+
       try {
-        const registerData: RegisterCredentials = {
+        const response = await authService.register({
           email: formData.email,
           username: formData.username,
           password: formData.password,
           full_name: formData.full_name,
           company_code: formData.company_code
-        };
-        
-        // Make the API call and explicitly check for success response
-        const response = await authService.register(registerData);
-        
-        // Print the response for debugging
-        console.log('Signup API Success Response:', response);
-        
-        // Only proceed if we get a successful response
-        // Clear any auth data that might have been stored during registration
-        authService.logout();
-        
-        toast.success('Registration successful!', {
-          description: 'Please log in with your credentials to access your account.',
-          duration: 5000
         });
+
+        // Show verification message and wait before redirecting
+        toast.info('Account Created Successfully', {
+          description: 'Your account has been created but requires verification. Please check your email for verification instructions. This process may take 24-48 hours.',
+          duration: 8000,
+        });
+
+        // Wait for 3 seconds to ensure the user sees the message
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
-        // Redirect to login page instead of dashboard
         router.push('/login');
-      } catch (error) {
-        // Print detailed error for debugging
-        console.error('Registration error details:', error);
+      } catch (error: any) {
+        console.error('Registration error:', error);
         
-        // Check for API response with success: false
-        if (error && typeof error === 'object' && 'success' in error && error.success === false) {
-          if ('errors' in error && Array.isArray(error.errors) && error.errors.length > 0) {
-            // Join all error messages
-            const errorMessages = error.errors;
-            const combinedErrorMessage = errorMessages.join(', ');
-            console.log('Error messages from API:', combinedErrorMessage);
-            
-            // Check if any error is about email already registered
-            if (errorMessages.some(msg => 
-              msg.includes('Email already registered') || 
-              msg.includes('already exists') || 
-              msg.toLowerCase().includes('email'))) {
-              toast.error('Email already registered', {
-                description: 'Please use a different email address to continue with registration.',
-                duration: 5000
-              });
+        if (error.errors && Array.isArray(error.errors)) {
+          // Handle validation errors
+          error.errors.forEach((err: string) => {
+            // Extract field name from error message if it exists
+            const fieldMatch = err.match(/^(\w+):\s*(.+)$/);
+            if (fieldMatch) {
+              const [, field, message] = fieldMatch;
+              setErrors(prev => ({ ...prev, [field]: message }));
             } else {
               toast.error('Registration failed', {
-                description: combinedErrorMessage,
-                duration: 5000
+                description: err,
+                duration: 5000,
               });
             }
-            return;
-          }
+          });
+        } else if (error.message) {
+          // Handle general errors
+          toast.error('Registration failed', {
+            description: error.message,
+            duration: 5000,
+          });
+        } else {
+          // Handle unknown errors
+          toast.error('Registration failed', {
+            description: 'An unexpected error occurred. Please try again.',
+            duration: 5000,
+          });
         }
-        
-        // Default case - extract error message if possible
-        let errorMessage = 'Please try again later';
-        if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
-          errorMessage = error.message;
-        }
-        
-        toast.error('Registration failed', {
-          description: errorMessage,
-          duration: 5000
-        });
       } finally {
         setIsLoading(false);
       }

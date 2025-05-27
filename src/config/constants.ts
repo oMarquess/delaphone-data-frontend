@@ -42,14 +42,26 @@ export const VALIDATION = {
 export const ROUTES = {
   AUTH: {
     LOGIN: '/login',
-    SIGNUP: '/signup',
+    REGISTER: '/register',
     FORGOT_PASSWORD: '/forgot-password',
+    RESET_PASSWORD: '/reset-password',
   },
   APP: {
     DASHBOARD: '/dashboard',
     PROFILE: '/profile',
+  },
+  API: {
+    AUTH: '/api/auth',
+    DASHBOARD: '/api/dashboard',
+  },
+  UI: {
+    LIGHT_THEME: 'light',
+    DARK_THEME: 'dark',
   }
 } as const;
+
+// API Constants
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // UI Configuration
 export const UI = {

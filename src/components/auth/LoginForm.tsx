@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
-import { authService } from '@/services/auth';
+import authService from '@/services/auth';
 import { ROUTES } from '@/config/constants';
 
 interface RateLimitState {
@@ -33,6 +33,8 @@ export default function LoginForm() {
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get('redirect') || ROUTES.APP.DASHBOARD;
   const { login, isAuthenticated } = useAuth();
+  const [isRateLimited, setIsRateLimited] = useState(false);
+  const [error, setError] = useState('');
 
   // If already authenticated, redirect to dashboard
   useEffect(() => {
@@ -83,9 +85,48 @@ export default function LoginForm() {
     }));
   };
 
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters long';
+    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+    }
+
+    setError(Object.values(newErrors)[0] || '');
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isRateLimited) return;
+
     setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await login({
+        email: formData.email,
+        password: formData.password
+      }, rememberMe);
+
+      toast.success('Login successful!', {
+        description: 'Welcome back!',
+        duration: 3000,
+      });
+
+      router.push('/dashboard');
     
     try {
       const response = await login(formData.email, formData.password, rememberMe);
@@ -103,6 +144,64 @@ export default function LoginForm() {
       toast.success('Login successful!');
       router.push(redirectPath);
     } catch (error: any) {
+      console.error('Login error:', error);
+      
+      if (error.type === 'verification_required') {
+        toast.error('Account Not Verified', {
+          description: 'Your account is pending verification. Please check your email for verification instructions. This process may take 24-48 hours.',
+          duration: 8000,
+        });
+      } else if (error.type === 'validation') {
+        // Handle validation errors
+        if (error.errors && Array.isArray(error.errors)) {
+          error.errors.forEach((err: string) => {
+            toast.error('Invalid Login', {
+              description: err,
+              duration: 5000,
+            });
+          });
+        } else {
+          toast.error('Invalid Login', {
+            description: error.message || 'Please check your credentials and try again.',
+            duration: 5000,
+          });
+        }
+      } else if (error.type === 'delay') {
+        const remainingTime = parseInt(error.delay);
+        setRateLimit({
+          type: 'delay',
+          message: error.message,
+          remainingTime
+        });
+        setIsRateLimited(true);
+        toast.error('Too Many Attempts', {
+          description: `Please wait ${formatRemainingTime(remainingTime)} before trying again.`,
+          duration: 5000,
+        });
+      } else if (error.type === 'lockout') {
+        const lockoutTime = parseInt(error.lockoutTime);
+        setRateLimit({
+          type: 'lockout',
+          message: error.message,
+          remainingTime: lockoutTime
+        });
+        setIsRateLimited(true);
+        toast.error('Account Locked', {
+          description: `Too many failed attempts. Please try again in ${formatRemainingTime(lockoutTime)}.`,
+          duration: 5000,
+        });
+      } else if (error.message) {
+        setError(error.message);
+        toast.error('Login failed', {
+          description: error.message,
+          duration: 5000,
+        });
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+        toast.error('Login failed', {
+          description: 'An unexpected error occurred. Please try again.',
+          duration: 5000,
+        });
       // Handle different error types
       switch (error.type) {
         case 'error':
