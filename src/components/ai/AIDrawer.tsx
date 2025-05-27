@@ -494,36 +494,40 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
           {open && (
             <>
               {/* Export icon on left margin - repositioned for right drawer */}
-              <div className="absolute left-6 top-20 z-10 flex flex-col space-y-2">
-                <button 
-                  className="p-2 rounded-full bg-white dark:bg-gray-700 shadow-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-gray-700 dark:text-gray-200"
-                  aria-label="Export"
-                >
-                  <DownloadOutlined style={{ fontSize: '18px' }} />
-                </button>
+              <div className="absolute left-6 top-32 z-10 flex flex-col space-y-2">
+                <Tooltip title="Export Data" placement="right">
+                  <div 
+                    className="p-2 transition-colors text-gray-700 dark:text-gray-200 cursor-pointer"
+                    aria-label="Export"
+                  >
+                    <DownloadOutlined style={{ fontSize: '18px' }} />
+                  </div>
+                </Tooltip>
                 
                 <Tooltip title={`Current Model: ${currentModel?.label}`} placement="right">
                   <Dropdown menu={modelMenu} placement="topRight" trigger={['click']}>
-                    <button 
-                      className="p-2 rounded-full bg-white dark:bg-gray-700 shadow-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-gray-700 dark:text-gray-200"
+                    <div 
+                      className="p-2 bg-white dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors text-gray-700 dark:text-gray-200 cursor-pointer"
                       aria-label="Select AI Model"
                     >
                       <SettingOutlined style={{ fontSize: '18px' }} />
-                    </button>
+                    </div>
                   </Dropdown>
                 </Tooltip>
                 
-                <button 
-                  className="p-2 rounded-full bg-purple-600 shadow-md hover:bg-purple-700 transition-colors text-white"
-                  aria-label="Send to AI"
-                  onClick={sendToAIInterpretation}
-                  disabled={isLoading || !currentTabData}
-                >
-                  <SendOutlined style={{ fontSize: '18px' }} />
-                </button>
+                <Tooltip title="Analyze Data with AI" placement="right">
+                  <div 
+                    className="p-2 transition-colors text-gray cursor-pointer"
+                    aria-label="Send to AI"
+                    onClick={sendToAIInterpretation}
+                    style={{ opacity: isLoading || !currentTabData ? 0.5 : 1, pointerEvents: isLoading || !currentTabData ? 'none' : 'auto' }}
+                  >
+                    <SendOutlined style={{ fontSize: '18px' }} />
+                  </div>
+                </Tooltip>
                 <Tooltip title={`${showRawData ? 'Hide' : 'Show'} Raw Data`} placement="right">
-                  <button 
-                    className={`p-2 transition-colors ${
+                  <div 
+                    className={`p-2 transition-colors cursor-pointer ${
                       showRawData 
                         ? 'text-blue-500 hover:text-blue-600' 
                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -532,7 +536,7 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
                     onClick={() => setShowRawData(!showRawData)}
                   >
                     <CodeOutlined style={{ fontSize: '18px' }} />
-                  </button>
+                  </div>
                 </Tooltip>
               </div>
               
