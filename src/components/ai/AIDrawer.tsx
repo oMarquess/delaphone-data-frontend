@@ -61,12 +61,22 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
   const [currentTabData, setCurrentTabData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState('gpt-4-0125-preview'); // Default model
   const [dateRange, setDateRange] = useState({
     startDate: format(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd')
   });
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [showRawData, setShowRawData] = useState(false);
+
+  // Available AI models
+  const availableModels = [
+    { key: 'gpt-4-0125-preview', label: 'GPT-4 Turbo', description: 'Latest GPT-4 model (Default)' },
+    { key: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', description: 'Google\'s newest model' },
+    { key: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo', description: 'Faster and more cost-effective' },
+    // { key: 'claude-3-sonnet', label: 'Claude 3 Sonnet', description: 'Anthropic\'s balanced model' },
+    // { key: 'claude-3-haiku', label: 'Claude 3 Haiku', description: 'Fast and efficient' }
+  ];
 
   // Check if current theme is dark
   useEffect(() => {
@@ -228,7 +238,7 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
       // Send to backend
       const response = await axios.post(`${API_BASE_URL}/ai/interpret`, {
         data: stringifiedData,
-        model: "gpt-4-0125-preview" // Default model - could be made configurable
+        model: selectedModel
       }, {
         headers: {
           'Content-Type': 'application/json',
@@ -339,7 +349,7 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
         // Send to backend
         const response = await axios.post(`${API_BASE_URL}/ai/interpret`, {
           data: stringifiedData,
-          model: "gpt-4-0125-preview"
+          model: selectedModel
         }, {
           headers: {
             'Content-Type': 'application/json',
@@ -427,6 +437,26 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
     ],
   };
 
+  // Model selection dropdown menu
+  const modelMenu = {
+    items: availableModels.map(model => ({
+      key: model.key,
+      label: (
+        <div className="py-1">
+          <div className="font-medium">{model.label}</div>
+          <div className="text-xs text-gray-500">{model.description}</div>
+        </div>
+      ),
+      onClick: () => {
+        setSelectedModel(model.key);
+        message.success(`Switched to ${model.label}`);
+      }
+    })),
+  };
+
+  // Get current model display info
+  const currentModel = availableModels.find(model => model.key === selectedModel);
+
   return (
     <ConfigProvider
       theme={{
@@ -471,6 +501,18 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
                 >
                   <DownloadOutlined style={{ fontSize: '18px' }} />
                 </button>
+                
+                <Tooltip title={`Current Model: ${currentModel?.label}`} placement="right">
+                  <Dropdown menu={modelMenu} placement="topRight" trigger={['click']}>
+                    <button 
+                      className="p-2 rounded-full bg-white dark:bg-gray-700 shadow-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-gray-700 dark:text-gray-200"
+                      aria-label="Select AI Model"
+                    >
+                      <SettingOutlined style={{ fontSize: '18px' }} />
+                    </button>
+                  </Dropdown>
+                </Tooltip>
+                
                 <button 
                   className="p-2 rounded-full bg-purple-600 shadow-md hover:bg-purple-700 transition-colors text-white"
                   aria-label="Send to AI"
@@ -503,8 +545,14 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
               >
                 {/* Date range info */}
                 <div className="border-b border-gray-200 dark:border-gray-700 px-16 py-3 bg-gray-50 dark:bg-gray-900">
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    <span className="font-medium">Date Range:</span> {dateRange.startDate} to {dateRange.endDate}
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Date Range:</span> {dateRange.startDate} to {dateRange.endDate}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">AI Model:</span> 
+                      <Tag color="blue" className="ml-2">{currentModel?.label}</Tag>
+                    </div>
                   </div>
                 </div>
                 
