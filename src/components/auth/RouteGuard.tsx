@@ -7,12 +7,12 @@ import { ROUTES } from '@/config/constants';
 import { LoadingScreen } from '@/components/ui/LoadingSpinner';
 
 export default function RouteGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!loading) {
       // Check if the route requires authentication
       const isProtectedRoute = pathname.startsWith('/dashboard');
       
@@ -21,10 +21,10 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
         router.push(`${ROUTES.AUTH.LOGIN}?redirect=${encodeURIComponent(pathname)}`);
       }
     }
-  }, [isAuthenticated, isLoading, pathname, router]);
+  }, [isAuthenticated, loading, pathname, router]);
 
   // Show loading indicator if we're still checking authentication
-  if (isLoading) {
+  if (loading) {
     return <LoadingScreen />;
   }
 

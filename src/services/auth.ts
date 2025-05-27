@@ -273,11 +273,10 @@ class AuthService {
 
       // Create user data from response
       const userData = {
+        id: `user_${Date.now()}`, // Generate a temporary ID since API doesn't provide one
         username: response.data.user_info.username,
-        is_verified: response.data.user_info.is_verified,
-        is_active: response.data.user_info.is_active,
-        company_id: response.data.user_info.company_id,
-        company_code: response.data.user_info.company_code
+        email: credentials.email, // Use email from login credentials
+        is_verified: response.data.user_info.is_verified
       };
 
       // Store user data
@@ -286,6 +285,13 @@ class AuthService {
 
       return {
         ...response.data,
+        user_id: userData.id,
+        username: response.data.user_info.username,
+        email: credentials.email,
+        company_id: response.data.user_info.company_id,
+        company_code: response.data.user_info.company_code,
+        is_verified: response.data.user_info.is_verified,
+        verification_required: !response.data.user_info.is_verified,
         user: userData
       };
     } catch (error) {

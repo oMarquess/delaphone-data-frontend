@@ -78,13 +78,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await authService.login(credentials, rememberMe);
       setIsAuthenticated(true);
       
-      // Extract user data from response
+      // Extract user data from response - access from top level since login spreads response.data
       const userData = {
-        username: response.user_info?.username || response.user?.username,
-        is_verified: response.user_info?.is_verified || response.user?.is_verified,
-        is_active: response.user_info?.is_active || response.user?.is_active,
-        company_id: response.user_info?.company_id || response.user?.company_id,
-        company_code: response.user_info?.company_code || response.user?.company_code
+        username: response.username,
+        is_verified: response.is_verified,
+        is_active: (response.user as any)?.is_active,
+        company_id: response.company_id,
+        company_code: response.company_code
       };
       
       setUser(userData);
