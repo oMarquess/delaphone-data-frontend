@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { PhoneIcon, UserIcon, ClockIcon, BarChartIcon, Settings, CalendarIcon, CheckCircleIcon } from 'lucide-react';
+import { SyncOutlined } from '@ant-design/icons';
 import SummaryCard from '@/components/dashboard/SummaryCard';
 import { AnalyticsFilterBar, AnalyticsFilters } from '@/components/analytics/AnalyticsFilterBar';
 import { useAnalyticsData, formatDuration } from '@/services/analytics';
@@ -13,6 +14,8 @@ import QuickDateSelector from '@/components/analytics/QuickDateSelector';
 import { publishDateChange, publishFilterChange } from '@/components/ai/AIDrawer';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import { motion } from 'framer-motion';
+import { useSettings } from '@/context/SettingsContext';
+import { toast } from 'sonner';
 
 export default function AnalyticsPage() {
   // Get today's date in YYYY-MM-DD format
@@ -34,6 +37,7 @@ export default function AnalyticsPage() {
   const { data, isLoading, isError, mutate } = useAnalyticsData(filters);
   const [filterVisible, setFilterVisible] = useState(false);
   const [dateRangeLabel, setDateRangeLabel] = useState('Custom');
+  const { autoRefresh, setRefreshState, lastRefreshTime } = useSettings();
 
   // State for tab selection in the detailed analysis section
   const [analysisTab, setAnalysisTab] = useState<string>('comparison');
@@ -42,6 +46,46 @@ export default function AnalyticsPage() {
   useEffect(() => {
     localStorage.setItem('analyticsFilters', JSON.stringify(filters));
   }, [filters]);
+
+  // Auto-refresh functionality for Caller Analytics section
+  useEffect(() => {
+    if (!autoRefresh.enabled || 
+        !autoRefresh.enabledSections.callerAnalytics || 
+        autoRefresh.interval <= 0) {
+      return;
+    }
+
+    console.log('🔄 Setting up auto-refresh for Caller Analytics');
+    console.log('Interval:', autoRefresh.interval, 'ms');
+
+    const refreshInterval = setInterval(async () => {
+      try {
+        setRefreshState(true);
+        console.log('🔄 Auto-refreshing Caller Analytics data at:', new Date().toISOString());
+        
+        // Use the mutate function to refresh data in background
+        await mutate();
+        
+        setRefreshState(false, new Date());
+        console.log('✅ Caller Analytics auto-refresh completed successfully');
+      } catch (error) {
+        console.error('❌ Caller Analytics auto-refresh failed:', error);
+        setRefreshState(false);
+        // Don't show error toast for background refresh failures
+      }
+    }, autoRefresh.interval);
+
+    return () => {
+      console.log('🛑 Cleaning up Caller Analytics auto-refresh interval');
+      clearInterval(refreshInterval);
+    };
+  }, [
+    autoRefresh.enabled, 
+    autoRefresh.enabledSections.callerAnalytics, 
+    autoRefresh.interval,
+    setRefreshState,
+    mutate
+  ]);
 
   const handleFilterChange = (newFilters: AnalyticsFilters) => {
     setFilters(newFilters);
@@ -108,6 +152,19 @@ export default function AnalyticsPage() {
     publishFilterChange('Caller Analytics', newFilters);
   };
 
+  // Manual refresh function
+  const handleManualRefresh = async () => {
+    try {
+      setRefreshState(true);
+      await mutate();
+      setRefreshState(false, new Date());
+      toast.success('Caller analytics refreshed successfully');
+    } catch (error) {
+      setRefreshState(false);
+      toast.error('Failed to refresh caller analytics');
+    }
+  };
+
   // Format duration from seconds to minutes for display with proper grammar
   const formatDurationDisplay = (seconds: number = 0) => {
     const minutes = Math.floor(seconds / 60);
@@ -126,9 +183,19 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       {/* Header with filter toggle */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Caller Analytics</h1>
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Caller Analytics</h1>
+        </div>
         
         <div className="flex flex-col sm:flex-row gap-3">
+          {/* Manual refresh button */}
+          <button
+            onClick={handleManualRefresh}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="Manual refresh"
+          >
+            <SyncOutlined className={`text-lg ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
           <div className="flex items-center">
             <DateRangePicker 
               onChange={handleDateRangeChange}
@@ -392,6 +459,25 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </section>
+      
+      {/* Auto-refresh status and last updated time at bottom */}
+      {autoRefresh.visualIndicators && (autoRefresh.enabled && autoRefresh.enabledSections.callerAnalytics || lastRefreshTime) && (
+        <div className="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-400 dark:text-gray-500 pt-4 border-t border-gray-100 dark:border-gray-800">
+          {autoRefresh.enabled && autoRefresh.enabledSections.callerAnalytics && (
+            <div className="flex items-center space-x-2">
+              <div className={`w-1.5 h-1.5 rounded-full ${
+                autoRefresh.interval > 0 ? 'bg-green-500' : 'bg-gray-400'
+              }`} />
+              <span>Auto-refresh: {autoRefresh.interval > 0 ? `${autoRefresh.interval/1000}s` : 'Off'}</span>
+            </div>
+          )}
+          {lastRefreshTime && (
+            <div>
+              Last updated: {lastRefreshTime.toLocaleTimeString()}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 } 

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { BarChartIcon, PhoneIcon, ClockIcon, UserIcon } from 'lucide-react';
+import { SyncOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 import DateRangePicker from '@/components/dashboard/DateRangePicker';
 import SummaryCard from '@/components/dashboard/SummaryCard';
 import CallVolumeChart from '@/components/dashboard/CallVolumeChart';
@@ -26,15 +27,17 @@ import {
   extractDurationMetrics
 } from '@/services/dashboard';
 import { useAuth } from '@/context/AuthContext';
+import { useSettings } from '@/context/SettingsContext';
 import { ROUTES } from '@/config/constants';
 import { publishDateChange } from '@/components/ai/AIDrawer';
 
 export default function DashboardPage() {
   const [dateRange, setDateRange] = useState({
-    startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+    startDate: new Date(), // Today instead of 7 days ago
     endDate: new Date(),
   });
   const { isAuthenticated } = useAuth();
+  const { autoRefresh, setRefreshState, lastRefreshTime } = useSettings();
   const router = useRouter();
 
   // Create a unique key for SWR based on date range
@@ -110,6 +113,52 @@ export default function DashboardPage() {
     }
   );
 
+  // NEW: Auto-refresh functionality for Overview section
+  useEffect(() => {
+    if (!autoRefresh.enabled || 
+        !autoRefresh.enabledSections.overview || 
+        autoRefresh.interval <= 0) {
+      return;
+    }
+
+    console.log('🔄 Setting up auto-refresh for Overview');
+    console.log('Interval:', autoRefresh.interval, 'ms');
+
+    const refreshInterval = setInterval(async () => {
+      try {
+        setRefreshState(true);
+        console.log('🔄 Auto-refreshing Overview data at:', new Date().toISOString());
+        
+        // Use SWR's mutate to refresh data in background
+        const currentKey = swrKey();
+        if (currentKey) {
+          await Promise.all([
+            mutate(currentKey, () => metricsFetcher(currentKey as [string, string]), { revalidate: false }),
+            mutate(currentKey, () => callRecordsFetcher(currentKey as [string, string]), { revalidate: false })
+          ]);
+        }
+        
+        setRefreshState(false, new Date());
+        console.log('✅ Auto-refresh completed successfully');
+      } catch (error) {
+        console.error('❌ Auto-refresh failed:', error);
+        setRefreshState(false);
+        // Don't show error toast for background refresh failures
+      }
+    }, autoRefresh.interval);
+
+    return () => {
+      console.log('🛑 Cleaning up auto-refresh interval');
+      clearInterval(refreshInterval);
+    };
+  }, [
+    autoRefresh.enabled, 
+    autoRefresh.enabledSections.overview, 
+    autoRefresh.interval,
+    swrKey,
+    setRefreshState
+  ]);
+
   // Combine loading states
   const isLoading = isDashboardLoading || isCallRecordsLoading;
 
@@ -163,6 +212,25 @@ export default function DashboardPage() {
     publishDateChange(startDateStr, endDateStr);
   };
 
+  // Manual refresh function
+  const handleManualRefresh = async () => {
+    try {
+      setRefreshState(true);
+      const currentKey = swrKey();
+      if (currentKey) {
+        await Promise.all([
+          mutate(currentKey, () => metricsFetcher(currentKey as [string, string]), { revalidate: false }),
+          mutate(currentKey, () => callRecordsFetcher(currentKey as [string, string]), { revalidate: false })
+        ]);
+      }
+      setRefreshState(false, new Date());
+      toast.success('Dashboard refreshed successfully');
+    } catch (error) {
+      setRefreshState(false);
+      toast.error('Failed to refresh dashboard');
+    }
+  };
+
   // Format call records for the table
   const formattedCallRecords = callRecordsData?.top_sources?.map((source: any) => ({
     src: source.src,
@@ -181,8 +249,20 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Dashboard Overview</h1>
-        <DateRangePicker onChange={handleDateRangeChange} className="w-auto" />
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Dashboard Overview</h1>
+        </div>
+        <div className="flex items-center space-x-3">
+          {/* NEW: Manual refresh button */}
+          <button
+            onClick={handleManualRefresh}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="Manual refresh"
+          >
+            <SyncOutlined className={`text-lg ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+          <DateRangePicker onChange={handleDateRangeChange} className="w-auto" />
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -278,6 +358,25 @@ export default function DashboardPage() {
           isLoading={isLoading}
         />
       </div>
+      
+      {/* Auto-refresh status and last updated time at bottom */}
+      {autoRefresh.visualIndicators && (autoRefresh.enabled && autoRefresh.enabledSections.overview || lastRefreshTime) && (
+        <div className="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-400 dark:text-gray-500 pt-4 border-t border-gray-100 dark:border-gray-800">
+          {autoRefresh.enabled && autoRefresh.enabledSections.overview && (
+            <div className="flex items-center space-x-2">
+              <div className={`w-1.5 h-1.5 rounded-full ${
+                autoRefresh.interval > 0 ? 'bg-green-500' : 'bg-gray-400'
+              }`} />
+              <span>Auto-refresh: {autoRefresh.interval > 0 ? `${autoRefresh.interval/1000}s` : 'Off'}</span>
+            </div>
+          )}
+          {lastRefreshTime && (
+            <div>
+              Last updated: {lastRefreshTime.toLocaleTimeString()}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 } 

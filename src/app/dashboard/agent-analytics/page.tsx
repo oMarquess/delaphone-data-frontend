@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { PhoneIcon, UserIcon, ClockIcon, BarChartIcon, FilterIcon, ChevronDownIcon, CalendarIcon, CheckCircleIcon, Settings } from 'lucide-react';
+import { SyncOutlined } from '@ant-design/icons';
 import { AnalyticsFilters } from '@/components/analytics/AnalyticsFilterBar';
 import { AgentAnalyticsFilterBar, AgentAnalyticsFilters } from '@/components/analytics/AgentAnalyticsFilterBar';
 import { useAnalyticsData, formatDuration } from '@/services/analytics';
@@ -13,6 +14,8 @@ import AgentEfficiencyGauges from '@/components/analytics/AgentEfficiencyGauges'
 import { dashboardService } from '@/services/dashboard';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSettings } from '@/context/SettingsContext';
+import { toast } from 'sonner';
 
 export default function AgentAnalyticsPage() {
   // Get today's date in YYYY-MM-DD format
@@ -35,6 +38,7 @@ export default function AgentAnalyticsPage() {
   const [filterVisible, setFilterVisible] = useState(false);
   const [dateRangeLabel, setDateRangeLabel] = useState('Custom');
   const [dateRange, setDateRange] = useState({ startDate: today, endDate: today });
+  const { autoRefresh, setRefreshState, lastRefreshTime } = useSettings();
 
   // State for tab selection in the detailed analysis section
   const [analysisTab, setAnalysisTab] = useState<string>('performance');
@@ -44,6 +48,46 @@ export default function AgentAnalyticsPage() {
     console.log('Current Filters:', filters);
     console.log('Current Data:', data);
   }, [filters, data]);
+
+  // Auto-refresh functionality for Agent Analytics section
+  useEffect(() => {
+    if (!autoRefresh.enabled || 
+        !autoRefresh.enabledSections.agentAnalytics || 
+        autoRefresh.interval <= 0) {
+      return;
+    }
+
+    console.log('🔄 Setting up auto-refresh for Agent Analytics');
+    console.log('Interval:', autoRefresh.interval, 'ms');
+
+    const refreshInterval = setInterval(async () => {
+      try {
+        setRefreshState(true);
+        console.log('🔄 Auto-refreshing Agent Analytics data at:', new Date().toISOString());
+        
+        // Use the mutate function to refresh data in background
+        await mutate();
+        
+        setRefreshState(false, new Date());
+        console.log('✅ Agent Analytics auto-refresh completed successfully');
+      } catch (error) {
+        console.error('❌ Agent Analytics auto-refresh failed:', error);
+        setRefreshState(false);
+        // Don't show error toast for background refresh failures
+      }
+    }, autoRefresh.interval);
+
+    return () => {
+      console.log('🛑 Cleaning up Agent Analytics auto-refresh interval');
+      clearInterval(refreshInterval);
+    };
+  }, [
+    autoRefresh.enabled, 
+    autoRefresh.enabledSections.agentAnalytics, 
+    autoRefresh.interval,
+    setRefreshState,
+    mutate
+  ]);
 
   const handleFilterChange = (newFilters: AgentAnalyticsFilters) => {
     console.group('Filter Change Process');
@@ -125,6 +169,19 @@ export default function AgentAnalyticsPage() {
     publishFilterChange('Agent Analytics', newFilters);
   };
 
+  // Manual refresh function
+  const handleManualRefresh = async () => {
+    try {
+      setRefreshState(true);
+      await mutate();
+      setRefreshState(false, new Date());
+      toast.success('Agent analytics refreshed successfully');
+    } catch (error) {
+      setRefreshState(false);
+      toast.error('Failed to refresh agent analytics');
+    }
+  };
+
   // Count active filters (excluding empty strings, 'all' values, and date range)
   const activeFilterCount = Object.entries(filters).reduce((count, [key, value]) => {
     // Skip date range and default values
@@ -140,9 +197,19 @@ export default function AgentAnalyticsPage() {
     <div className="space-y-6">
       {/* Header with filter toggle */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Agent Analytics</h1>
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Agent Analytics</h1>
+        </div>
         
         <div className="flex flex-col sm:flex-row gap-3">
+          {/* Manual refresh button */}
+          <button
+            onClick={handleManualRefresh}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="Manual refresh"
+          >
+            <SyncOutlined className={`text-lg ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
           <div className="flex items-center">
             <DateRangePicker 
               onChange={handleDateRangeChange}
@@ -405,6 +472,25 @@ export default function AgentAnalyticsPage() {
           </div>
         </div>
       </section>
+      
+      {/* Auto-refresh status and last updated time at bottom */}
+      {autoRefresh.visualIndicators && (autoRefresh.enabled && autoRefresh.enabledSections.agentAnalytics || lastRefreshTime) && (
+        <div className="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-400 dark:text-gray-500 pt-4 border-t border-gray-100 dark:border-gray-800">
+          {autoRefresh.enabled && autoRefresh.enabledSections.agentAnalytics && (
+            <div className="flex items-center space-x-2">
+              <div className={`w-1.5 h-1.5 rounded-full ${
+                autoRefresh.interval > 0 ? 'bg-green-500' : 'bg-gray-400'
+              }`} />
+              <span>Auto-refresh: {autoRefresh.interval > 0 ? `${autoRefresh.interval/1000}s` : 'Off'}</span>
+            </div>
+          )}
+          {lastRefreshTime && (
+            <div>
+              Last updated: {lastRefreshTime.toLocaleTimeString()}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 } 

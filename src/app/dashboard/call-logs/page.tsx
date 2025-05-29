@@ -3,13 +3,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import { FilterIcon, ChevronDownIcon, CalendarIcon, Download, Settings } from 'lucide-react';
-import useSWR from 'swr';
+import { SyncOutlined } from '@ant-design/icons';
+import useSWR, { mutate } from 'swr';
 import CallLogsAdvancedFilter, { CallLogsFilterValues } from '@/components/dashboard/CallLogsAdvancedFilter';
 import CallLogsTable, { CallLog } from '@/components/dashboard/CallLogsTable';
 import { dashboardService } from '@/services/dashboard';
 import { publishDateChange, publishFilterChange } from '@/components/ai/AIDrawer';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSettings } from '@/context/SettingsContext';
+import { toast } from 'sonner';
 
 export default function CallLogsPage() {
   const [filterVisible, setFilterVisible] = useState(false);
@@ -39,6 +42,7 @@ export default function CallLogsPage() {
     sortOrder: 'desc'
   });
   const [currentPage, setCurrentPage] = useState(1);
+  const { autoRefresh, setRefreshState, lastRefreshTime } = useSettings();
   
   // Count active filters (excluding empty strings and 'all' values)
   const activeFilterCount = Object.entries(filters).reduce((count, [key, value]) => {
@@ -71,15 +75,63 @@ export default function CallLogsPage() {
   };
   
   // Use SWR for data fetching
-  const { data, error, isLoading, mutate } = useSWR(swrKey(), fetcher, {
+  const { data, error, isLoading, mutate: mutateSWR } = useSWR(swrKey(), fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 5000,
     shouldRetryOnError: false,
     onSuccess: () => {
       // Close the advanced filters section when data is successfully loaded
       setFilterVisible(false);
+    },
+    onError: (error) => {
+      toast.error('Failed to load call logs', {
+        description: error.message || 'An unknown error occurred.'
+      });
     }
   });
+
+  // Auto-refresh functionality for Call Logs section
+  useEffect(() => {
+    if (!autoRefresh.enabled || 
+        !autoRefresh.enabledSections.callLogs || 
+        autoRefresh.interval <= 0) {
+      return;
+    }
+
+    console.log('🔄 Setting up auto-refresh for Call Logs');
+    console.log('Interval:', autoRefresh.interval, 'ms');
+
+    const refreshInterval = setInterval(async () => {
+      try {
+        setRefreshState(true);
+        console.log('🔄 Auto-refreshing Call Logs data at:', new Date().toISOString());
+        
+        // Use SWR's mutate to refresh data in background
+        const currentKey = swrKey();
+        if (currentKey) {
+          await mutate(currentKey, () => fetcher(currentKey as [string, string, string, CallLogsFilterValues, number]), { revalidate: false });
+        }
+        
+        setRefreshState(false, new Date());
+        console.log('✅ Call Logs auto-refresh completed successfully');
+      } catch (error) {
+        console.error('❌ Call Logs auto-refresh failed:', error);
+        setRefreshState(false);
+        // Don't show error toast for background refresh failures
+      }
+    }, autoRefresh.interval);
+
+    return () => {
+      console.log('🛑 Cleaning up Call Logs auto-refresh interval');
+      clearInterval(refreshInterval);
+    };
+  }, [
+    autoRefresh.enabled, 
+    autoRefresh.enabledSections.callLogs, 
+    autoRefresh.interval,
+    swrKey,
+    setRefreshState
+  ]);
   
   // Add debugging to see API response
   useEffect(() => {
@@ -130,6 +182,22 @@ export default function CallLogsPage() {
     // Reset page and trigger data refetch
     setCurrentPage(1);
   };
+
+  // Manual refresh function
+  const handleManualRefresh = async () => {
+    try {
+      setRefreshState(true);
+      const currentKey = swrKey();
+      if (currentKey) {
+        await mutate(currentKey, () => fetcher(currentKey as [string, string, string, CallLogsFilterValues, number]), { revalidate: false });
+      }
+      setRefreshState(false, new Date());
+      toast.success('Call logs refreshed successfully');
+    } catch (error) {
+      setRefreshState(false);
+      toast.error('Failed to refresh call logs');
+    }
+  };
   
   // Extract data for UI display
   const callLogsData = {
@@ -145,9 +213,19 @@ export default function CallLogsPage() {
     <div className="space-y-6">
       {/* Header with filter toggle */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Call Logs</h1>
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Call Logs</h1>
+        </div>
         
         <div className="flex flex-col sm:flex-row gap-3">
+          {/* Manual refresh button */}
+          <button
+            onClick={handleManualRefresh}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="Manual refresh"
+          >
+            <SyncOutlined className={`text-lg ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
          
          <div className="flex items-center">
             <DateRangePicker 
@@ -248,6 +326,25 @@ export default function CallLogsPage() {
         pageSize={pageSize}
         isLoading={isLoading}
       />
+      
+      {/* Auto-refresh status and last updated time at bottom */}
+      {autoRefresh.visualIndicators && (autoRefresh.enabled && autoRefresh.enabledSections.callLogs || lastRefreshTime) && (
+        <div className="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-400 dark:text-gray-500 pt-4 border-t border-gray-100 dark:border-gray-800">
+          {autoRefresh.enabled && autoRefresh.enabledSections.callLogs && (
+            <div className="flex items-center space-x-2">
+              <div className={`w-1.5 h-1.5 rounded-full ${
+                autoRefresh.interval > 0 ? 'bg-green-500' : 'bg-gray-400'
+              }`} />
+              <span>Auto-refresh: {autoRefresh.interval > 0 ? `${autoRefresh.interval/1000}s` : 'Off'}</span>
+            </div>
+          )}
+          {lastRefreshTime && (
+            <div>
+              Last updated: {lastRefreshTime.toLocaleTimeString()}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 } 

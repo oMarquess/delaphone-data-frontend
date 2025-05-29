@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
+import { SettingsProvider } from "@/context/SettingsContext";
 import RouteGuard from "@/components/auth/RouteGuard";
 import CacheProvider from "@/context/CacheProvider";
 
@@ -37,11 +38,13 @@ export default function RootLayout({
       <body className={`${inter.className} ${pressStart2P.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
-            <CacheProvider>
-              <RouteGuard>
-                {children}
-              </RouteGuard>
-            </CacheProvider>
+            <SettingsProvider>
+              <CacheProvider>
+                <RouteGuard>
+                  {children}
+                </RouteGuard>
+              </CacheProvider>
+            </SettingsProvider>
           </AuthProvider>
         <Toaster 
           duration={10000} // 10 seconds default duration for all toasts

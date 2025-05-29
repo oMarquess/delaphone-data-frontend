@@ -31,9 +31,9 @@ interface DateRangePickerProps {
 
 export default function DateRangePicker({ onChange, className = '' }: DateRangePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState('last7days');
-  const [dateRange, setDateRange] = useState(() => presets.find(p => p.value === 'last7days')?.getRange() || { 
-    startDate: subDays(new Date(), 6), 
+  const [selectedPreset, setSelectedPreset] = useState('today');
+  const [dateRange, setDateRange] = useState(() => presets.find(p => p.value === 'today')?.getRange() || { 
+    startDate: new Date(), 
     endDate: new Date() 
   });
   
