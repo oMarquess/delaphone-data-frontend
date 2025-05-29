@@ -22,6 +22,9 @@ export interface SettingsContextType {
   isRefreshing: boolean;
   lastRefreshTime: Date | null;
   setRefreshState: (isRefreshing: boolean, lastRefreshTime?: Date | null) => void;
+  lastRefreshError: string | null;
+  consecutiveFailures: number;
+  setRefreshError: (error: string | null) => void;
 }
 
 const defaultSettings: AutoRefreshSettings = {
@@ -55,6 +58,8 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   const [autoRefresh, setAutoRefresh] = useState<AutoRefreshSettings>(defaultSettings);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
+  const [lastRefreshError, setLastRefreshError] = useState<string | null>(null);
+  const [consecutiveFailures, setConsecutiveFailures] = useState(0);
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -95,6 +100,8 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     setAutoRefresh(defaultSettings);
     setIsRefreshing(false);
     setLastRefreshTime(null);
+    setLastRefreshError(null);
+    setConsecutiveFailures(0);
     console.log('🔄 Reset settings to defaults');
   };
 
@@ -105,6 +112,15 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     }
   };
 
+  const setRefreshError = (error: string | null) => {
+    setLastRefreshError(error);
+    if (error) {
+      setConsecutiveFailures(prev => prev + 1);
+    } else {
+      setConsecutiveFailures(0);
+    }
+  };
+
   const value: SettingsContextType = {
     autoRefresh,
     updateAutoRefreshSettings,
@@ -112,6 +128,9 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     isRefreshing,
     lastRefreshTime,
     setRefreshState,
+    lastRefreshError,
+    consecutiveFailures,
+    setRefreshError,
   };
 
   return (

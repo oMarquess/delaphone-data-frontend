@@ -37,7 +37,7 @@ export default function DashboardPage() {
     endDate: new Date(),
   });
   const { isAuthenticated } = useAuth();
-  const { autoRefresh, setRefreshState, lastRefreshTime } = useSettings();
+  const { autoRefresh, setRefreshState, lastRefreshTime, setRefreshError, lastRefreshError, consecutiveFailures } = useSettings();
   const router = useRouter();
 
   // Create a unique key for SWR based on date range
@@ -140,10 +140,23 @@ export default function DashboardPage() {
         
         setRefreshState(false, new Date());
         console.log('✅ Auto-refresh completed successfully');
+        // Clear any previous errors on success
+        setRefreshError(null);
       } catch (error) {
         console.error('❌ Auto-refresh failed:', error);
         setRefreshState(false);
-        // Don't show error toast for background refresh failures
+        
+        // Track the error
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        setRefreshError(errorMessage);
+        
+        // Show user notification after 3 consecutive failures
+        if (consecutiveFailures >= 2) { // Will be 3 after setRefreshError increments
+          toast.error('Auto-refresh temporarily unavailable', {
+            description: 'Check your connection or try manual refresh',
+            duration: 5000,
+          });
+        }
       }
     }, autoRefresh.interval);
 
@@ -156,7 +169,9 @@ export default function DashboardPage() {
     autoRefresh.enabledSections.overview, 
     autoRefresh.interval,
     swrKey,
-    setRefreshState
+    setRefreshState,
+    setRefreshError,
+    consecutiveFailures
   ]);
 
   // Combine loading states
@@ -225,9 +240,16 @@ export default function DashboardPage() {
       }
       setRefreshState(false, new Date());
       toast.success('Dashboard refreshed successfully');
+      // Clear any previous errors on success
+      setRefreshError(null);
     } catch (error) {
       setRefreshState(false);
-      toast.error('Failed to refresh dashboard');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setRefreshError(errorMessage);
+      toast.error('Failed to refresh dashboard', {
+        description: errorMessage,
+        duration: 4000,
+      });
     }
   };
 
@@ -360,21 +382,34 @@ export default function DashboardPage() {
       </div>
       
       {/* Auto-refresh status and last updated time at bottom */}
-      {autoRefresh.visualIndicators && (autoRefresh.enabled && autoRefresh.enabledSections.overview || lastRefreshTime) && (
+      {autoRefresh.visualIndicators && (autoRefresh.enabled && autoRefresh.enabledSections.overview || lastRefreshTime || lastRefreshError) && (
         <div className="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-400 dark:text-gray-500 pt-4 border-t border-gray-100 dark:border-gray-800">
           {autoRefresh.enabled && autoRefresh.enabledSections.overview && (
             <div className="flex items-center space-x-2">
               <div className={`w-1.5 h-1.5 rounded-full ${
+                lastRefreshError && consecutiveFailures > 0 ? 'bg-red-500' :
                 autoRefresh.interval > 0 ? 'bg-green-500' : 'bg-gray-400'
               }`} />
               <span>Auto-refresh: {autoRefresh.interval > 0 ? `${autoRefresh.interval/1000}s` : 'Off'}</span>
+              {lastRefreshError && consecutiveFailures > 0 && (
+                <span className="text-red-400 dark:text-red-500">
+                  (Failed {consecutiveFailures}x)
+                </span>
+              )}
             </div>
           )}
-          {lastRefreshTime && (
-            <div>
-              Last updated: {lastRefreshTime.toLocaleTimeString()}
-            </div>
-          )}
+          <div className="flex flex-col items-end">
+            {lastRefreshTime && (
+              <div>
+                Last updated: {lastRefreshTime.toLocaleTimeString()}
+              </div>
+            )}
+            {lastRefreshError && (
+              <div className="text-red-400 dark:text-red-500 mt-1">
+                Last error: {lastRefreshError}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

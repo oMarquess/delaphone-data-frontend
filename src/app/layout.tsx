@@ -39,11 +39,11 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <SettingsProvider>
-              <CacheProvider>
-                <RouteGuard>
-                  {children}
-                </RouteGuard>
-              </CacheProvider>
+            <CacheProvider>
+              <RouteGuard>
+                {children}
+              </RouteGuard>
+            </CacheProvider>
             </SettingsProvider>
           </AuthProvider>
         <Toaster 

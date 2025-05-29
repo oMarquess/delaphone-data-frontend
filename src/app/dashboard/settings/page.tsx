@@ -59,7 +59,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Settings</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Configure auto-refresh and dashboard preferences
           </p>
@@ -72,7 +72,7 @@ export default function SettingsPage() {
           Reset to Defaults
         </Button>
       </div>
-
+      
       {/* Status Card */}
       <Card className="border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
@@ -116,7 +116,7 @@ export default function SettingsPage() {
         <div className="space-y-6">
           {/* Master Toggle */}
           <div className="flex items-center justify-between">
-            <div>
+          <div>
               <h4 className="font-medium text-gray-800 dark:text-gray-200">
                 Enable Auto-Refresh
               </h4>
@@ -130,7 +130,7 @@ export default function SettingsPage() {
               size="default"
             />
           </div>
-
+          
           <Divider />
 
           {/* Refresh Interval */}
@@ -163,7 +163,7 @@ export default function SettingsPage() {
               className="text-xs"
             />
           </div>
-
+          
           <Divider />
 
           {/* Section-Specific Settings */}
@@ -214,7 +214,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <UserOutlined className="text-orange-500" />
-                  <div>
+          <div>
                     <span className="font-medium text-gray-800 dark:text-gray-200">Caller Analytics</span>
                     <p className="text-xs text-gray-600 dark:text-gray-400">Caller behavior metrics</p>
                   </div>
@@ -310,7 +310,7 @@ export default function SettingsPage() {
               <li>• Manual refresh is always available regardless of auto-refresh settings</li>
             </ul>
           </div>
-        </div>
+      </div>
       </Card>
     </div>
   );
