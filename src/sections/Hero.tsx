@@ -15,7 +15,7 @@ export const Hero = () => {
   const backgroundPositionY = useTransform(scrollYProgress, [0,1], [0, -300])
   
   // Typewriter effect state
-  const phrases = ["AI Insights", "Revenue Intel.,", "Growth Opportunities", "Customer Truths"];
+  const phrases = ["Revenue Intel.,", "Growth Opportunities", "Customer Truths"];
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
