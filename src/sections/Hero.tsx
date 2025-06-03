@@ -15,7 +15,7 @@ export const Hero = () => {
   const backgroundPositionY = useTransform(scrollYProgress, [0,1], [0, -300])
   
   // Typewriter effect state
-  const phrases = ["AI Insights", "Revenue Intelligence", "Growth Opportunities", "Customer Truths"];
+  const phrases = ["AI Insights", "Revenue Intel.,", "Growth Opportunities", "Customer Truths"];
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -113,7 +113,7 @@ export const Hero = () => {
       <h1 className="text-6xl leading-tight md:text-7xl md:leading-[1.1] font-semibold tracking-tighter bg-[radial-gradient(100%_100%_at_top_left,_white,_#FFFFFF,_rgba(255,87,87,0.5))] text-transparent bg-clip-text text-center">
         <span className="text-white">
           {displayText}
-          <span className="inline-block w-0.5 h-[1em] bg-white animate-pulse ml-1"></span>
+          <span className="inline-block w-0.5 h-[1.2em] bg-white animate-pulse ml-1"></span>
         </span>{" "}
         From Every Customer Call
       </h1>
