@@ -539,173 +539,183 @@ export default function AIInsightsPage() {
         {/* Customer Voice & Sentiment Metrics */}
         {customerMetrics && !customerLoading && (
           <div className="space-y-6">
-            {/* Topic Distribution Chart */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <BarChartOutlined className="text-lg text-blue-600" />
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Topic Distribution</h3>
-                  </div>
-                  <AntTooltip
-                    title={
-                      <div className="space-y-2">
-                        <div className="font-semibold">Topic Distribution</div>
-                        <div>Breakdown of call topics to understand customer needs and interests.</div>
-                        <div className="text-xs space-y-1 mt-2 pt-2 border-t border-gray-600">
-                          <div><strong>Categories:</strong></div>
-                          <div>• Product Inquiries: Questions about features</div>
-                          <div>• Technical Support: Help with issues</div>
-                          <div>• Billing: Payment and account questions</div>
-                          <div>• General: Information requests</div>
+            {/* Topic Distribution and Sentiment Analysis Charts */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Topic Distribution Chart */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <BarChartOutlined className="text-lg text-blue-600" />
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Topic Distribution</h3>
+                    </div>
+                    <AntTooltip
+                      title={
+                        <div className="space-y-2">
+                          <div className="font-semibold">Topic Distribution</div>
+                          <div>Breakdown of call topics to understand customer needs and interests.</div>
+                          <div className="text-xs space-y-1 mt-2 pt-2 border-t border-gray-600">
+                            <div><strong>Categories:</strong></div>
+                            <div>• Product Inquiries: Questions about features</div>
+                            <div>• Technical Support: Help with issues</div>
+                            <div>• Billing: Payment and account questions</div>
+                            <div>• General: Information requests</div>
+                          </div>
                         </div>
-                      </div>
-                    }
-                  >
-                    <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
-                  </AntTooltip>
-                </div>
-              </div>
-              
-              <div className="p-4">
-                {topicChartData.length > 0 ? (
-                  <div className="h-[250px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={topicChartData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, value, percent }) => {
-                            // Only show label if percentage is above 5%
-                            if (percent < 0.05) return null;
-                            return `${value.toFixed(1)}%`;
-                          }}
-                          outerRadius={80}
-                          innerRadius={60}
-                          fill="#8884d8"
-                          dataKey="value"
-                          paddingAngle={2}
-                          activeIndex={0}
-                          activeShape={(props: PieSectorDataItem) => (
-                            <Sector
-                              {...props}
-                              outerRadius={(props.outerRadius || 0) + 10}
-                            />
-                          )}
-                        >
-                          {topicChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend 
-                          layout="vertical" 
-                          verticalAlign="middle" 
-                          align="right"
-                          iconType="circle"
-                          formatter={(value, entry: any) => (
-                            <span className="text-sm text-gray-700 dark:text-gray-300">
-                              {value} ({entry.payload.value.toFixed(1)}%)
-                            </span>
-                          )}
-                          wrapperStyle={{ paddingLeft: '20px' }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
+                      }
+                    >
+                      <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
+                    </AntTooltip>
                   </div>
-                ) : (
-                  <div className="h-[250px] flex items-center justify-center">
-                    <div className="text-center">
-                      <BarChartOutlined className="text-4xl text-gray-400 dark:text-gray-500 mb-4" />
-                      <div className="text-gray-500 dark:text-gray-400 text-lg mb-2">
-                        No topic data available
-                      </div>
-                      <p className="text-gray-400 dark:text-gray-500 text-sm">
-                        No topic analysis data found for the selected date range
-                      </p>
+                </div>
+                
+                <div className="p-4">
+                  {topicChartData.length > 0 ? (
+                    <div className="h-[250px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={topicChartData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, value, percent }) => {
+                              // Only show label if percentage is above 5%
+                              if (percent < 0.05) return null;
+                              return `${value.toFixed(1)}%`;
+                            }}
+                            outerRadius={80}
+                            innerRadius={60}
+                            fill="#8884d8"
+                            dataKey="value"
+                            paddingAngle={2}
+                            activeIndex={0}
+                            activeShape={(props: PieSectorDataItem) => (
+                              <Sector
+                                {...props}
+                                outerRadius={(props.outerRadius || 0) + 10}
+                              />
+                            )}
+                          >
+                            {topicChartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend 
+                            layout="vertical" 
+                            verticalAlign="middle" 
+                            align="right"
+                            iconType="circle"
+                            formatter={(value, entry: any) => (
+                              <span className="text-sm text-gray-700 dark:text-gray-300">
+                                {value} ({entry.payload.value.toFixed(1)}%)
+                              </span>
+                            )}
+                            wrapperStyle={{ paddingLeft: '20px' }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
                     </div>
+                  ) : (
+                    <div className="h-[250px] flex items-center justify-center">
+                      <div className="text-center">
+                        <BarChartOutlined className="text-4xl text-gray-400 dark:text-gray-500 mb-4" />
+                        <div className="text-gray-500 dark:text-gray-400 text-lg mb-2">
+                          No topic data available
+                        </div>
+                        <p className="text-gray-400 dark:text-gray-500 text-sm">
+                          No topic analysis data found for the selected date range
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <RiseOutlined className="text-green-500" />
+                    <span>Showing distribution of {customerMetrics?.totalAnalyzedCalls || 0} analyzed calls</span>
                   </div>
-                )}
-              </div>
-              
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  <RiseOutlined className="text-green-500" />
-                  <span>Showing distribution of {customerMetrics?.totalAnalyzedCalls || 0} analyzed calls</span>
                 </div>
               </div>
-            </div>
 
-            {/* Sentiment Analysis Chart */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <HeartOutlined className="text-lg text-pink-600" />
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Sentiment Analysis</h3>
-                <AntTooltip
-                  title={
-                    <div className="space-y-2">
-                      <div className="font-semibold">Sentiment Analysis</div>
-                      <div>Customer emotional tone analysis from call transcriptions.</div>
-                      <div className="text-xs space-y-1 mt-2 pt-2 border-t border-gray-600">
-                        <div><strong>Sentiment Categories:</strong></div>
-                        <div>• Positive: Happy, satisfied customers</div>
-                        <div>• Neutral: Factual, informational calls</div>
-                        <div>• Negative: Frustrated, dissatisfied customers</div>
-                        <div>• Average Score: {customerMetrics.averageSentimentScore.toFixed(3)}</div>
-                      </div>
+              {/* Sentiment Analysis Chart */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <HeartOutlined className="text-lg text-pink-600" />
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Sentiment Analysis</h3>
                     </div>
-                  }
-                >
-                  <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
-                </AntTooltip>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                    {formatPercentage(customerMetrics.sentimentBreakdown.positive)}
+                    <AntTooltip
+                      title={
+                        <div className="space-y-2">
+                          <div className="font-semibold">Sentiment Analysis</div>
+                          <div>Customer emotional tone analysis from call transcriptions.</div>
+                          <div className="text-xs space-y-1 mt-2 pt-2 border-t border-gray-600">
+                            <div><strong>Sentiment Categories:</strong></div>
+                            <div>• Positive: Happy, satisfied customers</div>
+                            <div>• Neutral: Factual, informational calls</div>
+                            <div>• Negative: Frustrated, dissatisfied customers</div>
+                            <div>• Average Score: {customerMetrics?.averageSentimentScore.toFixed(3)}</div>
+                          </div>
+                        </div>
+                      }
+                    >
+                      <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
+                    </AntTooltip>
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Positive</div>
-                  <Progress 
-                    percent={customerMetrics.sentimentBreakdown.positive} 
-                    strokeColor="#10B981" 
-                    showInfo={false}
-                    className="mt-2"
-                  />
                 </div>
                 
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
-                    {formatPercentage(customerMetrics.sentimentBreakdown.neutral)}
+                <div className="p-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {formatPercentage(customerMetrics?.sentimentBreakdown.positive || 0)}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Positive</div>
+                      <Progress 
+                        percent={customerMetrics?.sentimentBreakdown.positive || 0} 
+                        strokeColor="#10B981" 
+                        showInfo={false}
+                        className="mt-2"
+                      />
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                        {formatPercentage(customerMetrics?.sentimentBreakdown.neutral || 0)}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Neutral</div>
+                      <Progress 
+                        percent={customerMetrics?.sentimentBreakdown.neutral || 0} 
+                        strokeColor="#F59E0B" 
+                        showInfo={false}
+                        className="mt-2"
+                      />
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                        {formatPercentage(customerMetrics?.sentimentBreakdown.negative || 0)}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Negative</div>
+                      <Progress 
+                        percent={customerMetrics?.sentimentBreakdown.negative || 0} 
+                        strokeColor="#EF4444" 
+                        showInfo={false}
+                        className="mt-2"
+                      />
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Neutral</div>
-                  <Progress 
-                    percent={customerMetrics.sentimentBreakdown.neutral} 
-                    strokeColor="#F59E0B" 
-                    showInfo={false}
-                    className="mt-2"
-                  />
                 </div>
                 
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-red-600 dark:text-red-400">
-                    {formatPercentage(customerMetrics.sentimentBreakdown.negative)}
+                <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <RiseOutlined className="text-green-500" />
+                    <span>Average Sentiment Score: {customerMetrics?.averageSentimentScore.toFixed(3)}</span>
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Negative</div>
-                  <Progress 
-                    percent={customerMetrics.sentimentBreakdown.negative} 
-                    strokeColor="#EF4444" 
-                    showInfo={false}
-                    className="mt-2"
-                  />
-                </div>
-              </div>
-              
-              <div className="mt-6 text-center">
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Total Analyzed Calls: <span className="font-semibold">{customerMetrics.totalAnalyzedCalls}</span>
                 </div>
               </div>
             </div>
