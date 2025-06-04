@@ -63,8 +63,12 @@ export default function AnalyticsPage() {
         setRefreshState(true);
         console.log('🔄 Auto-refreshing Caller Analytics data at:', new Date().toISOString());
         
-        // Use the mutate function to refresh data in background
-        await mutate();
+        // Use the mutate function with cache-busting to refresh data
+        await mutate(undefined, { 
+          revalidate: true,  // Force revalidation
+          populateCache: true,  // Ensure cache is updated
+          optimisticData: undefined  // Don't use optimistic updates
+        });
         
         setRefreshState(false, new Date());
         console.log('✅ Caller Analytics auto-refresh completed successfully');
@@ -171,7 +175,11 @@ export default function AnalyticsPage() {
   const handleManualRefresh = async () => {
     try {
       setRefreshState(true);
-      await mutate();
+      await mutate(undefined, { 
+        revalidate: true,  // Force revalidation
+        populateCache: true,  // Ensure cache is updated
+        optimisticData: undefined  // Don't use optimistic updates
+      });
       setRefreshState(false, new Date());
       toast.success('Caller analytics refreshed successfully');
       // Clear any previous errors on success

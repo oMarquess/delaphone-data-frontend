@@ -65,8 +65,12 @@ export default function AgentAnalyticsPage() {
         setRefreshState(true);
         console.log('🔄 Auto-refreshing Agent Analytics data at:', new Date().toISOString());
         
-        // Use the mutate function to refresh data in background
-        await mutate();
+        // Use the mutate function with cache-busting to refresh data
+        await mutate(undefined, { 
+          revalidate: true,  // Force revalidation
+          populateCache: true,  // Ensure cache is updated
+          optimisticData: undefined  // Don't use optimistic updates
+        });
         
         setRefreshState(false, new Date());
         console.log('✅ Agent Analytics auto-refresh completed successfully');

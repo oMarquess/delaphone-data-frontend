@@ -22,6 +22,13 @@ api.interceptors.request.use(async (config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Add cache-busting headers for analytics requests to ensure fresh data
+    config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+    config.headers['Pragma'] = 'no-cache';
+    config.headers['Expires'] = '0';
+    config.headers['X-Requested-At'] = Date.now().toString();
+    
     return config;
   } catch (error) {
     console.error('Error getting valid token for request:', error);
@@ -194,12 +201,13 @@ export const useAnalyticsData = (filters: AnalyticsFilters, type: 'caller' | 'ag
     fetcher,
     {
       revalidateOnFocus: false,
-      dedupingInterval: 300000, // 5 minutes instead of 1 minute
+      dedupingInterval: 1000, // Reduced from 300000ms (5 minutes) to 1000ms (1 second)
       shouldRetryOnError: true,
       errorRetryCount: 3,
-      revalidateIfStale: false,
+      revalidateIfStale: true, // Changed: Allow revalidation of stale data
       revalidateOnReconnect: true,
-      keepPreviousData: true // Important: keep showing previous data while fetching new data
+      keepPreviousData: false, // Changed: Don't keep previous data, show fresh data immediately
+      refreshInterval: 0, // Disable automatic refresh (handled manually)
     }
   );
 

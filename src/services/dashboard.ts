@@ -172,6 +172,13 @@ export const dashboardService = {
         params: {
           start_date: startDate,
           end_date: endDate,
+        },
+        headers: {
+          // Cache-busting headers to ensure fresh data
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'X-Requested-At': Date.now().toString()
         }
       });
       console.log('Dashboard API response:', response.data);
@@ -191,6 +198,13 @@ export const dashboardService = {
           start_date: startDate,
           end_date: endDate,
           limit
+        },
+        headers: {
+          // Cache-busting headers to ensure fresh data
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'X-Requested-At': Date.now().toString()
         }
       });
       console.log('Call records API response:', response.data);
@@ -256,7 +270,16 @@ export const dashboardService = {
       
       console.log('Calling API with params:', params);
       
-      const response = await api.get('/call-records/logs', { params });
+      const response = await api.get('/call-records/logs', { 
+        params,
+        headers: {
+          // Cache-busting headers to ensure fresh data
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'X-Requested-At': Date.now().toString()
+        }
+      });
       console.log('API response:', response.data);
       
       return response.data;

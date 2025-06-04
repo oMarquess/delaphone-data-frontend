@@ -77,8 +77,10 @@ export default function CallLogsPage() {
   // Use SWR for data fetching
   const { data, error, isLoading, mutate: mutateSWR } = useSWR(swrKey(), fetcher, {
     revalidateOnFocus: false,
-    dedupingInterval: 5000,
+    dedupingInterval: 1000,
     shouldRetryOnError: false,
+    revalidateIfStale: true,
+    refreshInterval: 0,
     onSuccess: () => {
       // Close the advanced filters section when data is successfully loaded
       setFilterVisible(false);
@@ -106,10 +108,23 @@ export default function CallLogsPage() {
         setRefreshState(true);
         console.log('🔄 Auto-refreshing Call Logs data at:', new Date().toISOString());
         
-        // Use SWR's mutate to refresh data in background
+        // Use SWR's mutate to refresh data with cache-busting
         const currentKey = swrKey();
         if (currentKey) {
-          await mutate(currentKey, () => fetcher(currentKey as [string, string, string, CallLogsFilterValues, number]), { revalidate: false });
+          // Create cache-busting fetcher that forces fresh data
+          const cacheBustingFetcher = async (key: [string, string, string, CallLogsFilterValues, number]) => {
+            const data = await dashboardService.getCallLogs(key[1], key[2], { 
+              ...key[3],
+              page: key[4]
+            });
+            return data;
+          };
+          
+          await mutate(currentKey, () => cacheBustingFetcher(currentKey as [string, string, string, CallLogsFilterValues, number]), { 
+            revalidate: true,
+            populateCache: true,
+            optimisticData: undefined
+          });
         }
         
         setRefreshState(false, new Date());
@@ -204,7 +219,20 @@ export default function CallLogsPage() {
       setRefreshState(true);
       const currentKey = swrKey();
       if (currentKey) {
-        await mutate(currentKey, () => fetcher(currentKey as [string, string, string, CallLogsFilterValues, number]), { revalidate: false });
+        // Create cache-busting fetcher that forces fresh data
+        const cacheBustingFetcher = async (key: [string, string, string, CallLogsFilterValues, number]) => {
+          const data = await dashboardService.getCallLogs(key[1], key[2], { 
+            ...key[3],
+            page: key[4]
+          });
+          return data;
+        };
+        
+        await mutate(currentKey, () => cacheBustingFetcher(currentKey as [string, string, string, CallLogsFilterValues, number]), { 
+          revalidate: true,  // Force revalidation
+          populateCache: true,  // Ensure cache is updated
+          optimisticData: undefined  // Don't use optimistic updates
+        });
       }
       setRefreshState(false, new Date());
       toast.success('Call logs refreshed successfully');

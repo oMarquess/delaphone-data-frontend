@@ -83,8 +83,10 @@ export default function DashboardPage() {
     metricsFetcher,
     {
       revalidateOnFocus: false,
-      dedupingInterval: 5000,
+      dedupingInterval: 1000,
       shouldRetryOnError: false,
+      revalidateIfStale: true,
+      refreshInterval: 0,
       onError: (error) => {
         toast.error('Failed to load dashboard data', {
           description: error.message || 'An unknown error occurred.'
@@ -103,8 +105,10 @@ export default function DashboardPage() {
     callRecordsFetcher,
     {
       revalidateOnFocus: false,
-      dedupingInterval: 5000,
+      dedupingInterval: 1000,
       shouldRetryOnError: false,
+      revalidateIfStale: true,
+      refreshInterval: 0,
       onError: (error) => {
         toast.error('Failed to load call records', {
           description: error.message || 'An unknown error occurred.'
@@ -129,12 +133,34 @@ export default function DashboardPage() {
         setRefreshState(true);
         console.log('🔄 Auto-refreshing Overview data at:', new Date().toISOString());
         
-        // Use SWR's mutate to refresh data in background
+        // Use SWR's mutate to refresh data with cache-busting
         const currentKey = swrKey();
         if (currentKey) {
+          // Add timestamp to bypass any potential server-side caching
+          const timestamp = Date.now();
+          
+          // Create cache-busting fetchers that force fresh data
+          const cacheBustingMetricsFetcher = async (key: [string, string]) => {
+            const data = await dashboardService.getDashboardMetrics(key[0], key[1]);
+            return data;
+          };
+          
+          const cacheBustingCallRecordsFetcher = async (key: [string, string]) => {
+            const data = await dashboardService.getCallRecords(key[0], key[1]);
+            return data;
+          };
+          
           await Promise.all([
-            mutate(currentKey, () => metricsFetcher(currentKey as [string, string]), { revalidate: false }),
-            mutate(currentKey, () => callRecordsFetcher(currentKey as [string, string]), { revalidate: false })
+            mutate(currentKey, () => cacheBustingMetricsFetcher(currentKey as [string, string]), { 
+              revalidate: true,  // Changed: Force revalidation
+              populateCache: true,  // Ensure cache is updated
+              optimisticData: undefined  // Don't use optimistic updates
+            }),
+            mutate(currentKey, () => cacheBustingCallRecordsFetcher(currentKey as [string, string]), { 
+              revalidate: true,  // Changed: Force revalidation
+              populateCache: true,  // Ensure cache is updated
+              optimisticData: undefined  // Don't use optimistic updates
+            })
           ]);
         }
         
@@ -233,9 +259,28 @@ export default function DashboardPage() {
       setRefreshState(true);
       const currentKey = swrKey();
       if (currentKey) {
+        // Create cache-busting fetchers that force fresh data
+        const cacheBustingMetricsFetcher = async (key: [string, string]) => {
+          const data = await dashboardService.getDashboardMetrics(key[0], key[1]);
+          return data;
+        };
+        
+        const cacheBustingCallRecordsFetcher = async (key: [string, string]) => {
+          const data = await dashboardService.getCallRecords(key[0], key[1]);
+          return data;
+        };
+        
         await Promise.all([
-          mutate(currentKey, () => metricsFetcher(currentKey as [string, string]), { revalidate: false }),
-          mutate(currentKey, () => callRecordsFetcher(currentKey as [string, string]), { revalidate: false })
+          mutate(currentKey, () => cacheBustingMetricsFetcher(currentKey as [string, string]), { 
+            revalidate: true,  // Force revalidation
+            populateCache: true,  // Ensure cache is updated
+            optimisticData: undefined  // Don't use optimistic updates
+          }),
+          mutate(currentKey, () => cacheBustingCallRecordsFetcher(currentKey as [string, string]), { 
+            revalidate: true,  // Force revalidation
+            populateCache: true,  // Ensure cache is updated
+            optimisticData: undefined  // Don't use optimistic updates
+          })
         ]);
       }
       setRefreshState(false, new Date());
