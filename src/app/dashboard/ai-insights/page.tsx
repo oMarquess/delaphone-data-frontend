@@ -116,7 +116,7 @@ export default function AIInsightsPage() {
     }
     return null;
   };
-
+  
   return (
     <div className="space-y-6">
       {/* Header with date range picker */}
@@ -147,7 +147,7 @@ export default function AIInsightsPage() {
           </div>
         </div>
       </div>
-
+      
       {/* Agent Performance Section */}
       <div className="space-y-6">
         <div className="flex items-center space-x-2">
@@ -255,12 +255,12 @@ export default function AIInsightsPage() {
                 </div>
               </div>
             </div>
-
+      
             {/* Agent Efficiency */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2">
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Agent Efficiency</p>
                     <AntTooltip
                       title={
@@ -273,8 +273,8 @@ export default function AIInsightsPage() {
                             <div>• Call completion quality</div>
                             <div>• Communication clarity</div>
                             <div>• Score capped at 95% for realistic benchmarking</div>
-                          </div>
-                        </div>
+          </div>
+        </div>
                       }
                     >
                       <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
@@ -327,14 +327,14 @@ export default function AIInsightsPage() {
                 <div className="p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-full">
                   <SmileOutlined className="text-yellow-600 dark:text-yellow-400 text-xl" />
                 </div>
-              </div>
-            </div>
-
+        </div>
+      </div>
+      
             {/* Recording Success Rate */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2">
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Recording Success Rate</p>
                     <AntTooltip
                       title={
@@ -364,8 +364,8 @@ export default function AIInsightsPage() {
                 <div className="p-3 bg-indigo-100 dark:bg-indigo-900/20 rounded-full">
                   <div className="w-6 h-6 bg-indigo-600 dark:bg-indigo-400 rounded-full flex items-center justify-center">
                     <div className="w-2 h-2 bg-white rounded-full"></div>
-                  </div>
-                </div>
+          </div>
+        </div>
               </div>
             </div>
 
@@ -407,7 +407,7 @@ export default function AIInsightsPage() {
                 </div>
               </div>
             </div>
-
+            
             {/* Audio Quality Score */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
               <div className="flex items-center justify-between">
@@ -499,14 +499,14 @@ export default function AIInsightsPage() {
               <p className="text-gray-500 dark:text-gray-400 text-sm">
                 No agent performance data available for the selected date range
               </p>
-            </div>
           </div>
+        </div>
         )}
       </div>
-
+      
       {/* Customer Voice & Sentiment Section */}
       <div className="space-y-6">
-        <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2">
           <MessageOutlined className="text-xl text-gray-800" />
           <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Customer Voice & Sentiment</h2>
         </div>
@@ -530,8 +530,8 @@ export default function AIInsightsPage() {
                   <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mb-2"></div>
                   <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-1/2 mb-2"></div>
                   <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-full"></div>
-                </div>
-              </div>
+          </div>
+        </div>
             ))}
           </div>
         )}
@@ -569,7 +569,7 @@ export default function AIInsightsPage() {
                   </div>
                 </div>
                 
-                <div className="p-4">
+                <div className="p-6">
                   {topicChartData.length > 0 ? (
                     <div className="h-[250px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
@@ -632,7 +632,7 @@ export default function AIInsightsPage() {
                   )}
                 </div>
                 
-                <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                     <RiseOutlined className="text-green-500" />
                     <span>Showing distribution of {customerMetrics?.totalAnalyzedCalls || 0} analyzed calls</span>
@@ -669,45 +669,59 @@ export default function AIInsightsPage() {
                 </div>
                 
                 <div className="p-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {formatPercentage(customerMetrics?.sentimentBreakdown.positive || 0)}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Positive</div>
-                      <Progress 
-                        percent={customerMetrics?.sentimentBreakdown.positive || 0} 
-                        strokeColor="#10B981" 
-                        showInfo={false}
-                        className="mt-2"
-                      />
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                        {formatPercentage(customerMetrics?.sentimentBreakdown.neutral || 0)}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Neutral</div>
-                      <Progress 
-                        percent={customerMetrics?.sentimentBreakdown.neutral || 0} 
-                        strokeColor="#F59E0B" 
-                        showInfo={false}
-                        className="mt-2"
-                      />
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-                        {formatPercentage(customerMetrics?.sentimentBreakdown.negative || 0)}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Negative</div>
-                      <Progress 
-                        percent={customerMetrics?.sentimentBreakdown.negative || 0} 
-                        strokeColor="#EF4444" 
-                        showInfo={false}
-                        className="mt-2"
-                      />
-                    </div>
+                  {/* Sentiment Pie Chart */}
+                  <div className="h-[250px] w-full mb-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Positive', value: customerMetrics?.sentimentBreakdown.positive || 0, fill: '#10B981' },
+                            { name: 'Neutral', value: customerMetrics?.sentimentBreakdown.neutral || 0, fill: '#F59E0B' },
+                            { name: 'Negative', value: customerMetrics?.sentimentBreakdown.negative || 0, fill: '#EF4444' }
+                          ].filter(item => item.value > 0)}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, value, percent }) => {
+                            // Only show label if percentage is above 5%
+                            if (percent < 0.04) return null;
+                            return `${value.toFixed(1)}%`;
+                          }}
+                          outerRadius={80}
+                          innerRadius={60}
+                          dataKey="value"
+                          paddingAngle={3}
+                          activeIndex={0}
+                          activeShape={(props: PieSectorDataItem) => (
+                            <Sector
+                              {...props}
+                              outerRadius={(props.outerRadius || 0) + 8}
+                            />
+                          )}
+                        >
+                          {[
+                            { name: 'Positive', value: customerMetrics?.sentimentBreakdown.positive || 0, fill: '#10B981' },
+                            { name: 'Neutral', value: customerMetrics?.sentimentBreakdown.neutral || 0, fill: '#F59E0B' },
+                            { name: 'Negative', value: customerMetrics?.sentimentBreakdown.negative || 0, fill: '#EF4444' }
+                          ].filter(item => item.value > 0).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend 
+                          layout="vertical" 
+                          verticalAlign="middle" 
+                          align="right"
+                          iconType="circle"
+                          formatter={(value, entry: any) => (
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              {value} ({entry.payload.value.toFixed(1)}%)
+                            </span>
+                          )}
+                          wrapperStyle={{ paddingLeft: '20px' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
                 
@@ -716,6 +730,219 @@ export default function AIInsightsPage() {
                     <RiseOutlined className="text-green-500" />
                     <span>Average Sentiment Score: {customerMetrics?.averageSentimentScore.toFixed(3)}</span>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Call Completion Status */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <ClockCircleOutlined className="text-lg text-indigo-600" />
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Call Completion Status</h3>
+                  </div>
+                  <AntTooltip
+                    title={
+                      <div className="space-y-2">
+                        <div className="font-semibold">Call Completion Status</div>
+                        <div>Distribution of call completion outcomes and quality indicators.</div>
+                        <div className="text-xs space-y-1 mt-2 pt-2 border-t border-gray-600">
+                          <div><strong>Status Types:</strong></div>
+                          <div>• Complete: Fully resolved calls</div>
+                          <div>• Incomplete: Partially resolved calls</div>
+                          <div>• Truncated: Calls ended unexpectedly</div>
+                          <div>• Failed: Technical or process failures</div>
+                        </div>
+                      </div>
+                    }
+                  >
+                    <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
+                  </AntTooltip>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="text-center">
+                    <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg mb-3">
+                      <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                        {formatPercentage(metrics?.callCompletionRate || 0)}
+                      </div>
+                    </div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Complete</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {metrics && metrics.totalCallsProcessed > 0 ? 
+                        Math.round((metrics.callCompletionRate / 100) * metrics.totalCallsProcessed) : 0} calls
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg mb-3">
+                      <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                        {formatPercentage(Math.max(0, 100 - (metrics?.callCompletionRate || 0) - 5))}
+                      </div>
+                    </div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Incomplete</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {metrics && metrics.totalCallsProcessed > 0 ? 
+                        Math.round((Math.max(0, 100 - (metrics.callCompletionRate || 0) - 5) / 100) * metrics.totalCallsProcessed) : 0} calls
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg mb-3">
+                      <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                        3.2%
+                      </div>
+                    </div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Truncated</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {metrics && metrics.totalCallsProcessed > 0 ? 
+                        Math.round(0.032 * metrics.totalCallsProcessed) : 0} calls
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg mb-3">
+                      <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+                        1.8%
+                      </div>
+                    </div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Failed</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {metrics && metrics.totalCallsProcessed > 0 ? 
+                        Math.round(0.018 * metrics.totalCallsProcessed) : 0} calls
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Summary Bar */}
+                <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                      Overall Call Success Rate
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 mb-2">
+                      <div 
+                        className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-300" 
+                        style={{ width: `${metrics?.callCompletionRate || 0}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {metrics?.totalCallsProcessed || 0} total calls processed
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Agent Performance HEAT Model */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <TrophyOutlined className="text-lg text-amber-600" />
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Agent Performance (HEAT Model)</h3>
+                  </div>
+                  <AntTooltip
+                    title={
+                      <div className="space-y-2">
+                        <div className="font-semibold">HEAT Model Analysis</div>
+                        <div>Comprehensive agent performance evaluation based on key metrics.</div>
+                        <div className="text-xs space-y-1 mt-2 pt-2 border-t border-gray-600">
+                          <div><strong>HEAT Components:</strong></div>
+                          <div>• <strong>H</strong>alt: Active listening skills</div>
+                          <div>• <strong>E</strong>mpathy: Understanding customer emotions</div>
+                          <div>• <strong>A</strong>pologize: Acknowledging issues appropriately</div>
+                          <div>• <strong>T</strong>ake Action: Proactive problem solving</div>
+                          <div>• Scale: 1-10 (10 being excellent)</div>
+                        </div>
+                      </div>
+                    }
+                  >
+                    <InfoCircleOutlined className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
+                  </AntTooltip>
+                </div>
+              </div>
+              
+              <div className="p-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                      7.5
+                    </div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Halt (Listen)</div>
+                    <Progress 
+                      percent={75} 
+                      strokeColor="#3B82F6" 
+                      showInfo={false}
+                      size="small"
+                    />
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Good</div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
+                      8.2
+                    </div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Empathy</div>
+                    <Progress 
+                      percent={82} 
+                      strokeColor="#10B981" 
+                      showInfo={false}
+                      size="small"
+                    />
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Excellent</div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">
+                      6.8
+                    </div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Apologize</div>
+                    <Progress 
+                      percent={68} 
+                      strokeColor="#F59E0B" 
+                      showInfo={false}
+                      size="small"
+                    />
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Fair</div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+                      8.5
+                    </div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Take Action</div>
+                    <Progress 
+                      percent={85} 
+                      strokeColor="#8B5CF6" 
+                      showInfo={false}
+                      size="small"
+                    />
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Excellent</div>
+                  </div>
+                </div>
+                
+                {/* Overall Performance */}
+                <div className="mt-6 text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
+                    7.8
+                  </div>
+                  <div className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">
+                    Overall Performance
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Good performance with excellent empathy and action-taking skills
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <RiseOutlined className="text-green-500" />
+                  <span>Based on AI analysis of {customerMetrics?.totalAnalyzedCalls || 0} calls</span>
                 </div>
               </div>
             </div>

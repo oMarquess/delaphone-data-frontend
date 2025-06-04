@@ -319,7 +319,8 @@ export const aiInsightsService = {
 
     // Filter records with topic or sentiment data
     const analyzedRecords = records.filter(record => 
-      record.custom_topic || record.two_party_sentiment || record.topic_detection_summary
+      record.custom_topic || record.two_party_sentiment || record.topic_detection_summary || 
+      (record as any).sentiment_analysis || (record as any).lemur_analysis
     );
 
     // Topic distribution analysis
@@ -342,15 +343,17 @@ export const aiInsightsService = {
     let sentimentRecordsCount = 0;
 
     analyzedRecords.forEach(record => {
-      // Analyze topics
-      const topic = record.custom_topic?.toLowerCase() || '';
+      // Analyze topics using the new structure
+      const customTopic = record.custom_topic?.toLowerCase() || '';
+      const lemurTopic = (record as any).lemur_analysis?.custom_topic?.toLowerCase() || '';
+      const topic = customTopic || lemurTopic;
       const topicSummary = record.topic_detection_summary?.toString().toLowerCase() || '';
       
       if (topic.includes('product') || topic.includes('feature') || topicSummary.includes('product')) {
         topicCounts.productInquiries++;
       } else if (topic.includes('technical') || topic.includes('support') || topic.includes('issue') || topicSummary.includes('technical')) {
         topicCounts.technicalSupport++;
-      } else if (topic.includes('billing') || topic.includes('payment') || topic.includes('invoice') || topicSummary.includes('billing')) {
+      } else if (topic.includes('billing') || topic.includes('payment') || topic.includes('invoice') || topic.includes('account') || topicSummary.includes('billing')) {
         topicCounts.billing++;
       } else if (topic.includes('general') || topic.includes('info') || topicSummary.includes('general')) {
         topicCounts.general++;
@@ -358,23 +361,89 @@ export const aiInsightsService = {
         topicCounts.other++;
       }
 
-      // Analyze sentiment
-      if (record.two_party_sentiment) {
+      // Analyze sentiment using the new rich data structure
+      let sentimentProcessed = false;
+      
+      // First, try to use the new sentiment_analysis array
+      const sentimentAnalysis = (record as any).sentiment_analysis;
+      if (sentimentAnalysis && Array.isArray(sentimentAnalysis)) {
+        let positiveCount = 0;
+        let neutralCount = 0;
+        let negativeCount = 0;
+        
+        sentimentAnalysis.forEach((item: any) => {
+          if (item.sentiment === 'POSITIVE') {
+            positiveCount++;
+          } else if (item.sentiment === 'NEGATIVE') {
+            negativeCount++;
+          } else {
+            neutralCount++;
+          }
+        });
+        
+        // Determine overall sentiment based on majority
+        if (positiveCount > neutralCount && positiveCount > negativeCount) {
+          sentimentCounts.positive++;
+          totalSentimentScore += 0.8;
+        } else if (negativeCount > positiveCount && negativeCount > neutralCount) {
+          sentimentCounts.negative++;
+          totalSentimentScore += 0.2;
+        } else {
+          sentimentCounts.neutral++;
+          totalSentimentScore += 0.5;
+        }
+        sentimentRecordsCount++;
+        sentimentProcessed = true;
+      }
+      
+      // If no sentiment_analysis array, try lemur_analysis sentiment
+      if (!sentimentProcessed && (record as any).lemur_analysis?.sentiment_analysis) {
+        const lemurSentiment = (record as any).lemur_analysis.sentiment_analysis;
+        if (lemurSentiment.customer_sentiment === 'POSITIVE') {
+          sentimentCounts.positive++;
+          totalSentimentScore += 0.8;
+        } else if (lemurSentiment.customer_sentiment === 'NEGATIVE') {
+          sentimentCounts.negative++;
+          totalSentimentScore += 0.2;
+        } else {
+          sentimentCounts.neutral++;
+          totalSentimentScore += 0.5;
+        }
+        sentimentRecordsCount++;
+        sentimentProcessed = true;
+      }
+      
+      // Fallback to two_party_sentiment (old structure)
+      if (!sentimentProcessed && record.two_party_sentiment) {
         const sentiment = record.two_party_sentiment;
         
         // Handle different sentiment data structures
         if (typeof sentiment === 'object') {
-          // Look for sentiment indicators in the object
-          const sentimentStr = JSON.stringify(sentiment).toLowerCase();
-          if (sentimentStr.includes('positive') || sentimentStr.includes('satisfied') || sentimentStr.includes('happy')) {
-            sentimentCounts.positive++;
-            totalSentimentScore += 0.8;
-          } else if (sentimentStr.includes('negative') || sentimentStr.includes('frustrated') || sentimentStr.includes('angry')) {
-            sentimentCounts.negative++;
-            totalSentimentScore += 0.2;
+          // Check for customer_sentiment field first
+          if (sentiment.customer_sentiment) {
+            if (sentiment.customer_sentiment.toLowerCase().includes('positive')) {
+              sentimentCounts.positive++;
+              totalSentimentScore += 0.8;
+            } else if (sentiment.customer_sentiment.toLowerCase().includes('negative')) {
+              sentimentCounts.negative++;
+              totalSentimentScore += 0.2;
+            } else {
+              sentimentCounts.neutral++;
+              totalSentimentScore += 0.5;
+            }
           } else {
-            sentimentCounts.neutral++;
-            totalSentimentScore += 0.5;
+            // Look for sentiment indicators in the object
+            const sentimentStr = JSON.stringify(sentiment).toLowerCase();
+            if (sentimentStr.includes('positive') || sentimentStr.includes('satisfied') || sentimentStr.includes('happy')) {
+              sentimentCounts.positive++;
+              totalSentimentScore += 0.8;
+            } else if (sentimentStr.includes('negative') || sentimentStr.includes('frustrated') || sentimentStr.includes('angry')) {
+              sentimentCounts.negative++;
+              totalSentimentScore += 0.2;
+            } else {
+              sentimentCounts.neutral++;
+              totalSentimentScore += 0.5;
+            }
           }
         } else if (typeof sentiment === 'string') {
           const sentimentStr = sentiment.toLowerCase();
