@@ -56,27 +56,15 @@ const SideNav = () => {
   const navItems: NavItem[] = [
     {
       path: '/dashboard',
-      name: 'Overview', 
+      name: 'Analytics Dashboard', 
       icon: <DashboardOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />,
-      themeColor: 'border-gray-400'
+      themeColor: 'border-blue-400'
     },
     {
       path: '/dashboard/call-logs',
       name: 'Call Logs', 
       icon: <PhoneOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />,
       themeColor: 'border-blue-400'
-    },
-    {
-      path: '/dashboard/analytics', 
-      name: 'Caller Analytics', 
-      icon: <BarChartOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />,
-      themeColor: 'border-blue-500'
-    },
-    {
-      path: '/dashboard/agent-analytics', 
-      name: 'Agent Analytics', 
-      icon: <UserOutlined className="text-gray-700 dark:text-gray-300" style={{ fontSize: '18px' }} />,
-      themeColor: 'border-green-500'
     },
     {
       path: '/dashboard/reports', 
