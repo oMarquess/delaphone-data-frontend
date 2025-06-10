@@ -1,8 +1,9 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { ChevronsLeftRight, MoreHorizontal } from 'lucide-react';
 
 interface SummaryCardProps {
   title: string;
@@ -15,6 +16,8 @@ interface SummaryCardProps {
   };
   className?: string;
   isLoading?: boolean;
+  onExplainClick?: () => void;
+  explanationId?: string;
 }
 
 export default function SummaryCard({ 
@@ -23,21 +26,68 @@ export default function SummaryCard({
   icon, 
   trend, 
   className = '',
-  isLoading = false
+  isLoading = false,
+  onExplainClick,
+  explanationId
 }: SummaryCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700',
+        'bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 relative group',
         className
       )}
     >
       <div className="flex justify-between items-start">
         <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium">{title}</h3>
-        {icon && <div className="text-gray-400 dark:text-gray-500">{icon}</div>}
+        <div className="flex items-center space-x-2">
+          {icon && <div className="text-gray-400 dark:text-gray-500">{icon}</div>}
+          
+          {/* Animated Explanation Icon */}
+          {onExplainClick && (
+            <motion.button
+              onClick={onExplainClick}
+              className="p-1.5 rounded-full bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-300"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 1 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              <motion.div
+                animate={{ 
+                  rotate: isHovered ? [0, 15, -15, 0] : 0,
+                }}
+                transition={{ 
+                  duration: 0.6,
+                  ease: "easeInOut"
+                }}
+              >
+                <motion.div
+                  animate={{
+                    scale: isHovered ? [1, 1.2, 1] : 1
+                  }}
+                  transition={{
+                    duration: 1,
+                    repeat: isHovered ? Infinity : 0,
+                    ease: "easeInOut"
+                  }}
+                >
+                  {isHovered ? (
+                    <MoreHorizontal size={14} />
+                  ) : (
+                    <ChevronsLeftRight size={14} />
+                  )}
+                </motion.div>
+              </motion.div>
+            </motion.button>
+          )}
+        </div>
       </div>
       
       {isLoading ? (

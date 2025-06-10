@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import { toast } from 'sonner';
-import { BarChartIcon, PhoneIcon, ClockIcon, UserIcon, TrendingUpIcon, HeadphonesIcon } from 'lucide-react';
+import { BarChartIcon, PhoneIcon, ClockIcon, UserIcon, TrendingUpIcon, HeadphonesIcon, ChevronsLeftRight, MoreHorizontal, X, Info } from 'lucide-react';
 import { SyncOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import useSWR, { mutate } from 'swr';
@@ -54,6 +54,7 @@ import { publishDateChange } from '@/components/ai/AIDrawer';
 export default function DashboardPage() {
   // State management
   const [activeTab, setActiveTab] = useState<'calls' | 'customer' | 'agent'>('calls');
+  const [explanationModal, setExplanationModal] = useState<string | null>(null);
   
   // Date range state (same pattern as call logs)
   const [dateRange, setDateRange] = useState(() => {
@@ -406,8 +407,175 @@ export default function DashboardPage() {
     }
   ];
 
+  // Explanation data for different charts and metrics
+  const explanations = {
+    totalCalls: {
+      title: "Total Calls",
+      description: "The total number of calls processed during the selected time period.",
+      details: [
+        "Includes inbound, outbound, and internal calls",
+        "Counts all call attempts regardless of disposition",
+        "Updates in real-time as new calls are processed",
+        "Useful for understanding overall call volume trends"
+      ],
+      insights: "Higher call volumes may indicate increased business activity or seasonal trends."
+    },
+    avgDuration: {
+      title: "Average Call Duration", 
+      description: "The average length of all calls in the selected time period.",
+      details: [
+        "Calculated from total talk time divided by number of calls",
+        "Includes only successfully connected calls",
+        "Measured in minutes and seconds",
+        "Excludes hold time and wrap-up time"
+      ],
+      insights: "Longer durations may indicate complex issues or thorough customer service."
+    },
+    answerRate: {
+      title: "Answer Rate",
+      description: "Percentage of incoming calls that were successfully answered.",
+      details: [
+        "Calculated as (Answered Calls ÷ Total Incoming Calls) × 100",
+        "Industry benchmark is typically 80-85%",
+        "Excludes outbound calls from calculation",
+        "Key indicator of customer service accessibility"
+      ],
+      insights: "Low answer rates may indicate understaffing or technical issues."
+    },
+    uniqueCallers: {
+      title: "Unique Callers",
+      description: "Number of distinct phone numbers that made calls.",
+      details: [
+        "Counts unique source numbers for inbound calls",
+        "Counts unique destination numbers for outbound calls", 
+        "Helps identify customer engagement patterns",
+        "Useful for understanding customer base size"
+      ],
+      insights: "High unique caller counts indicate broad customer reach."
+    },
+    hourlyDistribution: {
+      title: "Hourly Call Distribution",
+      description: "Shows call volume patterns throughout the day.",
+      details: [
+        "Displays calls by hour (0-23) in local time",
+        "Helps identify peak and off-peak periods",
+        "Useful for staff scheduling optimization",
+        "Colors represent different call directions"
+      ],
+      insights: "Peak hours typically align with business hours and customer activity patterns."
+    },
+    callDirection: {
+      title: "Call Direction Analysis", 
+      description: "Breakdown of calls by direction (inbound, outbound, internal).",
+      details: [
+        "Inbound: Calls received from external numbers",
+        "Outbound: Calls made to external numbers",
+        "Internal: Calls between internal extensions",
+        "Percentages show distribution across categories"
+      ],
+      insights: "Direction patterns reveal business communication style and customer interaction levels."
+    },
+    durationMetrics: {
+      title: "Duration Metrics",
+      description: "Detailed analysis of call duration patterns and statistics.",
+      details: [
+        "Shows distribution of call lengths",
+        "Identifies short vs. long call patterns", 
+        "Helps optimize agent scheduling",
+        "Useful for capacity planning"
+      ],
+      insights: "Duration patterns can indicate call complexity and agent efficiency."
+    }
+  };
+
+  // Explanation Modal Component
+  const ExplanationModal = ({ id, onClose }: { id: string, onClose: () => void }) => {
+    const explanation = explanations[id as keyof typeof explanations];
+    if (!explanation) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+        >
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <Info size={20} className="text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
+                  {explanation.title}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Detailed explanation and insights
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Modal Content */}
+          <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
+            {/* Description */}
+            <div className="mb-6">
+              <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-2">Description</h4>
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                {explanation.description}
+              </p>
+            </div>
+
+            {/* Details */}
+            <div className="mb-6">
+              <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-3">Key Details</h4>
+              <ul className="space-y-2">
+                {explanation.details.map((detail, index) => (
+                  <li key={index} className="flex items-start space-x-2">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span className="text-gray-600 dark:text-gray-300">{detail}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Insights */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800/50">
+              <h4 className="text-lg font-medium text-blue-800 dark:text-blue-200 mb-2 flex items-center">
+                <TrendingUpIcon size={16} className="mr-2" />
+                Insights
+              </h4>
+              <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed">
+                {explanation.insights}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-8 relative overflow-hidden">
+    <>
+      {/* Explanation Modal */}
+      <AnimatePresence>
+        {explanationModal && (
+          <ExplanationModal 
+            id={explanationModal}
+            onClose={() => setExplanationModal(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <div className="space-y-8 relative overflow-hidden">
       {/* Animated background pattern */}
       <div className="absolute inset-0 -z-10">
         {/* Floating orbs */}
@@ -675,6 +843,7 @@ export default function DashboardPage() {
               isLoading={isLoading}
               getSafeMetric={getSafeMetric}
               generateSampleHourlyData={generateSampleHourlyData}
+              onExplainClick={setExplanationModal}
             />
           </motion.div>
         )}
@@ -742,7 +911,8 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -753,7 +923,8 @@ function CallsAnalyticsTab({
   formattedCallRecords, 
   isLoading, 
   getSafeMetric, 
-  generateSampleHourlyData 
+  generateSampleHourlyData,
+  onExplainClick
 }: any) {
   return (
     <div className="space-y-8">
@@ -764,6 +935,8 @@ function CallsAnalyticsTab({
           value={getSafeMetric('total_calls')}
           icon={<PhoneIcon size={18} />}
           isLoading={isLoading}
+          onExplainClick={() => onExplainClick('totalCalls')}
+          explanationId="totalCalls"
         />
         
         <SummaryCard 
@@ -771,6 +944,8 @@ function CallsAnalyticsTab({
           value={formatDuration(getSafeMetric('avg_duration'))}
           icon={<ClockIcon size={18} />}
           isLoading={isLoading}
+          onExplainClick={() => onExplainClick('avgDuration')}
+          explanationId="avgDuration"
         />
         
         <SummaryCard 
@@ -778,6 +953,8 @@ function CallsAnalyticsTab({
           value={`${getSafeMetric('answer_rate', 0).toFixed(1)}%`}
           icon={<BarChartIcon size={18} />}
           isLoading={isLoading}
+          onExplainClick={() => onExplainClick('answerRate')}
+          explanationId="answerRate"
         />
         
         <SummaryCard 
@@ -785,12 +962,32 @@ function CallsAnalyticsTab({
           value={getSafeMetric('total_inbound') + getSafeMetric('total_outbound')}
           icon={<UserIcon size={18} />}
           isLoading={isLoading}
+          onExplainClick={() => onExplainClick('uniqueCallers')}
+          explanationId="uniqueCallers"
         />
       </div>
       
       {/* Hourly Distribution Chart */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Hourly Call Distribution</h2>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 group">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100">Hourly Call Distribution</h2>
+          <motion.button
+            onClick={() => onExplainClick('hourlyDistribution')}
+            className="p-2 rounded-full bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-300"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <motion.div
+              whileHover={{ 
+                rotate: [0, 15, -15, 0],
+                scale: [1, 1.2, 1]
+              }}
+              transition={{ duration: 0.6 }}
+            >
+              <ChevronsLeftRight size={16} />
+            </motion.div>
+          </motion.button>
+        </div>
         <div className="h-[400px]">
           <HourlyDistributionLineChart 
             data={(dashboardData?.hourly_distribution && dashboardData.hourly_distribution.length > 0) 
@@ -803,8 +1000,26 @@ function CallsAnalyticsTab({
       
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Call Direction</h2>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 group">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100">Call Direction</h2>
+            <motion.button
+              onClick={() => onExplainClick('callDirection')}
+              className="p-2 rounded-full bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-300"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <motion.div
+                whileHover={{ 
+                  rotate: [0, 15, -15, 0],
+                  scale: [1, 1.2, 1]
+                }}
+                transition={{ duration: 0.6 }}
+              >
+                <ChevronsLeftRight size={16} />
+              </motion.div>
+            </motion.button>
+          </div>
           <div className="h-[320px]">
             <CallDirectionChart 
               data={dashboardData ? extractDirectionDistribution(dashboardData) : []} 
@@ -813,8 +1028,26 @@ function CallsAnalyticsTab({
           </div>
         </div>
         
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Duration Metrics</h2>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 group">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100">Duration Metrics</h2>
+            <motion.button
+              onClick={() => onExplainClick('durationMetrics')}
+              className="p-2 rounded-full bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-300"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <motion.div
+                whileHover={{ 
+                  rotate: [0, 15, -15, 0],
+                  scale: [1, 1.2, 1]
+                }}
+                transition={{ duration: 0.6 }}
+              >
+                <ChevronsLeftRight size={16} />
+              </motion.div>
+            </motion.button>
+          </div>
           <div className="h-[320px]">
             <CallDurationMetricsChart 
               {...(dashboardData ? extractDurationMetrics(dashboardData) : {})}
