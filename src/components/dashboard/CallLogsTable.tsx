@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { ChevronDownIcon, ChevronUpIcon, Play, Download, ChevronLeft, ChevronRight, Phone, Clock, Calendar, Info, ArrowUp, ArrowDown, ChevronsLeft, ChevronsRight, MessageSquare, TrendingUp, Users, Star, FileText } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon, Play, Download, ChevronLeft, ChevronRight, Phone, Clock, Calendar, Info, ArrowUp, ArrowDown, ChevronsLeft, ChevronsRight, MessageSquare, TrendingUp, Users, Star, FileText, X, ExternalLink } from 'lucide-react';
 import React from 'react';
 import { useAudioPlayer } from '@/components/ui/GlobalAudioPlayer';
 import { API_BASE_URL } from '@/config/constants';
@@ -105,6 +105,7 @@ export default function CallLogsTable({
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [loadingRecording, setLoadingRecording] = useState<string | null>(null);
+  const [transcriptModalOpen, setTranscriptModalOpen] = useState<string | null>(null);
 
   // Debug: Log transcript data in records
   console.log('📋 CallLogsTable received records:', records.length);
@@ -382,8 +383,192 @@ export default function CallLogsTable({
     }
   };
 
+  // Transcript Modal Component
+  const TranscriptModal = ({ record, onClose }: { record: CallLog, onClose: () => void }) => {
+    if (!record || !hasTranscript(record)) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-3">
+              <MessageSquare size={20} className="text-purple-600 dark:text-purple-400" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  Call Transcript & Analysis
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {formatPhoneNumber(record.src)} → {formatPhoneNumber(record.dst)} • {formatDate(record.calldate)}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Modal Content */}
+          <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            {/* Transcript Summary */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Words</div>
+                <div className="text-xl font-semibold text-gray-800 dark:text-white">{record.transcript_words_count || 0}</div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Speakers</div>
+                <div className="text-xl font-semibold text-gray-800 dark:text-white">{record.transcript_speakers_count || 0}</div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Confidence</div>
+                <div className="text-xl font-semibold text-gray-800 dark:text-white">{Math.round((record.transcript_confidence || 0) * 100)}%</div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Audio Duration</div>
+                <div className="text-xl font-semibold text-gray-800 dark:text-white">{formatDuration(record.transcript_audio_duration || 0)}</div>
+              </div>
+            </div>
+
+            {/* Analysis Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Agent Performance */}
+              {record.transcript_lemur_analysis?.agent_performance && (
+                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                    <Star size={16} className="mr-2" />
+                    Agent Performance
+                  </h5>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Overall</span>
+                      <span className={`px-3 py-1 text-sm rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.overall_performance || '')}`}>
+                        {record.transcript_lemur_analysis.agent_performance.overall_performance || 'N/A'}
+                      </span>
+                    </div>
+                    {record.transcript_lemur_analysis.agent_performance.heat_model_analysis?.empathy_score && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Empathy</span>
+                        <span className={`px-3 py-1 text-sm rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.heat_model_analysis.empathy_score)}`}>
+                          {record.transcript_lemur_analysis.agent_performance.heat_model_analysis.empathy_score}
+                        </span>
+                      </div>
+                    )}
+                    {record.transcript_lemur_analysis.agent_performance.heat_model_analysis?.halt_score && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Listening</span>
+                        <span className={`px-3 py-1 text-sm rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.heat_model_analysis.halt_score)}`}>
+                          {record.transcript_lemur_analysis.agent_performance.heat_model_analysis.halt_score}
+                        </span>
+                      </div>
+                    )}
+                    {record.transcript_lemur_analysis.agent_performance.heat_model_analysis?.take_action_score && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Action</span>
+                        <span className={`px-3 py-1 text-sm rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.heat_model_analysis.take_action_score)}`}>
+                          {record.transcript_lemur_analysis.agent_performance.heat_model_analysis.take_action_score}
+                        </span>
+                      </div>
+                    )}
+                    {record.transcript_lemur_analysis.agent_performance.performance_explanation && (
+                      <div className="mt-3 p-3 bg-white dark:bg-gray-600 rounded text-sm text-gray-600 dark:text-gray-300">
+                        {record.transcript_lemur_analysis.agent_performance.performance_explanation}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Sentiment Analysis */}
+              {record.transcript_lemur_analysis?.sentiment_analysis && (
+                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                    <TrendingUp size={16} className="mr-2" />
+                    Sentiment Analysis
+                  </h5>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Customer</span>
+                        <span className={`px-3 py-1 text-sm rounded-full ${getSentimentClass(record.transcript_lemur_analysis.sentiment_analysis.customer_sentiment || '')}`}>
+                          {record.transcript_lemur_analysis.sentiment_analysis.customer_sentiment || 'N/A'}
+                        </span>
+                      </div>
+                      {record.transcript_lemur_analysis.sentiment_analysis.customer_explanation && (
+                        <div className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-600 p-2 rounded">
+                          {record.transcript_lemur_analysis.sentiment_analysis.customer_explanation}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Agent</span>
+                        <span className={`px-3 py-1 text-sm rounded-full ${getSentimentClass(record.transcript_lemur_analysis.sentiment_analysis.agent_sentiment || '')}`}>
+                          {record.transcript_lemur_analysis.sentiment_analysis.agent_sentiment || 'N/A'}
+                        </span>
+                      </div>
+                      {record.transcript_lemur_analysis.sentiment_analysis.agent_explanation && (
+                        <div className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-600 p-2 rounded">
+                          {record.transcript_lemur_analysis.sentiment_analysis.agent_explanation}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Call Completion Status */}
+            {record.transcript_lemur_analysis?.call_completion && (
+              <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Call Completion</h5>
+                <div className="flex items-center mb-3">
+                  <span className={`px-3 py-1 text-sm rounded-full ${
+                    record.transcript_lemur_analysis.call_completion.status === 'COMPLETE' 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                  }`}>
+                    {record.transcript_lemur_analysis.call_completion.status || 'N/A'}
+                  </span>
+                </div>
+                {record.transcript_lemur_analysis.call_completion.explanation && (
+                  <div className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-600 p-3 rounded">
+                    {record.transcript_lemur_analysis.call_completion.explanation}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Full Transcript Text */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                <FileText size={16} className="mr-2" />
+                Full Transcript
+              </h5>
+              <div className="text-sm text-gray-600 dark:text-gray-400 max-h-60 overflow-y-auto bg-white dark:bg-gray-600 p-3 rounded">
+                {record.transcript_text || 'No transcript text available'}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+    <>
+      {/* Transcript Modal */}
+      {transcriptModalOpen && (
+        <TranscriptModal 
+          record={records.find(r => r.uniqueid === transcriptModalOpen)!}
+          onClose={() => setTranscriptModalOpen(null)}
+        />
+      )}
+      
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
         <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">
           Call Logs
@@ -514,9 +699,17 @@ export default function CallLogsTable({
                       {getDirectionIcon(record.direction)} <span className="ml-1">{record.direction}</span>
                     </span>
                     {hasTranscript(record) && (
-                      <span className="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 flex items-center">
-                        <MessageSquare size={10} className="mr-1" /> Transcript
-                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTranscriptModalOpen(record.uniqueid);
+                        }}
+                        className="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 flex items-center hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors group"
+                      >
+                        <MessageSquare size={10} className="mr-1" /> 
+                        Transcript
+                        <ExternalLink size={8} className="ml-1 opacity-60 group-hover:opacity-100 transition-opacity" />
+                      </button>
                     )}
                   </div>
                   
@@ -627,148 +820,7 @@ export default function CallLogsTable({
                       </div>
                     </div>
 
-                    {/* Transcript Section */}
-                    {hasTranscript(record) && (
-                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                        <h4 className="text-sm font-semibold text-gray-800 dark:text-white mb-3 flex items-center">
-                          <MessageSquare size={16} className="mr-2" />
-                          Call Transcript & Analysis
-                        </h4>
-                        
-                        {/* Transcript Summary */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                          <div className="bg-white dark:bg-gray-800 p-2 rounded border">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">Words</div>
-                            <div className="text-sm font-medium text-gray-800 dark:text-white">{record.transcript_words_count || 0}</div>
-                          </div>
-                          <div className="bg-white dark:bg-gray-800 p-2 rounded border">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">Speakers</div>
-                            <div className="text-sm font-medium text-gray-800 dark:text-white">{record.transcript_speakers_count || 0}</div>
-                          </div>
-                          <div className="bg-white dark:bg-gray-800 p-2 rounded border">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">Confidence</div>
-                            <div className="text-sm font-medium text-gray-800 dark:text-white">{Math.round((record.transcript_confidence || 0) * 100)}%</div>
-                          </div>
-                          <div className="bg-white dark:bg-gray-800 p-2 rounded border">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">Audio Duration</div>
-                            <div className="text-sm font-medium text-gray-800 dark:text-white">{formatDuration(record.transcript_audio_duration || 0)}</div>
-                          </div>
-                        </div>
 
-                        {/* Agent Performance (if available) */}
-                        {record.transcript_lemur_analysis?.agent_performance && (
-                          <div className="mb-4 p-3 bg-white dark:bg-gray-800 rounded border">
-                            <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                              <Star size={12} className="mr-1" />
-                              Agent Performance
-                            </h5>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                              <div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">Overall</div>
-                                <span className={`px-2 py-0.5 text-xs rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.overall_performance || '')}`}>
-                                  {record.transcript_lemur_analysis.agent_performance.overall_performance || 'N/A'}
-                                </span>
-                              </div>
-                              {record.transcript_lemur_analysis.agent_performance.heat_model_analysis?.empathy_score && (
-                                <div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">Empathy</div>
-                                  <span className={`px-2 py-0.5 text-xs rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.heat_model_analysis.empathy_score)}`}>
-                                    {record.transcript_lemur_analysis.agent_performance.heat_model_analysis.empathy_score}
-                                  </span>
-                                </div>
-                              )}
-                              {record.transcript_lemur_analysis.agent_performance.heat_model_analysis?.halt_score && (
-                                <div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">Listening</div>
-                                  <span className={`px-2 py-0.5 text-xs rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.heat_model_analysis.halt_score)}`}>
-                                    {record.transcript_lemur_analysis.agent_performance.heat_model_analysis.halt_score}
-                                  </span>
-                                </div>
-                              )}
-                              {record.transcript_lemur_analysis.agent_performance.heat_model_analysis?.take_action_score && (
-                                <div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">Action</div>
-                                  <span className={`px-2 py-0.5 text-xs rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.heat_model_analysis.take_action_score)}`}>
-                                    {record.transcript_lemur_analysis.agent_performance.heat_model_analysis.take_action_score}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            {record.transcript_lemur_analysis.agent_performance.performance_explanation && (
-                              <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                                {record.transcript_lemur_analysis.agent_performance.performance_explanation}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Sentiment Analysis Summary */}
-                        {record.transcript_lemur_analysis?.sentiment_analysis && (
-                          <div className="mb-4 p-3 bg-white dark:bg-gray-800 rounded border">
-                            <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                              <TrendingUp size={12} className="mr-1" />
-                              Sentiment Analysis
-                            </h5>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Customer</div>
-                                <span className={`px-2 py-0.5 text-xs rounded-full ${getSentimentClass(record.transcript_lemur_analysis.sentiment_analysis.customer_sentiment || '')}`}>
-                                  {record.transcript_lemur_analysis.sentiment_analysis.customer_sentiment || 'N/A'}
-                                </span>
-                                {record.transcript_lemur_analysis.sentiment_analysis.customer_explanation && (
-                                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                    {record.transcript_lemur_analysis.sentiment_analysis.customer_explanation}
-                                  </div>
-                                )}
-                              </div>
-                              <div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Agent</div>
-                                <span className={`px-2 py-0.5 text-xs rounded-full ${getSentimentClass(record.transcript_lemur_analysis.sentiment_analysis.agent_sentiment || '')}`}>
-                                  {record.transcript_lemur_analysis.sentiment_analysis.agent_sentiment || 'N/A'}
-                                </span>
-                                {record.transcript_lemur_analysis.sentiment_analysis.agent_explanation && (
-                                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                    {record.transcript_lemur_analysis.sentiment_analysis.agent_explanation}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Call Completion Status */}
-                        {record.transcript_lemur_analysis?.call_completion && (
-                          <div className="mb-4 p-3 bg-white dark:bg-gray-800 rounded border">
-                            <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Call Completion</h5>
-                            <div className="flex items-center">
-                              <span className={`px-2 py-0.5 text-xs rounded-full ${
-                                record.transcript_lemur_analysis.call_completion.status === 'COMPLETE' 
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                              }`}>
-                                {record.transcript_lemur_analysis.call_completion.status || 'N/A'}
-                              </span>
-                            </div>
-                            {record.transcript_lemur_analysis.call_completion.explanation && (
-                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                                {record.transcript_lemur_analysis.call_completion.explanation}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Full Transcript Text */}
-                        <div className="p-3 bg-white dark:bg-gray-800 rounded border">
-                          <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                            <FileText size={12} className="mr-1" />
-                            Full Transcript
-                          </h5>
-                          <div className="text-xs text-gray-600 dark:text-gray-400 max-h-32 overflow-y-auto">
-                            {record.transcript_text || 'No transcript text available'}
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
                     {record.disposition !== 'FAILED' && record.disposition !== 'NO ANSWER' && (
                       <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end">
@@ -1206,5 +1258,6 @@ export default function CallLogsTable({
         </div>
       )}
     </div>
+    </>
   );
 } 
