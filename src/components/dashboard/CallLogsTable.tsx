@@ -100,6 +100,28 @@ export default function CallLogsTable({
   pageSize = 100,
   isLoading = false
 }: CallLogsTableProps) {
+  // Add CSS for gradient animation
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes gradientShift {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [sortField, setSortField] = useState<string>('calldate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -704,11 +726,27 @@ export default function CallLogsTable({
                           e.stopPropagation();
                           setTranscriptModalOpen(record.uniqueid);
                         }}
-                        className="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 flex items-center hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors group"
+                        className="relative px-2 py-0.5 text-xs rounded-full bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 text-purple-800 dark:text-purple-200 flex items-center hover:from-purple-200 hover:to-pink-200 dark:hover:from-purple-800/70 dark:hover:to-pink-800/70 transition-all duration-300 group overflow-hidden"
+                        style={{
+                          background: 'linear-gradient(45deg, #f3e8ff, #fce7f3, #f3e8ff, #fce7f3)',
+                          backgroundSize: '400% 400%',
+                          animation: 'gradientShift 3s ease infinite',
+                          border: '1px solid transparent',
+                          backgroundClip: 'padding-box'
+                        }}
                       >
-                        <MessageSquare size={10} className="mr-1" /> 
-                        Transcript
-                        <ExternalLink size={8} className="ml-1 opacity-60 group-hover:opacity-100 transition-opacity" />
+                        <div 
+                          className="absolute inset-0 rounded-full opacity-75 blur-sm"
+                          style={{
+                            background: 'linear-gradient(45deg, #a855f7, #ec4899, #a855f7, #ec4899)',
+                            backgroundSize: '400% 400%',
+                            animation: 'gradientShift 3s ease infinite',
+                            zIndex: -1
+                          }}
+                        />
+                        <MessageSquare size={10} className="mr-1 relative z-10" /> 
+                        <span className="relative z-10">Transcript</span>
+                        <ExternalLink size={8} className="ml-1 opacity-60 group-hover:opacity-100 transition-opacity relative z-10" />
                       </button>
                     )}
                   </div>
@@ -945,10 +983,33 @@ export default function CallLogsTable({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         {hasTranscript(record) ? (
-                          <span className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
-                            <MessageSquare size={10} className="mr-1" />
-                            Available
-                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTranscriptModalOpen(record.uniqueid);
+                            }}
+                            className="relative inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 text-purple-800 dark:text-purple-200 hover:from-purple-200 hover:to-pink-200 dark:hover:from-purple-800/70 dark:hover:to-pink-800/70 transition-all duration-300 group overflow-hidden"
+                            style={{
+                              background: 'linear-gradient(45deg, #f3e8ff, #fce7f3, #f3e8ff, #fce7f3)',
+                              backgroundSize: '400% 400%',
+                              animation: 'gradientShift 3s ease infinite',
+                              border: '1px solid transparent',
+                              backgroundClip: 'padding-box'
+                            }}
+                          >
+                            <div 
+                              className="absolute inset-0 rounded-full opacity-75 blur-sm"
+                              style={{
+                                background: 'linear-gradient(45deg, #a855f7, #ec4899, #a855f7, #ec4899)',
+                                backgroundSize: '400% 400%',
+                                animation: 'gradientShift 3s ease infinite',
+                                zIndex: -1
+                              }}
+                            />
+                            <MessageSquare size={10} className="mr-1 relative z-10" />
+                            <span className="relative z-10">Available</span>
+                            <ExternalLink size={8} className="ml-1 opacity-60 group-hover:opacity-100 transition-opacity relative z-10" />
+                          </button>
                         ) : (
                           <span className="text-xs text-gray-400 dark:text-gray-500">-</span>
                         )}
