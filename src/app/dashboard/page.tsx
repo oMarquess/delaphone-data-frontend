@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import { toast } from 'sonner';
-import { BarChartIcon, PhoneIcon, ClockIcon, UserIcon, TrendingUpIcon, HeadphonesIcon, ChevronsLeftRight, MoreHorizontal, X, Info } from 'lucide-react';
+import { BarChartIcon, PhoneIcon, ClockIcon, UserIcon, TrendingUpIcon, HeadphonesIcon, ChevronsLeftRight, MoreHorizontal, X, Info, PackageIcon } from 'lucide-react';
 import { SyncOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import useSWR, { mutate } from 'swr';
@@ -53,7 +53,7 @@ import { publishDateChange } from '@/components/ai/AIDrawer';
 
 export default function DashboardPage() {
   // State management
-  const [activeTab, setActiveTab] = useState<'calls' | 'customer' | 'agent'>('calls');
+  const [activeTab, setActiveTab] = useState<'calls' | 'customer' | 'agent' | 'products'>('calls');
   const [explanationModal, setExplanationModal] = useState<string | null>(null);
   
   // Date range state (same pattern as call logs)
@@ -404,6 +404,13 @@ export default function DashboardPage() {
       icon: <HeadphonesIcon size={18} />,
       color: 'green',
       description: 'Agent performance & efficiency'
+    },
+    { 
+      id: 'products', 
+      label: 'Products & Services', 
+      icon: <PackageIcon size={18} />,
+      color: 'orange',
+      description: 'Product & service analytics'
     }
   ];
 
@@ -659,13 +666,10 @@ export default function DashboardPage() {
           </motion.div>
         </div>
 
-        {/* Creative Animated Tab Navigation */}
+        {/* Simple Tab Navigation */}
         <div className="relative">
-          {/* Background blur effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 via-purple-50/50 to-green-50/50 dark:from-blue-900/10 dark:via-purple-900/10 dark:to-green-900/10 rounded-lg blur-xl"></div>
-          
           {/* Tab container */}
-          <div className="relative flex flex-col sm:flex-row gap-2 p-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-200/50 dark:border-gray-700/50">
+          <div className="flex flex-col sm:flex-row gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             {tabs.map((tab, index) => (
               <motion.div
                 key={tab.id}
@@ -676,149 +680,46 @@ export default function DashboardPage() {
               >
                 <motion.button
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`group relative w-full p-3 rounded-lg border-2 transition-all duration-300 overflow-hidden ${
+                  className={`group relative w-full px-4 py-3 rounded-md transition-all duration-200 ${
                     activeTab === tab.id
-                      ? 'border-transparent shadow-lg transform scale-105'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md hover:scale-102'
+                      ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50'
                   }`}
-                  whileHover={{ y: -2 }}
+                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
-                  {/* Background gradient for active tab */}
-                  <AnimatePresence>
-                    {activeTab === tab.id && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.3 }}
-                        className={`absolute inset-0 bg-gradient-to-br ${
-                          tab.color === 'blue' 
-                            ? 'from-blue-400 via-blue-500 to-blue-600' 
-                            : tab.color === 'purple'
-                            ? 'from-purple-400 via-purple-500 to-pink-500'
-                            : 'from-green-400 via-emerald-500 to-teal-600'
-                        } rounded-lg`}
-                      />
-                    )}
-                  </AnimatePresence>
-                  
-                  {/* Hover gradient overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-lg ${
-                    tab.color === 'blue' 
-                      ? 'from-blue-400 to-blue-600' 
-                      : tab.color === 'purple'
-                      ? 'from-purple-400 to-pink-500'
-                      : 'from-green-400 to-teal-600'
-                  }`} />
+
                   
                   {/* Content */}
-                  <div className="relative z-10 flex flex-col items-center space-y-1">
-                    {/* Icon with animated background */}
-                    <motion.div
-                      className={`p-1.5 rounded-full transition-all duration-300 ${
-                        activeTab === tab.id
-                          ? 'bg-white/20 backdrop-blur-sm'
-                          : `bg-${tab.color}-50 dark:bg-${tab.color}-900/20 group-hover:bg-${tab.color}-100 dark:group-hover:bg-${tab.color}-900/30`
-                      }`}
-                      animate={{ 
-                        rotate: activeTab === tab.id ? [0, 5, -5, 0] : 0,
-                        scale: activeTab === tab.id ? 1.1 : 1
-                      }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <div className={`transition-colors duration-300 ${
-                        activeTab === tab.id
-                          ? 'text-white'
-                          : `text-${tab.color}-600 dark:text-${tab.color}-400 group-hover:text-${tab.color}-700 dark:group-hover:text-${tab.color}-300`
-                      }`}>
-                        {React.cloneElement(tab.icon, { size: 18 })}
-                      </div>
-                    </motion.div>
-                    
-                    {/* Label */}
-                    <div className="text-center">
-                      <motion.h3
-                        className={`text-xs font-semibold transition-colors duration-300 ${
-                          activeTab === tab.id
-                            ? 'text-white'
-                            : 'text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white'
-                        }`}
-                        animate={{ 
-                          scale: activeTab === tab.id ? 1.05 : 1
-                        }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        {tab.label}
-                      </motion.h3>
-                      
-                      {/* Description */}
-                      <motion.p
-                        className={`text-xs transition-colors duration-300 ${
-                          activeTab === tab.id
-                            ? 'text-white/80'
-                            : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'
-                        }`}
-                        initial={{ opacity: 0.7 }}
-                        animate={{ opacity: activeTab === tab.id ? 1 : 0.7 }}
-                      >
-                        {tab.description}
-                      </motion.p>
-                      
-                      {/* Active indicator line */}
-                      <AnimatePresence>
-                        {activeTab === tab.id && (
-                          <motion.div
-                            initial={{ width: 0, opacity: 0 }}
-                            animate={{ width: '100%', opacity: 1 }}
-                            exit={{ width: 0, opacity: 0 }}
-                            transition={{ duration: 0.4, delay: 0.1 }}
-                            className="h-0.5 bg-white/50 rounded-full mt-1"
-                          />
-                        )}
-                      </AnimatePresence>
+                  <div className="flex items-center space-x-3">
+                    {/* Icon */}
+                    <div className={`transition-colors duration-200 ${
+                      activeTab === tab.id
+                        ? 'text-gray-900 dark:text-white'
+                        : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300'
+                    }`}>
+                      {React.cloneElement(tab.icon, { size: 18 })}
                     </div>
                     
-                    {/* Floating particles effect for active tab */}
-                    <AnimatePresence>
-                      {activeTab === tab.id && (
-                        <>
-                          {[...Array(3)].map((_, i) => (
-                            <motion.div
-                              key={i}
-                              initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
-                              animate={{ 
-                                opacity: [0, 1, 0], 
-                                scale: [0, 1, 0], 
-                                x: [0, (i - 1) * 15, (i - 1) * 30],
-                                y: [0, -10, -20]
-                              }}
-                              transition={{ 
-                                duration: 2, 
-                                repeat: Infinity, 
-                                delay: i * 0.5,
-                                ease: "easeOut"
-                              }}
-                              className="absolute w-0.5 h-0.5 bg-white/60 rounded-full"
-                              style={{
-                                left: '50%',
-                                top: '10%'
-                              }}
-                            />
-                          ))}
-                        </>
-                      )}
-                    </AnimatePresence>
+                    {/* Label and Description */}
+                    <div className="flex flex-col">
+                      <h3 className={`text-sm font-medium transition-colors duration-200 ${
+                        activeTab === tab.id
+                          ? 'text-gray-900 dark:text-white'
+                          : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white'
+                      }`}>
+                        {tab.label}
+                      </h3>
+                      <p className={`text-xs transition-colors duration-200 ${
+                        activeTab === tab.id
+                          ? 'text-gray-500 dark:text-gray-400'
+                          : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400'
+                      }`}>
+                        {tab.description}
+                      </p>
+                    </div>
                   </div>
-                  
-                  {/* Ripple effect on click */}
-                  <motion.div
-                    className="absolute inset-0 bg-white/30 rounded-lg"
-                    initial={{ scale: 0, opacity: 0 }}
-                    whileTap={{ scale: 1, opacity: [0, 0.3, 0] }}
-                    transition={{ duration: 0.3 }}
-                  />
                 </motion.button>
               </motion.div>
             ))}
@@ -875,6 +776,20 @@ export default function DashboardPage() {
             <AgentAnalyticsTab 
               agentAnalyticsData={agentAnalyticsData}
               isLoading={isAgentLoading}
+            />
+          </motion.div>
+        )}
+
+        {activeTab === 'products' && (
+          <motion.div
+            key="products"
+            initial={{ opacity: 0, x: -20, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 20, scale: 0.95 }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+          >
+            <ProductsAnalyticsTab 
+              isLoading={isLoading}
             />
           </motion.div>
         )}
@@ -1350,6 +1265,150 @@ function AgentAnalyticsTab({ agentAnalyticsData, isLoading }: any) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// Products & Services Analytics Tab Component
+function ProductsAnalyticsTab({ isLoading }: any) {
+  return (
+    <div className="space-y-8">
+      {/* Welcome Message */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="text-center py-16"
+      >
+        <div className="relative">
+          {/* Background decoration */}
+          <div className="absolute inset-0 -z-10">
+            <motion.div
+              className="w-32 h-32 bg-gradient-to-r from-orange-200 to-red-200 dark:from-orange-900/30 dark:to-red-900/30 rounded-full blur-3xl mx-auto"
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.3, 0.5, 0.3],
+              }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </div>
+          
+          {/* Icon */}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-orange-500 to-red-500 rounded-full shadow-lg mb-6"
+          >
+            <PackageIcon size={36} className="text-white" />
+          </motion.div>
+          
+          {/* Title */}
+          <motion.h2
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="text-3xl font-bold text-gray-800 dark:text-white mb-4"
+          >
+            Products & Services Analytics
+          </motion.h2>
+          
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+            className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto"
+          >
+            This section is ready for your custom analytics components. Add charts, metrics, and insights specific to your products and services.
+          </motion.p>
+          
+          {/* Placeholder Cards */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 max-w-4xl mx-auto"
+          >
+            {/* Product Performance Card */}
+            <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 p-6 rounded-xl shadow-sm border border-orange-100 dark:border-orange-800/50">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-sm font-medium text-orange-700 dark:text-orange-400">Product Performance</h3>
+                <motion.div
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                >
+                  <TrendingUpIcon size={18} className="text-orange-500" />
+                </motion.div>
+              </div>
+              <div className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+                Coming Soon
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Track product usage and performance metrics
+              </div>
+            </div>
+            
+            {/* Service Quality Card */}
+            <div className="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 p-6 rounded-xl shadow-sm border border-red-100 dark:border-red-800/50">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-sm font-medium text-red-700 dark:text-red-400">Service Quality</h3>
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <BarChartIcon size={18} className="text-red-500" />
+                </motion.div>
+              </div>
+              <div className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+                Ready
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Monitor service quality and satisfaction
+              </div>
+            </div>
+            
+            {/* Revenue Insights Card */}
+            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 p-6 rounded-xl shadow-sm border border-yellow-100 dark:border-yellow-800/50">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Revenue Insights</h3>
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <UserIcon size={18} className="text-yellow-500" />
+                </motion.div>
+              </div>
+              <div className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+                Awaiting
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Analyze revenue patterns and trends
+              </div>
+            </div>
+          </motion.div>
+          
+          {/* Instructions */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2, duration: 0.5 }}
+            className="mt-12 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 max-w-3xl mx-auto"
+          >
+            <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-3 flex items-center">
+              <Info size={20} className="mr-2 text-orange-500" />
+              Ready for Customization
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
+              This tab is prepared for your specific products and services analytics. You can add components for tracking product performance, service quality metrics, revenue analysis, customer satisfaction scores, and any other business-specific KPIs that matter to your organization.
+            </p>
+          </motion.div>
+        </div>
+      </motion.div>
     </div>
   );
 } 
