@@ -1001,12 +1001,10 @@ function CallsAnalyticsTab({
 
 // Customer Analytics Tab Component
 function CustomerAnalyticsTab({ customerAnalyticsData, customerVoiceData, isLoading }: any) {
-  const [analysisTab, setAnalysisTab] = useState<string>('comparison');
-  
   return (
     <div className="space-y-8">
       {/* Customer Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
         <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-xl shadow-sm border border-blue-100 dark:border-blue-800/50">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-sm font-medium text-blue-700 dark:text-blue-400">Total Callers</h3>
@@ -1062,45 +1060,151 @@ function CustomerAnalyticsTab({ customerAnalyticsData, customerVoiceData, isLoad
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400">Average sentiment</div>
         </div>
+
+        {/* Customer Metrics Cards */}
+        {(() => {
+          if (isLoading) {
+            return [...Array(5)].map((_, i) => (
+              <div key={`loading-${i}`} className="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+                  <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                </div>
+              </div>
+            ));
+          }
+
+          if (!customerAnalyticsData?.top_callers || customerAnalyticsData.top_callers.length === 0) {
+            return null;
+          }
+
+          const callers = customerAnalyticsData.top_callers;
+          const totalCalls = callers.reduce((sum: number, caller: any) => sum + caller.call_count, 0);
+          const averageCalls = totalCalls / callers.length;
+
+          const topPerformers = {
+            mostActive: callers.reduce((prev: any, current: any) => 
+              prev.call_count > current.call_count ? prev : current),
+            longestCalls: callers.reduce((prev: any, current: any) => 
+              prev.total_duration > current.total_duration ? prev : current),
+            highestAvgDuration: callers.reduce((prev: any, current: any) => 
+              prev.avg_duration > current.avg_duration ? prev : current),
+            bestRecordingRate: callers.reduce((prev: any, current: any) => 
+              (prev.recording_rate || 0) > (current.recording_rate || 0) ? prev : current),
+            bestAnswerRate: callers.reduce((prev: any, current: any) => 
+              (prev.answer_rate || 0) > (current.answer_rate || 0) ? prev : current),
+          };
+
+          const formatDuration = (seconds: number) => {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+          };
+
+          return [
+            // Most Active Caller
+            <div key="most-active" className="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 p-6 rounded-xl shadow-sm border border-cyan-100 dark:border-cyan-800/50">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-sm font-medium text-cyan-700 dark:text-cyan-400">Most Active</h3>
+                <PhoneIcon size={18} className="text-cyan-500" />
+              </div>
+              <div className="text-3xl font-bold text-gray-800 dark:text-white mb-1">
+                {topPerformers.mostActive.call_count}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {topPerformers.mostActive.number}
+              </div>
+            </div>,
+
+            // Longest Total Duration
+            <div key="longest-duration" className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 p-6 rounded-xl shadow-sm border border-indigo-100 dark:border-indigo-800/50">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-sm font-medium text-indigo-700 dark:text-indigo-400">Longest Total</h3>
+                <ClockIcon size={18} className="text-indigo-500" />
+              </div>
+              <div className="text-3xl font-bold text-gray-800 dark:text-white mb-1">
+                {formatDuration(topPerformers.longestCalls.total_duration)}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {topPerformers.longestCalls.number}
+              </div>
+            </div>,
+
+            // Highest Average Duration
+            <div key="highest-avg" className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 p-6 rounded-xl shadow-sm border border-emerald-100 dark:border-emerald-800/50">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Highest Avg</h3>
+                <TrendingUpIcon size={18} className="text-emerald-500" />
+              </div>
+              <div className="text-3xl font-bold text-gray-800 dark:text-white mb-1">
+                {formatDuration(topPerformers.highestAvgDuration.avg_duration)}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {topPerformers.highestAvgDuration.number}
+              </div>
+            </div>,
+
+            // Best Recording Rate
+            <div key="best-recording" className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-6 rounded-xl shadow-sm border border-yellow-100 dark:border-yellow-800/50">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Best Recording</h3>
+                <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 715 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="text-3xl font-bold text-gray-800 dark:text-white mb-1">
+                {((topPerformers.bestRecordingRate.recording_rate || 0)).toFixed(1)}%
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {topPerformers.bestRecordingRate.number}
+              </div>
+            </div>,
+
+            // Best Answer Rate
+            <div key="best-answer" className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 p-6 rounded-xl shadow-sm border border-rose-100 dark:border-rose-800/50">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-sm font-medium text-rose-700 dark:text-rose-400">Best Answer</h3>
+                <svg className="w-5 h-5 text-rose-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="text-3xl font-bold text-gray-800 dark:text-white mb-1">
+                {((topPerformers.bestAnswerRate.answer_rate || 0)).toFixed(1)}%
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {topPerformers.bestAnswerRate.number}
+              </div>
+            </div>
+          ];
+        })()}
       </div>
 
-      {/* Customer Analysis Charts */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="flex border-b border-gray-200 dark:border-gray-700">
-          <button
-            onClick={() => setAnalysisTab('comparison')}
-            className={`px-4 py-3 text-sm font-medium transition-all ${
-              analysisTab === 'comparison'
-                ? 'bg-purple-50 dark:bg-purple-900/20 border-b-2 border-purple-500 dark:border-purple-400 text-purple-600 dark:text-purple-400'
-                : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/10'
-            }`}
-          >
-            Top Customer Comparison
-          </button>
-          <button
-            onClick={() => setAnalysisTab('radar')}
-            className={`px-4 py-3 text-sm font-medium transition-all ${
-              analysisTab === 'radar'
-                ? 'bg-purple-50 dark:bg-purple-900/20 border-b-2 border-purple-500 dark:border-purple-400 text-purple-600 dark:text-purple-400'
-                : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/10'
-            }`}
-          >
-            Performance Radar
-          </button>
-          <button
-            onClick={() => setAnalysisTab('metrics')}
-            className={`px-4 py-3 text-sm font-medium transition-all ${
-              analysisTab === 'metrics'
-                ? 'bg-purple-50 dark:bg-purple-900/20 border-b-2 border-purple-500 dark:border-purple-400 text-purple-600 dark:text-purple-400'
-                : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/10'
-            }`}
-          >
-            Customer Metrics
-          </button>
-        </div>
+      {/* Creative Layout for Charts */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         
-        <div className="p-6">
-          {analysisTab === 'comparison' && (
+        {/* Top Customer Comparison - Large Card */}
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+          className="xl:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow duration-300"
+        >
+          <div className="p-6 pb-0">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <BarChartIcon size={20} className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Top Customer Comparison</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Compare your most active customers</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 pb-6">
             <div className="h-[400px]">
               <TopCallerComparisonChart 
                 callers={customerAnalyticsData?.top_callers} 
@@ -1108,9 +1212,28 @@ function CustomerAnalyticsTab({ customerAnalyticsData, customerVoiceData, isLoad
                 sortMetric="call_count"
               />
             </div>
-          )}
-          
-          {analysisTab === 'radar' && (
+          </div>
+        </motion.div>
+
+        {/* Performance Radar - Tall Card */}
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow duration-300"
+        >
+          <div className="p-6 pb-0">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                <TrendingUpIcon size={20} className="text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Performance Radar</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Multi-dimensional analysis</p>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 pb-6">
             <div className="h-[400px]">
               <CallPerformanceRadar 
                 callers={customerAnalyticsData?.top_callers} 
@@ -1118,18 +1241,14 @@ function CustomerAnalyticsTab({ customerAnalyticsData, customerVoiceData, isLoad
                 maxCallers={5}
               />
             </div>
-          )}
-          
-          {analysisTab === 'metrics' && (
-            <div>
-              <CallerMetricsCards 
-                callers={customerAnalyticsData?.top_callers} 
-                isLoading={isLoading} 
-              />
-            </div>
-          )}
-        </div>
+          </div>
+        </motion.div>
       </div>
+
+
+
+      {/* Optional: Add spacing for visual balance */}
+      <div className="h-4"></div>
     </div>
   );
 }
