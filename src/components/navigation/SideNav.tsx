@@ -92,7 +92,7 @@ const SideNav = () => {
     if (currentNav) {
       setActiveTab(currentNav.name);
     }
-  }, [pathname, setActiveTab]);
+  }, [pathname, setActiveTab, navItems]);
 
   const handleLogout = () => {
     logout();

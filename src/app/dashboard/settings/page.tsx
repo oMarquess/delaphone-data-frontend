@@ -175,7 +175,7 @@ export default function SettingsPage() {
               </h4>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Choose which sections should auto-refresh. Disabling sections you don't actively monitor can improve performance.
+              Choose which sections should auto-refresh. Disabling sections you don&apos;t actively monitor can improve performance.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -305,7 +305,7 @@ export default function SettingsPage() {
             </h4>
             <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
               <li>• Lower refresh rates improve battery life on mobile devices</li>
-              <li>• Disable auto-refresh for sections you don't actively monitor</li>
+              <li>• Disable auto-refresh for sections you don&apos;t actively monitor</li>
               <li>• Visual indicators help track data freshness without interrupting workflow</li>
               <li>• Manual refresh is always available regardless of auto-refresh settings</li>
             </ul>

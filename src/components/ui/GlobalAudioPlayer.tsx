@@ -319,7 +319,7 @@ function FloatingAudioPlayer() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragOffset]);
+  }, [isDragging, dragOffset, handleMouseMove]);
 
   return (
     <div

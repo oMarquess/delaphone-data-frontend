@@ -3,6 +3,7 @@ import OldmutualLogo from "@/assets/OldMutual-removebg-preview.png";
 import UnitedPensionsLogo from "@/assets/united-pensions-logo.png";
 import StarBitesLogo from "@/assets/starbites.png";
 import {motion} from "framer-motion";
+import Image from "next/image";
 
 export const LogoTicker = () => {
   return <section className="py-20 md:py-24">
@@ -25,7 +26,7 @@ export const LogoTicker = () => {
           }}
           className="flex flex-none gap-14 pr-14 -translate-x-1/2">
             {[OldmutualLogo, StarBitesLogo, OldmutualLogo, StarBitesLogo, OldmutualLogo, StarBitesLogo, OldmutualLogo, StarBitesLogo, OldmutualLogo, StarBitesLogo].map((logo, index) => (
-              <img key={`${logo.src}-${index}`} src={logo.src} alt={`Partner logo ${index + 1}`} className="h-6 w-auto" />
+              <Image key={`${logo.src}-${index}`} src={logo} alt={`Partner logo ${index + 1}`} className="h-6 w-auto" />
             ))}
           </motion.div>
         </div>

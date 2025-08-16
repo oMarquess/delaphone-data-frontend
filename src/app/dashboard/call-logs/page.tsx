@@ -189,7 +189,7 @@ export default function CallLogsPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters, dateRange.startDate, dateRange.endDate]);
+  }, [filters, dateRange]);
   
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

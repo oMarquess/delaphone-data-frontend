@@ -28,7 +28,7 @@ export interface SettingsContextType {
 }
 
 const defaultSettings: AutoRefreshSettings = {
-  enabled: true,
+  enabled: false,
   interval: 30000, // 30 seconds
   enabledSections: {
     overview: true,

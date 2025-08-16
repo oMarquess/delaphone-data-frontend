@@ -995,7 +995,7 @@ export default function AIInsightsPage() {
                             </span>
                           </div>
                           <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                            "{excerpt.text}"
+                            &ldquo;{excerpt.text}&rdquo;
                           </p>
                           <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                             {new Date(excerpt.timestamp).toLocaleString()} • {excerpt.wordCount} words
