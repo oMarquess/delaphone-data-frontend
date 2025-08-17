@@ -49,8 +49,9 @@ import { useAnalyticsData } from '@/services/analytics';
 import { useCustomerVoiceSentimentMetrics, useBusinessIntelligenceAnalysis } from '@/services/aiInsights';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
-import { ROUTES } from '@/config/constants';
+import { ROUTES, API_BASE_URL } from '@/config/constants';
 import { publishDateChange } from '@/components/ai/AIDrawer';
+import tokenManager from '@/services/tokenManager';
 
 type ActiveTab = 'calls' | 'customers' | 'agents' | 'bi';
 
@@ -102,84 +103,217 @@ export default function DashboardPage() {
     }
   };
 
-  // Use SWR for dashboard metrics
-  const { 
-    data: dashboardData, 
-    error: dashboardError, 
-    isLoading: isDashboardLoading 
-  } = useSWR(
-    swrKey(),
-    metricsFetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 1000,
-      shouldRetryOnError: false,
-      revalidateIfStale: true,
-      refreshInterval: 0,
-      onError: (error) => {
-        toast.error('Failed to load dashboard data', {
-          description: error.message || 'An unknown error occurred.'
-        });
-      }
+  // Sequential loading state management
+  const [loadingPhase, setLoadingPhase] = useState<'critical' | 'analytics' | 'ai' | 'complete'>('critical');
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [callRecordsData, setCallRecordsData] = useState<any>(null);
+  const [customerAnalyticsData, setCustomerAnalyticsData] = useState<any>(null);
+  const [agentAnalyticsData, setAgentAnalyticsData] = useState<any>(null);
+  const [customerVoiceData, setCustomerVoiceData] = useState<any>(null);
+  const [businessIntelligenceData, setBusinessIntelligenceData] = useState<any>(null);
+
+  // Loading states for each phase
+  const [isDashboardLoading, setIsDashboardLoading] = useState(false);
+  const [isCallRecordsLoading, setIsCallRecordsLoading] = useState(false);
+  const [isCustomerLoading, setIsCustomerLoading] = useState(false);
+  const [isAgentLoading, setIsAgentLoading] = useState(false);
+  const [isVoiceLoading, setIsVoiceLoading] = useState(false);
+  const [isBILoading, setIsBILoading] = useState(false);
+
+  // Sequential API loading implementation
+  const loadSequentialData = useCallback(async () => {
+    const currentKey = swrKey();
+    if (!currentKey) return;
+
+    try {
+      // Phase 1: Critical Dashboard Data (highest priority)
+      console.log('🚀 Starting Phase 1: Critical Dashboard Data');
+      setLoadingPhase('critical');
+      
+      setIsDashboardLoading(true);
+      const dashboardResult = await dashboardService.getDashboardMetrics(currentKey[0], currentKey[1]);
+      setDashboardData(dashboardResult);
+      setIsDashboardLoading(false);
+      console.log('✅ Phase 1 Complete: Dashboard Metrics loaded');
+
+      setIsCallRecordsLoading(true);
+      const callRecordsResult = await dashboardService.getCallRecords(currentKey[0], currentKey[1]);
+      setCallRecordsData(callRecordsResult);
+      setIsCallRecordsLoading(false);
+      console.log('✅ Phase 1 Complete: Call Records loaded');
+
+      // Phase 2: Analytics Data (medium priority)
+      console.log('🚀 Starting Phase 2: Analytics Data');
+      setLoadingPhase('analytics');
+      
+      // Load analytics in parallel since they're separate endpoints
+      const [customerResult, agentResult] = await Promise.all([
+        (async () => {
+          setIsCustomerLoading(true);
+          try {
+            const filters = {
+              startDate: dateRange.startDate,
+              endDate: dateRange.endDate,
+              minCalls: 1,
+              disposition: 'all' as const,
+              direction: 'all' as const,
+              sortBy: 'count' as const,
+              limit: 100
+            };
+            const queryString = buildAnalyticsQueryString(filters);
+            const url = `/call-records/caller-analysis?${queryString}`;
+            const response = await fetch(`${API_BASE_URL}${url}`, {
+              headers: {
+                'Authorization': `Bearer ${await tokenManager.getValidToken()}`,
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+              }
+            });
+            const data = await response.json();
+            return data;
+          } finally {
+            setIsCustomerLoading(false);
+          }
+        })(),
+        (async () => {
+          setIsAgentLoading(true);
+          try {
+            const filters = {
+              startDate: dateRange.startDate,
+              endDate: dateRange.endDate,
+              minCalls: 1,
+              disposition: 'all' as const,
+              direction: 'all' as const,
+              sortBy: 'count' as const,
+              limit: 100,
+              agent: 'all'
+            };
+            const queryString = buildAnalyticsQueryString(filters);
+            const url = `/call-records/agent-performance?${queryString}`;
+            const response = await fetch(`${API_BASE_URL}${url}`, {
+              headers: {
+                'Authorization': `Bearer ${await tokenManager.getValidToken()}`,
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+              }
+            });
+            const data = await response.json();
+            return data;
+          } finally {
+            setIsAgentLoading(false);
+          }
+        })()
+      ]);
+      
+      setCustomerAnalyticsData(customerResult);
+      setAgentAnalyticsData(agentResult);
+      console.log('✅ Phase 2 Complete: Analytics Data loaded');
+
+      // Phase 3: AI Insights (lowest priority, heaviest computation)
+      console.log('🚀 Starting Phase 3: AI Insights');
+      setLoadingPhase('ai');
+      
+      // Load AI insights in parallel since they're separate heavy endpoints
+      const [voiceResult, biResult] = await Promise.all([
+        (async () => {
+          setIsVoiceLoading(true);
+          try {
+            const queryString = buildAIInsightsQueryString(dateRange.startDate, dateRange.endDate, true);
+            const url = `/ai-insights/logs?${queryString}`;
+            const response = await fetch(`${API_BASE_URL}${url}`, {
+              headers: {
+                'Authorization': `Bearer ${await tokenManager.getValidToken()}`,
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+              }
+            });
+            const data = await response.json();
+            return data;
+          } finally {
+            setIsVoiceLoading(false);
+          }
+        })(),
+        (async () => {
+          setIsBILoading(true);
+          try {
+            const queryString = buildBIQueryString(dateRange.startDate, dateRange.endDate, true, 'gemini-2.5-flash-preview-05-20');
+            const url = `/call-records/business-intelligence-analysis?${queryString}`;
+            const response = await fetch(`${API_BASE_URL}${url}`, {
+              headers: {
+                'Authorization': `Bearer ${await tokenManager.getValidToken()}`,
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+              }
+            });
+            const data = await response.json();
+            return data;
+          } finally {
+            setIsBILoading(false);
+          }
+        })()
+      ]);
+      
+      setCustomerVoiceData(voiceResult);
+      setBusinessIntelligenceData(biResult);
+      console.log('✅ Phase 3 Complete: AI Insights loaded');
+      
+      setLoadingPhase('complete');
+      console.log('🎉 All dashboard data loaded successfully!');
+      
+    } catch (error) {
+      console.error('❌ Sequential loading failed:', error);
+      toast.error('Failed to load dashboard data', {
+        description: error instanceof Error ? error.message : 'An unknown error occurred.'
+      });
     }
-  );
+  }, [dateRange.startDate, dateRange.endDate, swrKey]);
 
-  // Use SWR for call records
-  const { 
-    data: callRecordsData, 
-    error: callRecordsError, 
-    isLoading: isCallRecordsLoading 
-  } = useSWR(
-    swrKey(),
-    callRecordsFetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 1000,
-      shouldRetryOnError: false,
-      revalidateIfStale: true,
-      refreshInterval: 0,
-      onError: (error) => {
-        toast.error('Failed to load call records', {
-          description: error.message || 'An unknown error occurred.'
-        });
-      }
+  // Helper functions for building query strings
+  const buildAnalyticsQueryString = (filters: any): string => {
+    const queryParams = new URLSearchParams();
+    queryParams.append('start_date', filters.startDate);
+    queryParams.append('end_date', filters.endDate);
+    queryParams.append('min_calls', filters.minCalls.toString());
+    queryParams.append('disposition', filters.disposition);
+    queryParams.append('direction', filters.direction);
+    queryParams.append('sort_by', filters.sortBy);
+    queryParams.append('limit', filters.limit.toString());
+    if (filters.agent) queryParams.append('agent', filters.agent);
+    return queryParams.toString();
+  };
+
+  const buildAIInsightsQueryString = (startDate: string, endDate: string, uploadToGcs: boolean): string => {
+    const queryParams = new URLSearchParams();
+    queryParams.append('start_date', startDate);
+    queryParams.append('end_date', endDate);
+    queryParams.append('upload_to_gcs', uploadToGcs.toString());
+    queryParams.append('include_details', 'true');
+    return queryParams.toString();
+  };
+
+  const buildBIQueryString = (startDate: string, endDate: string, hasRecording: boolean, model: string): string => {
+    const queryParams = new URLSearchParams();
+    queryParams.append('start_date', startDate);
+    queryParams.append('end_date', endDate);
+    queryParams.append('has_recording', hasRecording.toString());
+    queryParams.append('model', model);
+    return queryParams.toString();
+  };
+
+  // Load data when component mounts or date range changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadSequentialData();
     }
-  );
-
-  // Analytics data for Customer Analytics tab
-  const { data: customerAnalyticsData, isLoading: isCustomerLoading, mutate: mutateCustomer } = useAnalyticsData({
-    startDate: dateRange.startDate,
-    endDate: dateRange.endDate,
-    minCalls: 1,
-    disposition: 'all',
-    direction: 'all',
-    sortBy: 'count',
-    limit: 100
-  });
-
-  const { data: agentAnalyticsData, isLoading: isAgentLoading, mutate: mutateAgent } = useAnalyticsData({
-    startDate: dateRange.startDate,
-    endDate: dateRange.endDate,
-    minCalls: 1,
-    disposition: 'all',
-    direction: 'all',
-    sortBy: 'count',
-    limit: 100,
-    agent: 'all'
-  } as AgentAnalyticsFilters, 'agent');
-
-  const { data: customerVoiceData, isLoading: isVoiceLoading, mutate: mutateVoice } = useCustomerVoiceSentimentMetrics(
-    dateRange.startDate,
-    dateRange.endDate
-  );
-
-  // Business Intelligence data
-  const { data: businessIntelligenceData, isLoading: isBILoading, mutate: mutateBIData } = useBusinessIntelligenceAnalysis(
-    dateRange.startDate,
-    dateRange.endDate,
-    true, // has_recording = true
-    'gemini-2.5-flash-preview-05-20' // model
-  );
+  }, [dateRange.startDate, dateRange.endDate, isAuthenticated, loadSequentialData]);
 
   // Auto-refresh functionality for Overview section
   useEffect(() => {
@@ -196,45 +330,10 @@ export default function DashboardPage() {
       try {
         setRefreshState(true);
         console.log('🔄 Auto-refreshing Analytics Dashboard data at:', new Date().toISOString());
+        console.log('🔄 Using sequential loading strategy for auto-refresh');
         
-        // Use SWR's mutate to refresh data with cache-busting
-        const currentKey = swrKey();
-        if (currentKey) {
-          const cacheBustingMetricsFetcher = async (key: [string, string]) => {
-            const data = await dashboardService.getDashboardMetrics(key[0], key[1]);
-            return data;
-          };
-          
-          const cacheBustingCallRecordsFetcher = async (key: [string, string]) => {
-            const data = await dashboardService.getCallRecords(key[0], key[1]);
-            return data;
-          };
-          
-          await Promise.all([
-            mutate(currentKey, () => cacheBustingMetricsFetcher(currentKey as [string, string]), { 
-              revalidate: true,
-              populateCache: true,
-              optimisticData: undefined
-            }),
-            mutate(currentKey, () => cacheBustingCallRecordsFetcher(currentKey as [string, string]), { 
-              revalidate: true,
-              populateCache: true,
-              optimisticData: undefined
-            }),
-            // Refresh analytics data for other tabs
-            mutateCustomer(undefined, { 
-              revalidate: true,
-              populateCache: true,
-              optimisticData: undefined
-            }),
-            mutateAgent(undefined, { 
-              revalidate: true,
-              populateCache: true,
-              optimisticData: undefined
-            }),
-            mutateVoice()
-          ]);
-        }
+        // Use sequential loading for auto-refresh
+        await loadSequentialData();
         
         setRefreshState(false, new Date());
         console.log('✅ Auto-refresh completed successfully');
@@ -263,13 +362,10 @@ export default function DashboardPage() {
     autoRefresh.enabled, 
     autoRefresh.enabledSections.overview, 
     autoRefresh.interval,
-    swrKey,
+    loadSequentialData,
     setRefreshState,
     setRefreshError,
-    consecutiveFailures,
-    mutateCustomer,
-    mutateAgent,
-    mutateVoice
+    consecutiveFailures
   ]);
 
   // Combine loading states
@@ -324,46 +420,12 @@ export default function DashboardPage() {
     publishDateChange(dateStrings[0], dateStrings[1]);
   };
 
-  // Manual refresh function
+  // Manual refresh function using sequential loading
   const handleManualRefresh = async () => {
     try {
       setRefreshState(true);
-      const currentKey = swrKey();
-      if (currentKey) {
-        const cacheBustingMetricsFetcher = async (key: [string, string]) => {
-          const data = await dashboardService.getDashboardMetrics(key[0], key[1]);
-          return data;
-        };
-        
-        const cacheBustingCallRecordsFetcher = async (key: [string, string]) => {
-          const data = await dashboardService.getCallRecords(key[0], key[1]);
-          return data;
-        };
-        
-        await Promise.all([
-          mutate(currentKey, () => cacheBustingMetricsFetcher(currentKey as [string, string]), { 
-            revalidate: true,
-            populateCache: true,
-            optimisticData: undefined
-          }),
-          mutate(currentKey, () => cacheBustingCallRecordsFetcher(currentKey as [string, string]), { 
-            revalidate: true,
-            populateCache: true,
-            optimisticData: undefined
-          }),
-          mutateCustomer(undefined, { 
-            revalidate: true,
-            populateCache: true,
-            optimisticData: undefined
-          }),
-          mutateAgent(undefined, { 
-            revalidate: true,
-            populateCache: true,
-            optimisticData: undefined
-          }),
-          mutateVoice()
-        ]);
-      }
+      console.log('🔄 Manual refresh initiated - using sequential loading');
+      await loadSequentialData();
       setRefreshState(false, new Date());
       toast.success('Analytics dashboard refreshed successfully');
       setRefreshError(null);
@@ -398,7 +460,7 @@ export default function DashboardPage() {
      { id: 'calls' as const, label: 'Calls Analytics', icon: PhoneIcon, description: 'Call metrics & performance' },
      { id: 'customers' as const, label: 'Customer Analytics', icon: Users, description: 'Customer insights & behavior' },
      { id: 'agents' as const, label: 'Agent Analytics', icon: BarChart3, description: 'Agent performance & efficiency' },
-     { id: 'bi' as const, label: 'Business Intelligence', icon: Brain, description: 'Business intelligence & analytics' },
+     { id: 'bi' as const, label: 'Business Intelligence', icon: Brain, description: 'Business intel & analytics' },
    ];
 
   // Explanation data for different charts and metrics
@@ -2155,6 +2217,17 @@ export default function DashboardPage() {
             >
               <SyncOutlined className={`text-lg ${isLoading ? 'animate-spin' : ''}`} />
             </motion.button>
+            
+            {/* Loading Phase Indicator */}
+            {loadingPhase !== 'complete' && (
+              <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+                <span className="text-sm text-blue-700 dark:text-blue-300">
+                  {loadingPhase === 'critical' && 'Loading Dashboard...'}
+                  {loadingPhase === 'analytics' && 'Loading Analytics...'}
+                  {loadingPhase === 'ai' && 'Loading AI Insights...'}
+                </span>
+              </div>
+            )}
             
             {/* Date Range Picker (same as call logs) */}
             <div className="flex items-center">
