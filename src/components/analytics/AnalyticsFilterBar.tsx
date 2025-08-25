@@ -109,7 +109,7 @@ export const AnalyticsFilterBar: React.FC<AnalyticsFilterBarProps> = ({
     if (!filtersModified) {
       setLocalFilters(localFilters);
     }
-  }, [localFilters, filtersModified]);
+  }, [localFilters, filtersModified, defaultFilters.direction, defaultFilters.disposition, defaultFilters.limit, defaultFilters.minCalls, defaultFilters.sortBy]);
 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">

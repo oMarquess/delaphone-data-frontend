@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import authService from '@/services/auth';
 import tokenManager from '@/services/tokenManager';
@@ -72,6 +72,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [isAuthenticated]);
 
+  const logout = useCallback(() => {
+    authService.logout();
+    setIsAuthenticated(false);
+    setUser(null);
+    router.push(ROUTES.AUTH.LOGIN);
+  }, [router]);
+
   const login = async (credentials: { email: string; password: string }, rememberMe: boolean) => {
     try {
       setLoading(true);
@@ -97,12 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    authService.logout();
-    setIsAuthenticated(false);
-    setUser(null);
-    router.push(ROUTES.AUTH.LOGIN);
-  };
+
 
   const value = {
     isAuthenticated,

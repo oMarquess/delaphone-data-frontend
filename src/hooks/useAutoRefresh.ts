@@ -54,7 +54,7 @@ export const useAutoRefresh = ({
       console.log('🛑 Cleaning up auto-refresh interval');
       clearInterval(intervalId);
     };
-  }, [enabled, interval, performRefresh, ...dependencies]);
+  }, [enabled, interval, performRefresh, dependencies]);
 
   const forceRefresh = useCallback(async () => {
     await performRefresh();

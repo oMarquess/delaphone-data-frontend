@@ -235,7 +235,8 @@ export const dashboardService = {
       limit?: string,
       sortBy?: string,
       sortOrder?: string,
-      page?: number
+      page?: number,
+      includeTranscripts?: boolean
     }
   ): Promise<any> => {
     try {
@@ -243,6 +244,8 @@ export const dashboardService = {
       const params: Record<string, any> = {
         start_date: startDate,
         end_date: endDate,
+        // Always include transcripts by default
+        include_transcripts: filters.includeTranscripts !== false
       };
       
       // Only add parameters that have values
@@ -268,7 +271,10 @@ export const dashboardService = {
         params.offset = filters.page > 1 ? (filters.page - 1) * (parseInt(filters.limit || '100')) : 0;
       }
       
-      console.log('Calling API with params:', params);
+      console.log('🔍 Call Logs API Request:');
+      console.log('📍 URL:', '/call-records/logs');
+      console.log('📋 Params:', params);
+      console.log('🎯 Include Transcripts:', params.include_transcripts);
       
       const response = await api.get('/call-records/logs', { 
         params,
@@ -280,11 +286,21 @@ export const dashboardService = {
           'X-Requested-At': Date.now().toString()
         }
       });
-      console.log('API response:', response.data);
+      
+      console.log('📦 Call Logs API Response:');
+      console.log('📊 Total Records:', response.data?.records?.length || 0);
+      console.log('📜 Records with Transcripts:', response.data?.records?.filter((r: any) => r.transcript_id)?.length || 0);
+      console.log('🔍 Sample Record Transcript Data:', response.data?.records?.[0] ? {
+        hasTranscriptId: !!response.data.records[0].transcript_id,
+        hasTranscriptText: !!response.data.records[0].transcript_text,
+        transcriptStatus: response.data.records[0].transcript_status,
+        transcriptWordsCount: response.data.records[0].transcript_words_count
+      } : 'No records');
+      console.log('📋 Full Response Structure:', Object.keys(response.data || {}));
       
       return response.data;
     } catch (error) {
-      console.error('Error fetching call logs:', error);
+      console.error('❌ Error fetching call logs:', error);
       throw error;
     }
   },

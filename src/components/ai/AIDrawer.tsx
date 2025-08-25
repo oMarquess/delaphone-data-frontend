@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Drawer, ConfigProvider, theme as antTheme, Button, message, Collapse, Badge, Tooltip, Tag, Dropdown } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -177,15 +177,8 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
     };
   }, [open, activeTab, dateRange, activeFilters]);
 
-  // Fetch data based on active tab when drawer is opened
-  useEffect(() => {
-    if (open) {
-      fetchTabData(activeTab, dateRange, activeFilters[activeTab] || {});
-    }
-  }, [open, activeTab]);
-
   // Function to fetch data based on active tab
-  const fetchTabData = async (tab: string, dates: {startDate: string, endDate: string}, filters: any = {}) => {
+  const fetchTabData = useCallback(async (tab: string, dates: {startDate: string, endDate: string}, filters: any = {}) => {
     if (!open) return;
     
     setIsLoading(true);
@@ -262,7 +255,14 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [open, activeTab, dateRange, activeFilters, selectedModel, persistentInterpretations]);
+
+  // Fetch data based on active tab when drawer is opened
+  useEffect(() => {
+    if (open) {
+      fetchTabData(activeTab, dateRange, activeFilters[activeTab] || {});
+    }
+  }, [open, activeTab, fetchTabData, dateRange, activeFilters]);
 
   // Helper function to dispatch date change events (for other components to use)
   const publishDateChange = (startDate: string, endDate: string) => {
@@ -986,7 +986,7 @@ export const AIDrawer = ({ open, onClose }: AIDrawerProps) => {
                         transition={{ delay: 0.5, duration: 0.5 }}
                         className="text-red-600 dark:text-red-400 text-center mb-4 max-w-md"
                       >
-                        We couldn't analyze your data right now. Please try again in a few moments.
+                        We couldn&apos;t analyze your data right now. Please try again in a few moments.
                       </motion.p>
                       <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}

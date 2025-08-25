@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { ChevronDownIcon, ChevronUpIcon, Play, Download, ChevronLeft, ChevronRight, Phone, Clock, Calendar, Info, ArrowUp, ArrowDown, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon, Play, Download, ChevronLeft, ChevronRight, Phone, Clock, Calendar, Info, ArrowUp, ArrowDown, ChevronsLeft, ChevronsRight, MessageSquare, TrendingUp, Users, Star, FileText, X, ExternalLink } from 'lucide-react';
 import React from 'react';
 import { useAudioPlayer } from '@/components/ui/GlobalAudioPlayer';
 import { API_BASE_URL } from '@/config/constants';
@@ -22,6 +22,62 @@ export interface CallLog {
   cnam: string;
   did: string;
   uniqueid: string;
+  // Transcript fields
+  transcript_id?: string;
+  transcript_text?: string;
+  transcript_confidence?: number;
+  transcript_audio_duration?: number;
+  transcript_words_count?: number;
+  transcript_speakers_count?: number;
+  transcript_sentiments_count?: number;
+  transcript_topics_detected?: number;
+  transcript_status?: string;
+  transcript_processed_at?: string;
+  transcript_utterances?: Array<{
+    speaker: string;
+    text: string;
+    start: number;
+    end: number;
+    confidence: number;
+  }>;
+  transcript_sentiment_analysis?: Array<{
+    text: string;
+    sentiment: string;
+    confidence: number;
+    start: number;
+    end: number;
+  }>;
+  transcript_lemur_analysis?: {
+    custom_topic?: string;
+    agent_performance?: {
+      agent_identified?: string;
+      customer_identified?: string;
+      heat_model_analysis?: {
+        halt_score?: string;
+        halt_numeric?: number;
+        empathy_score?: string;
+        empathy_numeric?: number;
+        apologize_score?: string;
+        apologize_numeric?: number;
+        take_action_score?: string;
+        take_action_numeric?: number;
+      };
+      overall_performance?: string;
+      overall_numeric_score?: string;
+      performance_explanation?: string;
+    };
+    sentiment_analysis?: {
+      customer_sentiment?: string;
+      customer_explanation?: string;
+      agent_sentiment?: string;
+      agent_explanation?: string;
+    };
+    call_completion?: {
+      status?: string;
+      explanation?: string;
+    };
+  };
+  transcript_public_url?: string;
   [key: string]: any; // For any other properties
 }
 
@@ -44,11 +100,46 @@ export default function CallLogsTable({
   pageSize = 100,
   isLoading = false
 }: CallLogsTableProps) {
+  // Add CSS for gradient animation
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes gradientShift {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [sortField, setSortField] = useState<string>('calldate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [loadingRecording, setLoadingRecording] = useState<string | null>(null);
+  const [transcriptModalOpen, setTranscriptModalOpen] = useState<string | null>(null);
+
+  // Debug: Log transcript data in records
+  console.log('📋 CallLogsTable received records:', records.length);
+  console.log('🎯 Records with transcript_id:', records.filter(r => r.transcript_id).length);
+  console.log('📝 Sample record transcript fields:', records[0] ? {
+    uniqueid: records[0].uniqueid,
+    transcript_id: records[0].transcript_id,
+    transcript_text: records[0].transcript_text ? records[0].transcript_text.substring(0, 100) + '...' : null,
+    transcript_status: records[0].transcript_status,
+    transcript_confidence: records[0].transcript_confidence,
+    transcript_words_count: records[0].transcript_words_count
+  } : 'No records');
   
   // Use the global audio player
   const { playAudio } = useAudioPlayer();
@@ -162,6 +253,63 @@ export default function CallLogsTable({
     }
     return number;
   };
+
+  // Helper functions for transcript data
+  const hasTranscript = (record: CallLog): boolean => {
+    const hasTranscriptData = !!(record.transcript_id && record.transcript_text && record.transcript_status === 'TranscriptStatus.completed');
+    console.log('🎯 Transcript Check for record:', record.uniqueid, {
+      transcript_id: record.transcript_id,
+      transcript_text: record.transcript_text ? `${record.transcript_text.substring(0, 50)}...` : null,
+      transcript_status: record.transcript_status,
+      hasTranscriptData
+    });
+    return hasTranscriptData;
+  };
+
+  const getTranscriptSummary = (record: CallLog) => {
+    if (!hasTranscript(record)) return null;
+    return {
+      wordsCount: record.transcript_words_count || 0,
+      speakersCount: record.transcript_speakers_count || 0,
+      confidence: record.transcript_confidence || 0,
+      duration: record.transcript_audio_duration || 0
+    };
+  };
+
+  const getSentimentClass = (sentiment: string): string => {
+    switch (sentiment?.toUpperCase()) {
+      case 'POSITIVE':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'NEGATIVE':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      case 'NEUTRAL':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+    }
+  };
+
+  const getPerformanceClass = (score: string): string => {
+    switch (score?.toUpperCase()) {
+      case 'EXCELLENT':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'GOOD':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'FAIR':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'POOR':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+    }
+  };
+
+  const formatMilliseconds = (ms: number): string => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
   
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -257,8 +405,192 @@ export default function CallLogsTable({
     }
   };
 
+  // Transcript Modal Component
+  const TranscriptModal = ({ record, onClose }: { record: CallLog, onClose: () => void }) => {
+    if (!record || !hasTranscript(record)) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-3">
+              <MessageSquare size={20} className="text-purple-600 dark:text-purple-400" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  Call Transcript & Analysis
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {formatPhoneNumber(record.src)} → {formatPhoneNumber(record.dst)} • {formatDate(record.calldate)}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Modal Content */}
+          <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            {/* Transcript Summary */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Words</div>
+                <div className="text-xl font-semibold text-gray-800 dark:text-white">{record.transcript_words_count || 0}</div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Speakers</div>
+                <div className="text-xl font-semibold text-gray-800 dark:text-white">{record.transcript_speakers_count || 0}</div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Confidence</div>
+                <div className="text-xl font-semibold text-gray-800 dark:text-white">{Math.round((record.transcript_confidence || 0) * 100)}%</div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Audio Duration</div>
+                <div className="text-xl font-semibold text-gray-800 dark:text-white">{formatDuration(record.transcript_audio_duration || 0)}</div>
+              </div>
+            </div>
+
+            {/* Analysis Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Agent Performance */}
+              {record.transcript_lemur_analysis?.agent_performance && (
+                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                    <Star size={16} className="mr-2" />
+                    Agent Performance
+                  </h5>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Overall</span>
+                      <span className={`px-3 py-1 text-sm rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.overall_performance || '')}`}>
+                        {record.transcript_lemur_analysis.agent_performance.overall_performance || 'N/A'}
+                      </span>
+                    </div>
+                    {record.transcript_lemur_analysis.agent_performance.heat_model_analysis?.empathy_score && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Empathy</span>
+                        <span className={`px-3 py-1 text-sm rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.heat_model_analysis.empathy_score)}`}>
+                          {record.transcript_lemur_analysis.agent_performance.heat_model_analysis.empathy_score}
+                        </span>
+                      </div>
+                    )}
+                    {record.transcript_lemur_analysis.agent_performance.heat_model_analysis?.halt_score && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Listening</span>
+                        <span className={`px-3 py-1 text-sm rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.heat_model_analysis.halt_score)}`}>
+                          {record.transcript_lemur_analysis.agent_performance.heat_model_analysis.halt_score}
+                        </span>
+                      </div>
+                    )}
+                    {record.transcript_lemur_analysis.agent_performance.heat_model_analysis?.take_action_score && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Action</span>
+                        <span className={`px-3 py-1 text-sm rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.heat_model_analysis.take_action_score)}`}>
+                          {record.transcript_lemur_analysis.agent_performance.heat_model_analysis.take_action_score}
+                        </span>
+                      </div>
+                    )}
+                    {record.transcript_lemur_analysis.agent_performance.performance_explanation && (
+                      <div className="mt-3 p-3 bg-white dark:bg-gray-600 rounded text-sm text-gray-600 dark:text-gray-300">
+                        {record.transcript_lemur_analysis.agent_performance.performance_explanation}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Sentiment Analysis */}
+              {record.transcript_lemur_analysis?.sentiment_analysis && (
+                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                    <TrendingUp size={16} className="mr-2" />
+                    Sentiment Analysis
+                  </h5>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Customer</span>
+                        <span className={`px-3 py-1 text-sm rounded-full ${getSentimentClass(record.transcript_lemur_analysis.sentiment_analysis.customer_sentiment || '')}`}>
+                          {record.transcript_lemur_analysis.sentiment_analysis.customer_sentiment || 'N/A'}
+                        </span>
+                      </div>
+                      {record.transcript_lemur_analysis.sentiment_analysis.customer_explanation && (
+                        <div className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-600 p-2 rounded">
+                          {record.transcript_lemur_analysis.sentiment_analysis.customer_explanation}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Agent</span>
+                        <span className={`px-3 py-1 text-sm rounded-full ${getSentimentClass(record.transcript_lemur_analysis.sentiment_analysis.agent_sentiment || '')}`}>
+                          {record.transcript_lemur_analysis.sentiment_analysis.agent_sentiment || 'N/A'}
+                        </span>
+                      </div>
+                      {record.transcript_lemur_analysis.sentiment_analysis.agent_explanation && (
+                        <div className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-600 p-2 rounded">
+                          {record.transcript_lemur_analysis.sentiment_analysis.agent_explanation}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Call Completion Status */}
+            {record.transcript_lemur_analysis?.call_completion && (
+              <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Call Completion</h5>
+                <div className="flex items-center mb-3">
+                  <span className={`px-3 py-1 text-sm rounded-full ${
+                    record.transcript_lemur_analysis.call_completion.status === 'COMPLETE' 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                  }`}>
+                    {record.transcript_lemur_analysis.call_completion.status || 'N/A'}
+                  </span>
+                </div>
+                {record.transcript_lemur_analysis.call_completion.explanation && (
+                  <div className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-600 p-3 rounded">
+                    {record.transcript_lemur_analysis.call_completion.explanation}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Full Transcript Text */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                <FileText size={16} className="mr-2" />
+                Full Transcript
+              </h5>
+              <div className="text-sm text-gray-600 dark:text-gray-400 max-h-60 overflow-y-auto bg-white dark:bg-gray-600 p-3 rounded">
+                {record.transcript_text || 'No transcript text available'}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+    <>
+      {/* Transcript Modal */}
+      {transcriptModalOpen && (
+        <TranscriptModal 
+          record={records.find(r => r.uniqueid === transcriptModalOpen)!}
+          onClose={() => setTranscriptModalOpen(null)}
+        />
+      )}
+      
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
         <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">
           Call Logs
@@ -383,11 +715,40 @@ export default function CallLogsTable({
                     </div>
                   </div>
                   
-                  {/* Call direction indicator */}
-                  <div className="flex items-center mb-3">
+                  {/* Call direction indicator and transcript badge */}
+                  <div className="flex items-center justify-between mb-3">
                     <span className={`px-2 py-0.5 text-xs rounded-full flex items-center ${getDirectionClass(record.direction)}`}>
                       {getDirectionIcon(record.direction)} <span className="ml-1">{record.direction}</span>
                     </span>
+                    {hasTranscript(record) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTranscriptModalOpen(record.uniqueid);
+                        }}
+                        className="relative px-2 py-0.5 text-xs rounded-full bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 text-purple-800 dark:text-purple-200 flex items-center hover:from-purple-200 hover:to-pink-200 dark:hover:from-purple-800/70 dark:hover:to-pink-800/70 transition-all duration-300 group overflow-hidden"
+                        style={{
+                          background: 'linear-gradient(45deg, #f3e8ff, #fce7f3, #f3e8ff, #fce7f3)',
+                          backgroundSize: '400% 400%',
+                          animation: 'gradientShift 3s ease infinite',
+                          border: '1px solid transparent',
+                          backgroundClip: 'padding-box'
+                        }}
+                      >
+                        <div 
+                          className="absolute inset-0 rounded-full opacity-75 blur-sm"
+                          style={{
+                            background: 'linear-gradient(45deg, #a855f7, #ec4899, #a855f7, #ec4899)',
+                            backgroundSize: '400% 400%',
+                            animation: 'gradientShift 3s ease infinite',
+                            zIndex: -1
+                          }}
+                        />
+                        <MessageSquare size={10} className="mr-1 relative z-10" /> 
+                        <span className="relative z-10">Transcript</span>
+                        <ExternalLink size={8} className="ml-1 opacity-60 group-hover:opacity-100 transition-opacity relative z-10" />
+                      </button>
+                    )}
                   </div>
                   
                   {/* Call numbers */}
@@ -461,7 +822,8 @@ export default function CallLogsTable({
                 {/* Expanded details */}
                 {expandedRow === record.uniqueid && (
                   <div className="p-4 bg-gray-50 dark:bg-gray-700/70 border-t border-gray-200 dark:border-gray-600">
-                    <div className="grid grid-cols-2 gap-3">
+                    {/* Call Details Section */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
                       <div>
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Call ID</div>
                         <div className="text-xs text-gray-600 dark:text-gray-400 break-all">{record.uniqueid}</div>
@@ -495,6 +857,9 @@ export default function CallLogsTable({
                         <div className="text-xs text-gray-600 dark:text-gray-400 break-words">{record.accountcode || 'N/A'}</div>
                       </div>
                     </div>
+
+
+
                     {record.disposition !== 'FAILED' && record.disposition !== 'NO ANSWER' && (
                       <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end">
                         <button 
@@ -557,6 +922,9 @@ export default function CallLogsTable({
                   Direction
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Transcript
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -564,7 +932,7 @@ export default function CallLogsTable({
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-10 text-center">
+                  <td colSpan={9} className="px-6 py-10 text-center">
                     <div className="flex justify-center items-center space-x-2">
                       {/* <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500"></div> */}
                       <span className="text-gray-500 dark:text-gray-400">Loading records...</span>
@@ -613,6 +981,39 @@ export default function CallLogsTable({
                           {record.direction}
                         </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {hasTranscript(record) ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTranscriptModalOpen(record.uniqueid);
+                            }}
+                            className="relative inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 text-purple-800 dark:text-purple-200 hover:from-purple-200 hover:to-pink-200 dark:hover:from-purple-800/70 dark:hover:to-pink-800/70 transition-all duration-300 group overflow-hidden"
+                            style={{
+                              background: 'linear-gradient(45deg, #f3e8ff, #fce7f3, #f3e8ff, #fce7f3)',
+                              backgroundSize: '400% 400%',
+                              animation: 'gradientShift 3s ease infinite',
+                              border: '1px solid transparent',
+                              backgroundClip: 'padding-box'
+                            }}
+                          >
+                            <div 
+                              className="absolute inset-0 rounded-full opacity-75 blur-sm"
+                              style={{
+                                background: 'linear-gradient(45deg, #a855f7, #ec4899, #a855f7, #ec4899)',
+                                backgroundSize: '400% 400%',
+                                animation: 'gradientShift 3s ease infinite',
+                                zIndex: -1
+                              }}
+                            />
+                            <MessageSquare size={10} className="mr-1 relative z-10" />
+                            <span className="relative z-10">Available</span>
+                            <ExternalLink size={8} className="ml-1 opacity-60 group-hover:opacity-100 transition-opacity relative z-10" />
+                          </button>
+                        ) : (
+                          <span className="text-xs text-gray-400 dark:text-gray-500">-</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-white">
                         <div className="flex space-x-2">
                           {record.disposition !== 'FAILED' && record.disposition !== 'NO ANSWER' && (
@@ -647,63 +1048,168 @@ export default function CallLogsTable({
                     </tr>
                     {expandedRow === record.uniqueid && (
                       <tr key={`${record.uniqueid}-expanded`} className="bg-gray-50 dark:bg-gray-700/70">
-                        <td colSpan={8} className="px-6 py-4">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-600">
-                              <h4 className="text-sm font-semibold text-gray-800 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">Call Details</h4>
-                              <div className="space-y-2">
-                                <div className="grid grid-cols-[100px_1fr] items-baseline">
-                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">ID:</span>
-                                  <span className="text-xs text-gray-800 dark:text-gray-200 font-mono break-all">{record.uniqueid}</span>
+                        <td colSpan={9} className="px-6 py-4">
+                          <div className="space-y-6">
+                            {/* Call Details Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-600">
+                                <h4 className="text-sm font-semibold text-gray-800 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">Call Details</h4>
+                                <div className="space-y-2">
+                                  <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">ID:</span>
+                                    <span className="text-xs text-gray-800 dark:text-gray-200 font-mono break-all">{record.uniqueid}</span>
+                                  </div>
+                                  <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Channel:</span>
+                                    <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.channel}</span>
+                                  </div>
+                                  <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Dest. Channel:</span>
+                                    <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.dstchannel || 'N/A'}</span>
+                                  </div>
+                                  <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Context:</span>
+                                    <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.dcontext}</span>
+                                  </div>
                                 </div>
-                                <div className="grid grid-cols-[100px_1fr] items-baseline">
-                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Channel:</span>
-                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.channel}</span>
+                              </div>
+                              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-600">
+                                <h4 className="text-sm font-semibold text-gray-800 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">Duration Details</h4>
+                                <div className="space-y-2">
+                                  <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Total Duration:</span>
+                                    <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{formatDuration(record.duration)}</span>
+                                  </div>
+                                  <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Bill Duration:</span>
+                                    <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{formatDuration(record.billsec)}</span>
+                                  </div>
+                                  <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">DID:</span>
+                                    <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.did || 'N/A'}</span>
+                                  </div>
                                 </div>
-                                <div className="grid grid-cols-[100px_1fr] items-baseline">
-                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Dest. Channel:</span>
-                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.dstchannel || 'N/A'}</span>
-                                </div>
-                                <div className="grid grid-cols-[100px_1fr] items-baseline">
-                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Context:</span>
-                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.dcontext}</span>
+                              </div>
+                              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-600">
+                                <h4 className="text-sm font-semibold text-gray-800 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">Application</h4>
+                                <div className="space-y-2">
+                                  <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Last App:</span>
+                                    <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.lastapp}</span>
+                                  </div>
+                                  <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Last Data:</span>
+                                    <span className="text-xs text-gray-800 dark:text-gray-200 break-all">{record.lastdata}</span>
+                                  </div>
+                                  <div className="grid grid-cols-[100px_1fr] items-baseline">
+                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Account Code:</span>
+                                    <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.accountcode || 'N/A'}</span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-600">
-                              <h4 className="text-sm font-semibold text-gray-800 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">Duration Details</h4>
-                              <div className="space-y-2">
-                                <div className="grid grid-cols-[100px_1fr] items-baseline">
-                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Total Duration:</span>
-                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{formatDuration(record.duration)}</span>
+
+                            {/* Transcript Section */}
+                            {hasTranscript(record) && (
+                              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-600">
+                                <h4 className="text-sm font-semibold text-gray-800 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3 flex items-center">
+                                  <MessageSquare size={16} className="mr-2" />
+                                  Call Transcript & Analysis
+                                </h4>
+                                
+                                {/* Transcript Summary */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                                  <div className="text-center">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">Words</div>
+                                    <div className="text-lg font-semibold text-gray-800 dark:text-white">{record.transcript_words_count || 0}</div>
+                                  </div>
+                                  <div className="text-center">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">Speakers</div>
+                                    <div className="text-lg font-semibold text-gray-800 dark:text-white">{record.transcript_speakers_count || 0}</div>
+                                  </div>
+                                  <div className="text-center">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">Confidence</div>
+                                    <div className="text-lg font-semibold text-gray-800 dark:text-white">{Math.round((record.transcript_confidence || 0) * 100)}%</div>
+                                  </div>
+                                  <div className="text-center">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">Audio Duration</div>
+                                    <div className="text-lg font-semibold text-gray-800 dark:text-white">{formatDuration(record.transcript_audio_duration || 0)}</div>
+                                  </div>
                                 </div>
-                                <div className="grid grid-cols-[100px_1fr] items-baseline">
-                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Bill Duration:</span>
-                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{formatDuration(record.billsec)}</span>
+
+                                {/* Analysis Grid */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                  {/* Agent Performance */}
+                                  {record.transcript_lemur_analysis?.agent_performance && (
+                                    <div className="p-3 border border-gray-200 dark:border-gray-600 rounded">
+                                      <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                                        <Star size={12} className="mr-1" />
+                                        Agent Performance
+                                      </h5>
+                                      <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-xs text-gray-500 dark:text-gray-400">Overall</span>
+                                          <span className={`px-2 py-0.5 text-xs rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.overall_performance || '')}`}>
+                                            {record.transcript_lemur_analysis.agent_performance.overall_performance || 'N/A'}
+                                          </span>
+                                        </div>
+                                        {record.transcript_lemur_analysis.agent_performance.heat_model_analysis?.empathy_score && (
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">Empathy</span>
+                                            <span className={`px-2 py-0.5 text-xs rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.heat_model_analysis.empathy_score)}`}>
+                                              {record.transcript_lemur_analysis.agent_performance.heat_model_analysis.empathy_score}
+                                            </span>
+                                          </div>
+                                        )}
+                                        {record.transcript_lemur_analysis.agent_performance.heat_model_analysis?.halt_score && (
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">Listening</span>
+                                            <span className={`px-2 py-0.5 text-xs rounded-full ${getPerformanceClass(record.transcript_lemur_analysis.agent_performance.heat_model_analysis.halt_score)}`}>
+                                              {record.transcript_lemur_analysis.agent_performance.heat_model_analysis.halt_score}
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Sentiment Analysis */}
+                                  {record.transcript_lemur_analysis?.sentiment_analysis && (
+                                    <div className="p-3 border border-gray-200 dark:border-gray-600 rounded">
+                                      <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                                        <TrendingUp size={12} className="mr-1" />
+                                        Sentiment Analysis
+                                      </h5>
+                                      <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-xs text-gray-500 dark:text-gray-400">Customer</span>
+                                          <span className={`px-2 py-0.5 text-xs rounded-full ${getSentimentClass(record.transcript_lemur_analysis.sentiment_analysis.customer_sentiment || '')}`}>
+                                            {record.transcript_lemur_analysis.sentiment_analysis.customer_sentiment || 'N/A'}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-xs text-gray-500 dark:text-gray-400">Agent</span>
+                                          <span className={`px-2 py-0.5 text-xs rounded-full ${getSentimentClass(record.transcript_lemur_analysis.sentiment_analysis.agent_sentiment || '')}`}>
+                                            {record.transcript_lemur_analysis.sentiment_analysis.agent_sentiment || 'N/A'}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="grid grid-cols-[100px_1fr] items-baseline">
-                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">DID:</span>
-                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.did || 'N/A'}</span>
+
+                                {/* Transcript Text */}
+                                <div className="p-3 border border-gray-200 dark:border-gray-600 rounded">
+                                  <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                                    <FileText size={12} className="mr-1" />
+                                    Full Transcript
+                                  </h5>
+                                  <div className="text-xs text-gray-600 dark:text-gray-400 max-h-32 overflow-y-auto">
+                                    {record.transcript_text || 'No transcript text available'}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-600">
-                              <h4 className="text-sm font-semibold text-gray-800 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">Application</h4>
-                              <div className="space-y-2">
-                                <div className="grid grid-cols-[100px_1fr] items-baseline">
-                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Last App:</span>
-                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.lastapp}</span>
-                                </div>
-                                <div className="grid grid-cols-[100px_1fr] items-baseline">
-                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Last Data:</span>
-                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-all">{record.lastdata}</span>
-                                </div>
-                                <div className="grid grid-cols-[100px_1fr] items-baseline">
-                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Account Code:</span>
-                                  <span className="text-xs text-gray-800 dark:text-gray-200 break-words">{record.accountcode || 'N/A'}</span>
-                                </div>
-                              </div>
-                            </div>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -712,7 +1218,7 @@ export default function CallLogsTable({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={9} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
                     No call records found matching your filters.
                   </td>
                 </tr>
@@ -813,5 +1319,6 @@ export default function CallLogsTable({
         </div>
       )}
     </div>
+    </>
   );
 } 

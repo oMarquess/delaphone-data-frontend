@@ -17,10 +17,11 @@ import { toast } from 'sonner';
 export default function CallLogsPage() {
   const [filterVisible, setFilterVisible] = useState(false);
   const [dateRange, setDateRange] = useState(() => {
-    const today = new Date();
+    // Set to 2025-06-09 for testing (date with transcript data)
+    const testDate = new Date('2025-06-09');
     return {
-      startDate: format(startOfDay(today), 'yyyy-MM-dd'),
-      endDate: format(endOfDay(today), 'yyyy-MM-dd')
+      startDate: format(startOfDay(testDate), 'yyyy-MM-dd'),
+      endDate: format(endOfDay(testDate), 'yyyy-MM-dd')
     };
   });
   const [filters, setFilters] = useState<CallLogsFilterValues>({
@@ -68,9 +69,11 @@ export default function CallLogsPage() {
   
   // Fetcher function for SWR
   const fetcher = async ([url, startDate, endDate, filterValues, page]: [string, string, string, CallLogsFilterValues, number]) => {
+    console.log('🚀 Fetcher called with:', { url, startDate, endDate, page });
     return dashboardService.getCallLogs(startDate, endDate, { 
       ...filterValues,
-      page
+      page,
+      includeTranscripts: true // Explicitly request transcripts
     });
   };
   
@@ -115,7 +118,8 @@ export default function CallLogsPage() {
           const cacheBustingFetcher = async (key: [string, string, string, CallLogsFilterValues, number]) => {
             const data = await dashboardService.getCallLogs(key[1], key[2], { 
               ...key[3],
-              page: key[4]
+              page: key[4],
+              includeTranscripts: true // Ensure transcripts are included
             });
             return data;
           };
@@ -166,14 +170,17 @@ export default function CallLogsPage() {
   // Add debugging to see API response
   useEffect(() => {
     if (data) {
-      console.log('API Response:', {
-        data,
+      console.log('📊 Call Logs Page - API Response:', {
         totalCount: data.total_count,
         filteredCount: data.filtered_count,
         recordsLength: data.records?.length,
         pageSize: parseInt(filters.limit || '100'),
-        totalPages: Math.ceil((data.filtered_count || 0) / parseInt(filters.limit || '100'))
+        totalPages: Math.ceil((data.filtered_count || 0) / parseInt(filters.limit || '100')),
+        transcriptedRecords: data.records?.filter((r: any) => r.transcript_id)?.length || 0,
+        sampleTranscript: data.records?.[0]?.transcript_text ? data.records[0].transcript_text.substring(0, 100) + '...' : 'No transcript'
       });
+      console.log('🗓️ Current date range:', dateRange);
+      console.log('🔍 Current filters:', filters);
       // Ensure filters are closed after data is loaded
       setFilterVisible(false);
     }
@@ -182,7 +189,7 @@ export default function CallLogsPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters, dateRange.startDate, dateRange.endDate]);
+  }, [filters, dateRange]);
   
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -223,7 +230,8 @@ export default function CallLogsPage() {
         const cacheBustingFetcher = async (key: [string, string, string, CallLogsFilterValues, number]) => {
           const data = await dashboardService.getCallLogs(key[1], key[2], { 
             ...key[3],
-            page: key[4]
+            page: key[4],
+            includeTranscripts: true // Ensure transcripts are included
           });
           return data;
         };

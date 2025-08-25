@@ -2,7 +2,7 @@
 import { Button } from "@/components/Buttons";
 import starsBg from "@/assets/stars.png";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { useRouter } from 'next/navigation';
 
 export const Hero = () => {
@@ -15,7 +15,7 @@ export const Hero = () => {
   const backgroundPositionY = useTransform(scrollYProgress, [0,1], [0, -300])
   
   // Typewriter effect state
-  const phrases = ["Revenue Intel.,", "Growth Opportunities", "Customer Truths"];
+  const phrases = useMemo(() => ["Revenue Intel.,", "Growth Opportunities", "Customer Truths"], []);
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);

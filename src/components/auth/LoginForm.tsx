@@ -370,7 +370,7 @@ export default function LoginForm() {
           </button>
         </form>
         <p className="text-center text-sm text-gray-400">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <button
             onClick={() => router.push('/signup')}
             className="text-purple-500 hover:text-purple-400 font-medium transition-colors"

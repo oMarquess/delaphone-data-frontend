@@ -248,7 +248,7 @@ export default function SignUpForm() {
       >
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-white mb-2">Personal Information</h2>
-          <p className="text-gray-400 text-sm">Let's start with your basic details</p>
+          <p className="text-gray-400 text-sm">Let&apos;s start with your basic details</p>
         </div>
         <div>
           <label htmlFor="full_name" className="block text-sm font-medium text-gray-300 mb-2">
@@ -435,7 +435,7 @@ export default function SignUpForm() {
               <li>If you have a company code, enter it to gain immediate access</li>
               <li>Without a code, your account will require admin verification</li>
               <li>Verification typically takes 24 hours</li>
-              <li>You'll receive an email when your account is verified</li>
+              <li>You&apos;ll receive an email when your account is verified</li>
             </ul>
           </div>
         </div>

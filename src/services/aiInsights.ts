@@ -565,6 +565,132 @@ export const aiInsightsService = {
   },
 };
 
+// Business Intelligence Analysis Response Interface
+export interface BusinessIntelligenceResponse {
+  business_intelligence: {
+    status: string;
+    analysis: {
+      analysis_metadata: {
+        company_name: string;
+        analysis_period: {
+          start_date: string;
+          end_date: string;
+          total_days: number;
+        };
+        data_summary: {
+          total_calls_analyzed: number;
+          calls_with_transcripts: number;
+          average_call_duration: number;
+          analysis_confidence: number;
+        };
+        generated_at: string;
+        references: any;
+      };
+      executive_summary: {
+        overall_health_score: number;
+        key_findings: string[];
+        critical_alerts: string[];
+        business_impact: string;
+        references: any;
+        metric_explanations: any;
+      };
+      customer_experience: {
+        satisfaction_score: number;
+        sentiment_distribution: {
+          positive: number;
+          neutral: number;
+          negative: number;
+        };
+        top_pain_points: Array<{
+          issue: string;
+          frequency: number;
+          impact_score: number;
+          recommendation: string;
+        }>;
+        emotional_journey: any;
+        visualizations: any[];
+        references: any;
+        metric_explanations: any;
+      };
+      agent_performance: {
+        overall_effectiveness_score: number;
+        heat_model_breakdown: {
+          halt_average: number;
+          empathy_average: number;
+          apologize_average: string | number;
+          take_action_average: number;
+        };
+        performance_distribution: any;
+        coaching_priorities: any[];
+        top_performers: any[];
+        visualizations: any[];
+        references: any;
+        metric_explanations: any;
+      };
+      operational_efficiency: any;
+      business_intelligence: any;
+      common_products: any;
+      customer_keywords: any;
+      flagged_conversations: any;
+      interesting_facts: any;
+      forecasts: any;
+      risk_assessment: any;
+      recommendations: any;
+      visualization_dashboard: any;
+      benchmarks_and_targets: any;
+    };
+  };
+  data_summary: any;
+  quick_metrics: any;
+}
+
+// Helper function to build the query string for business intelligence analysis
+const buildBusinessIntelligenceQueryString = (
+  startDate: string, 
+  endDate: string, 
+  hasRecording: boolean = true,
+  model: string = 'gemini-2.5-flash-preview-05-20'
+): string => {
+  const queryParams = new URLSearchParams();
+  queryParams.append('start_date', startDate);
+  queryParams.append('end_date', endDate);
+  queryParams.append('has_recording', hasRecording.toString());
+  queryParams.append('model', model);
+  return queryParams.toString();
+};
+
+// Custom hook to fetch business intelligence analysis
+export const useBusinessIntelligenceAnalysis = (
+  startDate: string, 
+  endDate: string, 
+  hasRecording: boolean = true,
+  model: string = 'gemini-2.5-flash-preview-05-20'
+) => {
+  const queryString = buildBusinessIntelligenceQueryString(startDate, endDate, hasRecording, model);
+  const url = `/ai-insights/business-intelligence-analysis?${queryString}`;
+
+  const { data, error, isLoading, mutate } = useSWR<BusinessIntelligenceResponse>(
+    url,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5000, // 5 seconds deduping for BI analysis
+      shouldRetryOnError: true,
+      errorRetryCount: 2,
+      revalidateIfStale: true,
+      refreshInterval: 0, // Disable automatic refresh (BI analysis can be resource intensive)
+      keepPreviousData: true, // Keep previous data while fetching new data
+    }
+  );
+
+  return {
+    data,
+    error,
+    isLoading,
+    mutate
+  };
+};
+
 // Format duration from seconds to minutes for display
 export const formatDurationMinutes = (seconds: number): string => {
   const minutes = Math.round(seconds / 60 * 10) / 10;
